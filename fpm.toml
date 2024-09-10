@@ -15,6 +15,7 @@ auto-tests = true
 auto-examples = true
 module-naming = false
 
+
 [install]
 library = true
 
@@ -33,3 +34,8 @@ stdlib = "*"
 name="Flue"
 source-dir="app"
 main="main.f90"
+
+[preprocess]
+[preprocess.cpp]
+suffixes = ["F90"]
+macros=['SETGITHASH=Yes']
