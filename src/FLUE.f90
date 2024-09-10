@@ -1,4 +1,6 @@
 module FLUE
+  use FLUE_gluonProp
+  use FLUE_SU3MatrixOps
   use FLUE_gpManip
   use FLUE_mom
   use FLUE_constants
@@ -6,7 +8,8 @@ module FLUE
 
   character(len=*), parameter :: version="0.1.0"
   !private
-  !public :: version
+  !public :: calc_mom_space_scalarD
+  !public :: Ident, MultiplyMatMat, MultiplyMatdagMatdag, TraceMultMatMat, RealTraceMultMatMat, TraceLessConjgSubtract, colourDecomp
   !public :: Q_Average
   !public :: get_qhat
   !public :: WP, pi, WC

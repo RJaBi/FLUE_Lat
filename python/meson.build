@@ -77,6 +77,13 @@ gluonAna_sources = [
 ]
 py.install_sources(gluonAna_sources, subdir:'FLUE/gluonAna')
 
+gluonCalc_sources = [
+  'FLUE/gluonCalc/__init__.py',
+  'FLUE/gluonCalc/su3matrixops.py',
+  'FLUE/gluonCalc/gluonprop.py'
+]
+py.install_sources(gluonCalc_sources, subdir:'FLUE/gluonCalc')
+
 
 # Extension fortran module
 inc_np = include_directories(incdir_numpy, incdir_f2py, 'fpm_build' / 'include')

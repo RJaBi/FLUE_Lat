@@ -1,10 +1,15 @@
 module FLUE_SU3MatrixOps
   use FLUE_constants, only: WC, WP
   implicit none
-  complex(kind=WC), dimension(3,3), parameter :: Ident= reshape(source = [(1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP)], shape= [3,3])
-  private
+  ! Strictly this matrix visually is the tranpose in memory
+  ! but as this is the identity it doesnt matter
+  complex(kind=WC), dimension(3,3), parameter :: Ident= reshape(source = [ &
+       (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
+       (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP) , &
+       (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP)], shape= [3,3])
+  !private
 
-  public :: TracelessConjgSubtract, colourDecomp
+  !public :: TracelessConjgSubtract, colourDecomp
   
 
 contains
