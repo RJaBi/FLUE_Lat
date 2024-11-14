@@ -67,7 +67,7 @@ repos:
   hooks:
   - id: compile-fpm
     name: Test successful compilation with fpm
-    entry: fpm build --flag "-ffree-line-length-none"
+    entry: fpm build --flag "-ffree-line-length-none -fcoarray=single"
     language: system
     pass_filenames: false
     always_run: true
@@ -76,7 +76,7 @@ repos:
   hooks:
   - id: fortitude-lint
     name: Run Fortitude linter
-    entry: fortitude check --line-length 150
+    entry: fortitude check --line-length 150 --ignore S041
     language: system
     pass_filenames: yes
     always_run: true

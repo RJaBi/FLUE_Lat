@@ -1,10 +1,10 @@
+!! Constants module
 module FLUE_constants
-  !! Constants module
-  use, intrinsic :: ISO_C_BINDING, only: C_DOUBLE, C_DOUBLE_COMPLEX
-  implicit none
+   use, intrinsic :: iso_c_binding, only: c_double, c_double_complex
+   implicit none
 
-  integer, parameter :: WP = C_DOUBLE
-  integer, parameter :: WC = C_DOUBLE
-  !real(WP) :: pi = 3.1415926535897932384626433_WP
-  real(kind=WP), parameter :: PI = acos(-1.0_WP)
+   integer, parameter :: WP = c_double
+   integer, parameter :: WC = c_double
+   !real(WP) :: pi = 3.1415926535897932384626433_WP
+   real(kind=WP), parameter :: PI = acos(-1.0_wp)
 end module FLUE_constants
