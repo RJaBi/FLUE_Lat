@@ -1,4 +1,5 @@
 module FLUE
+  use FLUE_openQCDFileIO_SA
   use FLUE_gluonProp
   use FLUE_SU3MatrixOps
   use FLUE_gpManip
