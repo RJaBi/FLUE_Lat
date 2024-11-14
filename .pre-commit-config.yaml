@@ -1,7 +1,7 @@
 default_language_version:
 #    python: python3.11.5
 #    python: python3.10.13
-    python: python3.12.3
+    python: python3.13.0
 
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks

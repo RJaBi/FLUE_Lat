@@ -1,7 +1,7 @@
 module FLUE_gpManip
   !! Module to do gluon propagator manipulation
   use FLUE_constants, only: WP, pi
-  !use stdlib_stats, only: median
+  use stdlib_stats, only: median
   implicit none
   
 contains
@@ -38,8 +38,7 @@ contains
           ! write(*,*) qcount, 'inside mask', q_pos
           ! If there is anything in the mask, then keep the output
           QOUT(qcount) = sum(q, mask=mask) / count(mask, kind=WP)
-          !DOUT(qcount) = median(D, mask=mask)
-          DOUT(qcount) = D(1)
+          DOUT(qcount) = median(D, mask=mask)
           !write(*,*) D(merge(1,0,mask))
           !stop
           !DOUT(qcount) = median(D(mask), len(D(mask)))!sum(D, mask=mask) / count(mask, kind=WP)

@@ -1,29 +1,17 @@
 module FLUE_c
   use iso_c_binding, only: c_double, c_int, c_double_complex
-  use FLUE, only:  Q_Average, get_qhat, cone_cut, MultiplyMatMat, calc_mom_space_scalarD, scalarGluonProp
+  use FLUE, only:  Q_Average, get_qhat, cone_cut, MultiplyMatMat, calc_mom_space_scalarD
   !calculate_area, calculate_perimeter,
 contains
 
-  subroutine scalarGluonProp_c(NS, NT, U, xi, D)
-    ! U is in position space
-    integer(kind=c_int), intent(in) :: NS, NT
-    complex(kind=c_double_complex), dimension(NT, NS, NS, NS, 4, 3, 3), intent(in) :: U
-    real(kind=c_double), intent(in) :: xi
-    real(kind=c_double), dimension(NS, NS, NS, NS), intent(out) :: D
-    call scalarGluonProp(NS, NT, U, xi, D)
-  end subroutine scalarGluonProp_c
-  
-  subroutine calc_mom_space_scalarD_c(NS, NT, U, D, mu_start, xi)
-    integer(kind=c_int), intent(in) :: NS
-    integer(kind=c_int), intent(in) :: NT
-    !complex(kind=c_double_complex), dimension(:,:,:,:,:,:,:), intent(in)  :: U
-    complex(kind=c_double_complex), dimension(0:NT,0:NS,0:NS,0:NS,0:3,0:2,0:2), intent(in)  :: U
+
+  subroutine calc_mom_space_scalarD_c(U, D, mu_start, xi)
+    complex(kind=c_double_complex), dimension(:,:,:,:,:,:,:), intent(in)  :: U
     integer(kind=c_int),                                      intent(in)  :: mu_start
     real(kind=c_double),                                      intent(in)  :: xi
-    !complex(kind=c_double_complex), dimension(:,:,:,:),       intent(out) :: D
-    complex(kind=c_double_complex), dimension(0:NT/2,0:NS/2,0:NS/2,0:NS/2),       intent(out) :: D
+    complex(kind=c_double_complex), dimension(:,:,:,:),       intent(out) :: D
 
-    call calc_mom_space_scalarD(NS, NT, U, D, mu_start, xi)
+    call calc_mom_space_scalarD(U, D, mu_start, xi)
   end subroutine calc_mom_space_scalarD_c
     
   subroutine MultiplyMatMat_c(MM, left, right)
@@ -64,8 +52,7 @@ contains
     integer(c_int), intent(out) :: Qcount
     real(kind=C_DOUBLE), dimension(NQ, 4), intent(out) :: QOUT
     real(kind=C_DOUBLE), dimension(NQ), intent(out) :: DOut, D4out
-    !real(kind=C_DOUBLE), optional, intent(in) :: angleIN, xiIN, IRCutIN, IRRadiusIN
-    real(kind=C_DOUBLE), intent(in) :: angleIN, xiIN, IRCutIN, IRRadiusIN
+    real(kind=C_DOUBLE), optional, intent(in) :: angleIN, xiIN, IRCutIN, IRRadiusIN
 
     call cone_cut(NQ, radius, Q, D, D4, NT, NS, angleIN, xiIN, IRCutIN, IRRadiusIN, Qout, Dout, D4out, qcount)
   end subroutine cone_cut_c

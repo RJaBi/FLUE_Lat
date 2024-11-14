@@ -17,7 +17,7 @@ module-naming = false
 
 
 [install]
-library = false
+library = true
 
 [fortran]
 implicit-typing = false
@@ -28,9 +28,7 @@ source-form = "free"
 source-dir="src"
 
 [dependencies]
-#stdlib = "*"
-openmp = "*"
-csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
+stdlib = "*"
 
 [[executable]]
 name="Flue"
