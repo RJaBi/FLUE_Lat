@@ -28,9 +28,10 @@ source-form = "free"
 source-dir="src"
 
 [dependencies]
-#stdlib = "*"
+stdlib = "*"
 openmp = "*"
 csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
+fftpack = { git="https://github.com/fortran-lang/fftpack.git" }
 
 [[executable]]
 name="Flue"
