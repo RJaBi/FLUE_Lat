@@ -1,11 +1,11 @@
-enable-replacements=True
-c-relations=True
+enable-replacements=False
+c-relations=False
 
 # White space settings
 indent=3
 line-length=132
 strict-indent=True
-strip-comments=True
+strip-comments=False
 whitespace-relational=True
 whitespace-logical=True
 whitespace-plusminus=True
@@ -22,5 +22,5 @@ enable-decl=True
 # Don't indent pre-processor statements
 disable-fypp=True
 
-case=[1,1,1,1]
+case=[1,2,2,2]
 exclude=[]

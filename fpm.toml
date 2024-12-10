@@ -28,17 +28,24 @@ source-form = "free"
 source-dir="src"
 
 [dependencies]
-stdlib = "*"
-openmp = "*"
+#stdlib = "*"
+#openmp = "*"
+stdlib = { path = "../stdlib" }
 csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
 fftpack = { git="https://github.com/fortran-lang/fftpack.git" }
 
-[[executable]]
-name="Flue"
-source-dir="app"
-main="main.f90"
+#[[executable]]
+#name="Flue"
+#source-dir="app"
+#main="main.f90"
 
 [preprocess]
 [preprocess.cpp]
 suffixes = ["F90"]
 macros=['SETGITHASH=Yes']
+
+# fortitude-lint
+[extra.fortitude.check]
+line-length = 132
+ignore = ["S041", "S051", "M022"]
+preview = true
