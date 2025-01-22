@@ -1,0 +1,40 @@
+
+fixNum = 4
+fixLabels = [ 'k13700', 'G2L-128-Iso', 'G2L-128-Aniso', 'G2L-128-IsoAniso']
+
+
+[fix.k13700]
+gaugePath='/home/ryan/Documents/2025/conf/PACS-CS/RCNF2+1/RC32x64_B1900Kud01370000Ks01364000C1715/RC32x64_B1900Kud01370000Ks01364000C1715-b-002510'
+gaugeFormat='cssmILDG'
+nTrans=1
+transFiles=['/home/ryan/Documents/2025/conf/PACS-CS/RCNF2+1/RC32x64_B1900Kud01370000Ks01364000C1715/RC32x64_B1900Kud01370000Ks01364000C1715-b-002510FFTA.fix.gag']
+transFormat='cssm'
+NT=64
+NS=32
+
+[fix.G2L-128-Iso]
+gaugePath='/home/ryan/Documents/2025/conf/Gen2L/128x32/Gen2l_128x32n1'
+gaugeFormat='openqcd'
+nTrans=1
+transFiles=['/home/ryan/Documents/2025/conf/Gen2L/128x32/transform_twiceInv/Gen2l_128x32n1.trans.lime.npy']
+transFormat='npy'
+NT=128
+NS=32
+
+[fix.G2L-128-Aniso]
+gaugePath='/home/ryan/Documents/2025/conf/Gen2L/128x32/Gen2l_128x32n1'
+gaugeFormat='openqcd'
+nTrans=1
+transFiles=['/home/ryan/Documents/2025/conf/Gen2L/128x32/transform_twiceInv/Gen2l_128x32n1.trans_2.lime.npy']
+transFormat='npy'
+NT=128
+NS=32
+
+[fix.G2L-128-IsoAniso]
+gaugePath='/home/ryan/Documents/2025/conf/Gen2L/128x32/Gen2l_128x32n1'
+gaugeFormat='openqcd'
+nTrans=2
+transFiles=['/home/ryan/Documents/2025/conf/Gen2L/128x32/transform_twiceInv/Gen2l_128x32n1.trans.lime.npy', '/home/ryan/Documents/2025/conf/Gen2L/128x32/transform_twiceInv/Gen2l_128x32n1.trans_2.lime.npy']
+transFormat='npy'
+NT=128
+NS=32
