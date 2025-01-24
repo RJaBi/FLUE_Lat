@@ -1,7 +1,7 @@
 !! Functions to read openQCD format gaugefields
 module FLUE_openQCDFileIO_SA
    use FLUE_constants, only: WP, WC
-   implicit none
+   implicit none(external)
    private
    public :: ReadGaugeField_OpenQCD
 
@@ -13,7 +13,7 @@ contains
       integer, intent(in) :: a, b
       integer :: c
       !c = a - ((a-1)/b)*b
-      c = modulo(a - 1, b) + 1
+      c = MODULO(a - 1, b) + 1
    end function modc
 
 !  function determinant(matrix) result(det)
@@ -40,18 +40,18 @@ contains
       integer :: it, ix, iy, iz, mu, id
       integer :: jx, jy, jz, jt
       integer, dimension(4) :: dmu
-      write (*, *) 'here ', trim(filename)
-      open (infl, file=trim(filename), form='unformatted', access='stream', status='old', action='read', convert='little_endian')
+      write (*, *) 'here ', TRIM(filename)
+      open (infl, file=TRIM(filename), form='unformatted', access='stream', status='old', action='read', convert='little_endian')
       read (infl) ntdim, nxdim, nydim, nzdim, plaq
 
       !allocate(U_xd(nxdim,nydim,nzdim,ntdim,4,3,3))
 
       ! z varies quickest, then y, then x, then t
       do it = 1, ntdim; do ix = 1, nxdim; do iy = 1, nydim; do iz = 1, nzdim
-                  if (modulo(ix + iy + iz + it - 4, 2) == 0) cycle ! Format only considers odd points
+                  if (MODULO(ix + iy + iz + it - 4, 2) == 0) cycle  ! Format only considers odd points
 
                   do id = 1, 4
-                     mu = modc(id - 1, 4) ! Time dimension first: mu = 4, 1, 2, 3
+                     mu = modc(id - 1, 4)  ! Time dimension first: mu = 4, 1, 2, 3
 
                      dmu(:) = 0
                      dmu(mu) = 1
@@ -68,8 +68,8 @@ contains
                      U_xd(it, ix, iy, iz, mu, :, :) = UTmp
                      read (infl) UTmp
                      U_xd(jt, jx, jy, jz, mu, :, :) = UTmp
-                     U_xd(it, ix, iy, iz, mu, :, :) = transpose(U_xd(it, ix, iy, iz, mu, :, :))
-                     U_xd(jt, jx, jy, jz, mu, :, :) = transpose(U_xd(jt, jx, jy, jz, mu, :, :))
+                     U_xd(it, ix, iy, iz, mu, :, :) = TRANSPOSE(U_xd(it, ix, iy, iz, mu, :, :))
+                     U_xd(jt, jx, jy, jz, mu, :, :) = TRANSPOSE(U_xd(jt, jx, jy, jz, mu, :, :))
 
                      !call FixSU3Matrix(U_g(mu,ix,iy,iz,it))
                      !call FixSU3Matrix(U_g(mu,jx,jy,jz,jt))
@@ -78,7 +78,7 @@ contains
 
       close (infl)
 
-      U_xd = cshift(U_xd, -1, dim=5)
+      U_xd = CSHIFT(U_xd, -1, dim=5)
 
    end function ReadGaugeField_OpenQCD
 

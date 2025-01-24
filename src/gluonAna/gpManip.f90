@@ -2,7 +2,8 @@
 module FLUE_gpManip
    use FLUE_constants, only: WP, pi
    !use stdlib_stats, only: median
-   implicit none
+   implicit none(external)
+   public
 
 contains
 
@@ -23,20 +24,20 @@ contains
       ! Some working variables
       real(kind=WP) :: dq, q_pos, maxq
       logical, dimension(NQ) :: mask
-      QOUt = 0.0_wp
-      DOUT = 0.0_wp
+      QOUt = 0.0_WP
+      DOUT = 0.0_WP
       ! setup the loop
-      maxq = maxval(q)
+      maxq = MAXVAL(q)
       dq = maxq / real(q_slices, kind=WP)
-      q_pos = 0.0_wp
+      q_pos = 0.0_WP
       qcount = 1
       do
          ! Get a mask of 'adjacent' q values
-         mask = q > q_pos .and. q < q_pos + dq
-         if (any(mask)) then
+         mask = q > q_pos .AND. q < q_pos + dq
+         if (ANY(mask)) then
             ! write(*,*) qcount, 'inside mask', q_pos
             ! If there is anything in the mask, then keep the output
-            QOUT(qcount) = sum(q, mask=mask) / count(mask, kind=WP)
+            QOUT(qcount) = SUM(q, mask=mask) / COUNT(mask, kind=WP)
             !DOUT(qcount) = median(D, mask=mask)
             DOUT(qcount) = D(1)
             !write(*,*) D(merge(1,0,mask))
@@ -78,39 +79,39 @@ contains
       ! working variables
       ! The cone_mask is identical in the second index
       logical, dimension(NQ, 4) :: cone_mask
-      real(kind=WP), parameter, dimension(4) :: BCD_norm = (/0.5_wp, 0.5_wp, 0.5_wp, 0.5_wp/)
+      real(kind=WP), parameter, dimension(4) :: BCD_norm = (/0.5_WP, 0.5_WP, 0.5_WP, 0.5_WP/)
       real(kind=WP), dimension(4) :: qhat
       real(kind=WP) :: r, theta, q_norm
       integer :: qq
       ! set the optional vars
-      if (present(angleIN)) then
+      if (PRESENT(angleIN)) then
          angle = angleIN
       else
-         angle = pi / 2.0_wp
+         angle = pi / 2.0_WP
       end if
-      if (present(xiIN)) then
+      if (PRESENT(xiIN)) then
          xi = xiIN
       else
-         xi = 1.0_wp
+         xi = 1.0_WP
       end if
-      if (present(IRRadiusIN)) then
+      if (PRESENT(IRRadiusIN)) then
          IRRadius = IRRadiusIN
          !write(*,*) 'IRRadius', IRRadiusIN
       else
          IRRadius = radius
       end if
-      if (present(IRCutIN)) then
+      if (PRESENT(IRCutIN)) then
          IRCut = IRCutIN
       else
-         IRCut = 0.0_wp
+         IRCut = 0.0_WP
       end if
       !write(*,*) IRRadius, IRCut, angle
-      cone_mask = .false.
+      cone_mask = .FALSE.
       do qq = 1, NQ
          !call get_qhat(q(qq,:), (/NT,NS,NS,NS/), qhat)
          !write(*,*) qq, q(qq, :), qhat
          qhat = q(qq, :)
-         q_norm = sqrt(sum(real(qhat, kind=WP)**2.0_wp))
+         q_norm = SQRT(SUM(real(qhat, kind=WP)**2.0_WP))
 
          !if (qq == -1) then
          !   write(*,*) 'coordbase', q(qq,:)
@@ -124,19 +125,19 @@ contains
          !if (qq == -1) then
          !   write(*,*) 'qhat *xi', qhat
          !end if
-         if (all(qhat == qhat(1))) then
+         if (ALL(qhat == qhat(1))) then
             ! handle on-diagonal coordinates
             r = 0
             theta = 0
          else
-            theta = acos(dot_product(BCD_norm, qhat) / q_norm)
-            r = q_norm * sin(theta)
+            theta = ACOS(DOT_PRODUCT(BCD_norm, qhat) / q_norm)
+            r = q_norm * SIN(theta)
          end if
          ! Do the checks to construct a mask
          if (q_norm <= IRCut) then
             cone_mask(qq, :) = r <= IRRadius
          else
-            cone_mask(qq, :) = r <= IRRadius .and. theta < angle
+            cone_mask(qq, :) = r <= IRRadius .AND. theta < angle
          end if
          !if (qq == -1) then
          !   write(*,*) 'r', r
@@ -148,16 +149,16 @@ contains
       end do
       ! and now do the cut using the mask
       ! pack selets the elements which are true
-      qcount = count(cone_mask(:, 1))
-      qout = 0.0_wp
-      dout = 0.0_wp
-      d4out = 0.0_wp
-      dout(:qcount) = pack(d, cone_mask(:, 1))
-      qout(:qcount, 1) = pack(q(:, 1), cone_mask(:, 1))
-      qout(:qcount, 2) = pack(q(:, 2), cone_mask(:, 1))
-      qout(:qcount, 3) = pack(q(:, 3), cone_mask(:, 1))
-      qout(:qcount, 4) = pack(q(:, 4), cone_mask(:, 1))
-      d4out(:qcount) = pack(d4, cone_mask(:, 1))
+      qcount = COUNT(cone_mask(:, 1))
+      qout = 0.0_WP
+      dout = 0.0_WP
+      d4out = 0.0_WP
+      dout(:qcount) = PACK(d, cone_mask(:, 1))
+      qout(:qcount, 1) = PACK(q(:, 1), cone_mask(:, 1))
+      qout(:qcount, 2) = PACK(q(:, 2), cone_mask(:, 1))
+      qout(:qcount, 3) = PACK(q(:, 3), cone_mask(:, 1))
+      qout(:qcount, 4) = PACK(q(:, 4), cone_mask(:, 1))
+      d4out(:qcount) = PACK(d4, cone_mask(:, 1))
 
    end subroutine cone_cut
 

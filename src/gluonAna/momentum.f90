@@ -1,8 +1,8 @@
 !! momentum calculations module
 module FLUE_mom
    use FLUE_constants, only: WP, pi
-   implicit none
-
+   implicit none(external)
+   public
 contains
 
    pure subroutine get_qhat(coord, shape, qhat, a)
@@ -18,9 +18,9 @@ contains
       real(kind=WP) :: latSpace
       real(kind=WP), dimension(4), intent(out) :: qhat
     !! output q^_\mu
-      latSpace = 1.0_wp
-      if (present(a)) latSpace = a
-      qhat = (2.0_wp * pi / a) * real(coord, kind=WP) / real(shape, kind=WP)
+      latSpace = 1.0_WP
+      if (PRESENT(a)) latSpace = a
+      qhat = (2.0_WP * pi / a) * real(coord, kind=WP) / real(shape, kind=WP)
    end subroutine get_qhat
 
 end module FLUE_mom
