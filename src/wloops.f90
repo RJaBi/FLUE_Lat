@@ -9,11 +9,140 @@
 
 module FLUE_wloops
    use FLUE_constants, only: WP, WC
-   use FLUE_SU3MatrixOps, only: MultiplyMatMat, MultiplyMatdagMatdag, RealTraceMultMatMat, Ident
+   use FLUE_SU3MatrixOps, only: MultiplyMatMat, MultiplyMatdagMatdag, RealTraceMultMatMat, Ident, tracelessconjgsubtract
    implicit none(external)
    public
 
 contains
+
+   pure function genericPath(data, coordBase, path) result(U_xd)
+      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(in) :: data
+      integer, dimension(4), intent(in) :: coordBase
+      integer, dimension(:), intent(in) :: path
+      complex(kind=WC), dimension(3, 3) :: U_xd
+      ! internal
+      complex(kind=WC), dimension(3, 3) :: amat, bmat
+      integer, dimension(4) :: coord, pCoord
+      ! counters
+      integer :: pp
+      integer :: mu
+      coord = coordBase
+      U_xd = Ident
+      do pp = 1, SIZE(path)
+         bmat = U_xd
+         mu = path(pp)
+         pCoord = 0
+         pCoord(ABS(mu)) = 1
+         if (mu < 0) then
+            ! the step is backwards so subtract off from coord first
+            coord = coord - pCoord
+            coord = periodCoord(coord, SHAPE(data))
+            ! get the link here going forward in mu
+            ! and dagger it
+            amat = CONJG(TRANSPOSE(data(coord(1), coord(2), coord(3), coord(4), ABS(mu), :, :)))
+         else
+            amat = data(coord(1), coord(2), coord(3), coord(4), mu, :, :)
+            coord = coord + pCoord
+            coord = periodCoord(coord, SHAPE(data))
+         end if
+         ! now multiply it into U_xd from the right
+         call MultiplyMatMat(U_xd, bmat, amat)
+      end do
+   end function genericPath
+
+   subroutine genPlaquette(data, NT, NX, NY, NZ, muStart, muEnd, nuEnd, sumTrP, nP, time)
+      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3), intent(in) :: data
+      integer, intent(in) :: muStart, muEnd, nuEnd
+      integer, intent(in) :: NT, NX, NY, NZ
+      real(kind=WP), intent(out) :: sumTrP, time
+      integer, intent(out) :: nP
+      ! Counters
+      integer :: mu, nu, nnx, nny, nnz, nnt
+      ! other variables
+      complex(kind=WC), dimension(3, 3) :: plaq
+      integer, dimension(7) :: dataShape
+      integer, dimension(4) :: plaqPath, coordBase
+      real(kind=WP) :: P
+      ! Timers
+      real(kind=WP) :: start, end
+      !   write(*,*) data(1,1,1,1,1,1,1)
+      call CPU_TIME(start)
+      dataShape = (/NT, NX, NY, NZ, 4, 3, 3/)
+      !# hold the sum
+      sumTrP = 0.0_WP
+      !# hold the number measured
+      nP = 0
+
+      do mu = muStart, muEnd
+         do nu = mu + 1, nuEnd
+            plaqPath = (/mu, nu, -mu, -nu/)
+            do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt)
+               coordBase = (/nnt, nnx, nny, nnz/)
+               plaq = genericPath(data, coordBase, plaqPath)
+               call RealTraceMultMatMat(P, Ident, plaq)
+               sumTrP = sumTrP + P
+               nP = nP + 1
+            end do
+         end do
+      end do
+      call CPU_TIME(end)
+      time = end - start
+   end subroutine genPlaquette
+
+   pure function cloverLoopMuNuCoord(data, NT, NX, NY, NZ, mu, nu) result(U_xd)
+      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3), intent(in) :: data
+      integer, intent(in) :: NT, NX, NY, NZ, mu, nu
+      integer, dimension(4) :: coord
+      complex(kind=WC), dimension(NT, NX, NY, NZ, 3, 3) :: U_xd
+      integer, dimension(4, 4) :: plaqPath
+      integer, dimension(4) :: coordBase
+      ! counters
+      integer :: nnx, nny, nnz, nnt
+      ! top left
+      plaqPath(1, :) = (/nu, -mu, -nu, mu/)
+      ! top right
+      plaqPath(2, :) = (/mu, nu, -mu, -nu/)
+      ! bottom left
+      plaqPath(3, :) = (/-mu, -nu, mu, nu/)
+      ! bottom right
+      plaqPath(4, :) = (/-nu, mu, nu, -mu/)
+
+      do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt)
+         ! Calculate the clover for this coordinate
+         coordBase = (/nnt, nnx, nny, nnz/)
+         U_xd(nnt, nnx, nny, nnz, :, :) = genericPath(data, coordBase, plaqPath(1, :))
+         U_xd(nnt, nnx, nny, nnz, :, :) = U_xd(nnt, nnx, nny, nnz, :, :) &
+                                          + genericPath(data, coordBase, plaqPath(2, :))
+         U_xd(nnt, nnx, nny, nnz, :, :) = U_xd(nnt, nnx, nny, nnz, :, :) &
+                                          + genericPath(data, coordBase, plaqPath(3, :))
+         U_xd(nnt, nnx, nny, nnz, :, :) = U_xd(nnt, nnx, nny, nnz, :, :) &
+                                          + genericPath(data, coordBase, plaqPath(4, :))
+      end do
+   end function cloverLoopMuNuCoord
+
+   pure function magnetic(data, NT, NX, NY, NZ) result(B)
+      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3), intent(in) :: data
+      integer, intent(in) :: NT, NX, NY, NZ
+      real(kind=WP) :: B
+      !
+      complex(kind=WP), dimension(NT, NX, NY, NZ, 3, 3, 3) :: BField
+      !complex(kind=WP), dimension(NT,NX,NY,NZ,3,3,3) :: BDag
+      complex(kind=WP), dimension(NT, NX, NY, NZ, 3) :: BBDagTraceless
+      ! counter
+      integer :: nnx, nny, nnz, nnt, ii
+      BField(:, :, :, :, :, :, 1) = cloverLoopMuNuCoord(data, NT, NX, NY, NZ, 2, 3)
+      BField(:, :, :, :, :, :, 2) = cloverLoopMuNuCoord(data, NT, NX, NY, NZ, 2, 4)
+      BField(:, :, :, :, :, :, 3) = cloverLoopMuNuCoord(data, NT, NX, NY, NZ, 3, 4)
+
+      do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt, ii=1:3)
+         !BDag(nnt, nnx, nny, nnz, :, :, ii) = conjg(transpose(BField(nnt, nnx, nny, nnz, :, :, ii)))
+         call TraceLessConjgSubtract( &
+            BBDagTraceless(nnt, nnx, nny, nnz, ii), &
+            BField(nnt, nnx, nny, nnz, :, :, ii), &
+            BField(nnt, nnx, nny, nnz, :, :, ii))
+      end do
+      B = 0.25_WP * real(SUM(BField), kind=WP) / real(NT * NX * NY * NZ * 3, kind=WP)
+   end function magnetic
 
    pure function periodCoord(coord, dataShape)
       integer, dimension(7), intent(in) :: dataShape
@@ -30,6 +159,8 @@ contains
       do cc = 1, SIZE(coord)
          if (coord(cc) > dataShape(cc)) then
             periodCoord(cc) = 1
+         else if (coord(cc) == 0) then
+            periodCoord(cc) = dataShape(cc)
          end if
       end do
    end function periodCoord
@@ -411,6 +542,7 @@ contains
       sumTrP = 0.0_WP
       !# hold the number measured
       nP = 0
+      ! write(*,*) data(1,1,1,1,1,1,1)
       do mu = muStart, muEnd
          muCoord(:) = 0
          !# This is the shift in mu
@@ -428,6 +560,9 @@ contains
                         coordBase = (/nt, nx, ny, nz/)
                         coord = coordBase
                         Umu_x = data(coord(1), coord(2), coord(3), coord(4), mu, :, :)
+                        if (ALL(coordBase == (/1, 1, 1, 1/))) then
+                           !   write(*,*) 'Umu_x', mu, Umu_x(1,1)
+                        end if
                         !# U_nu(x + amu)
                         coord = coordBase + muCoord
                         !# respect periodic boundary conditions
@@ -437,6 +572,9 @@ contains
                            end if
                         end do
                         Unu_xmu = data(coord(1), coord(2), coord(3), coord(4), nu, :, :)
+                        if (ALL(coordBase == (/1, 1, 1, 1/))) then
+                           !  write(*,*) 'Unu_xmu', nu, Unu_xmu(1,1)
+                        end if
                         !# U_mu(x + anu)
                         coord = coordBase + nuCoord
                         do cc = 1, SIZE(coord)
@@ -445,9 +583,15 @@ contains
                            end if
                         end do
                         Umu_xnu = data(coord(1), coord(2), coord(3), coord(4), mu, :, :)
+                        if (ALL(coordBase == (/1, 1, 1, 1/))) then
+                           !write(*,*) 'Umu_xnu', mu, Umu_xnu(1,1)
+                        end if
                         !# U_nu(x)
                         coord = coordBase
                         Unu_x = data(coord(1), coord(2), coord(3), coord(4), nu, :, :)
+                        if (ALL(coordBase == (/1, 1, 1, 1/))) then
+                           ! write(*,*) 'Unu_x', nu, Unu_x(1,1)
+                        end if
                         !# Multiply bottom, right together
                         call MultiplyMatMat(UmuUnu, Umu_x, Unu_xmu)
                         !# Multiply left, top together, take dagger
