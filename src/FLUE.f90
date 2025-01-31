@@ -7,7 +7,7 @@ module FLUE
         & TracelessConjgSubtract, colourDecomp, RealTraceMat
    use FLUE_gpManip, only: Q_Average, cone_cut
    use FLUE_mom, only: get_qhat
-   use FLUE_constants, only: WP, WC, PI
+   use FLUE_constants, only: WP, WC, PI, SP
    use FLUE_version, only: writeCompiler, writeGit
    implicit none(external)
 

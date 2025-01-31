@@ -97,17 +97,17 @@ program calcB
       write (*, *) 'For gauge format ', TRIM(gaugeFormat)
       write (*, *) 'Factor on plaquette is ', plaqFactor
 
-      write (*, *) 'Using plaquette'
-      call plaquette(U, 1, 4, 4, sumTrP, nP, time)
-      !call plaquette(U, 1, 2, 2, sumTrP, nP, time)
-      aplaq = plaqFactor * sumTrp / nP
-      call plaquette(U, 1, 2, 4, sumTrP, nP, time)
-      splaq = plaqFactor * sumTrp / nP
-      call plaquette(U, 1, 1, 4, sumTrP, nP, time)
-      tplaq = plaqFactor * sumTrp / nP
-      write (*, *) 'U  Plaquette for', ' is ', aplaq, 'and took', time, 'seconds'
-      write (*, *) 'U SPlaquette for', ' is ', splaq, 'and took', time, 'seconds'
-      write (*, *) 'U TPlaquette for', ' is ', tplaq, 'and took', time, 'seconds'
+!PLAQ!      write (*, *) 'Using plaquette'
+!PLAQ!      call plaquette(U, 1, 4, 4, sumTrP, nP, time)
+!PLAQ!      !call plaquette(U, 1, 2, 2, sumTrP, nP, time)
+!PLAQ!      aplaq = plaqFactor * sumTrp / nP
+!PLAQ!      call plaquette(U, 1, 2, 4, sumTrP, nP, time)
+!PLAQ!      splaq = plaqFactor * sumTrp / nP
+!PLAQ!      call plaquette(U, 1, 1, 4, sumTrP, nP, time)
+!PLAQ!      tplaq = plaqFactor * sumTrp / nP
+!PLAQ!      write (*, *) 'U  Plaquette for', ' is ', aplaq, 'and took', time, 'seconds'
+!PLAQ!      write (*, *) 'U SPlaquette for', ' is ', splaq, 'and took', time, 'seconds'
+!PLAQ!      write (*, *) 'U TPlaquette for', ' is ', tplaq, 'and took', time, 'seconds'
       write (*, *) 'Using genPlaquette'
       call genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
       !call genPlaquette(U, 1, 2, 2, sumTrP, nP, time)
@@ -119,9 +119,9 @@ program calcB
       write (*, *) 'U  Plaquette for', ' is ', aplaq, 'and took', time, 'seconds'
       write (*, *) 'U SPlaquette for', ' is ', splaq, 'and took', time, 'seconds'
       write (*, *) 'U TPlaquette for', ' is ', tplaq, 'and took', time, 'seconds'
-
-      write (*, *) 'magnetic is ', magnetic(U, NT, NS, NS, NS)
-
+      !write(*,*) 'here?'
+      !write(*,*) 'out', NT, NS, NS, NS
+      write (*, *) 'magnetic is ', magnetic(U, NT, NS, NS, NS) / 1.5_WP
       deallocate (U)
    end do
 contains

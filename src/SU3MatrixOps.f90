@@ -118,6 +118,6 @@ contains
       com(5) = -AIMAG(A(1, 3)) + AIMAG(A(3, 1))
       com(6) = real(A(2, 3), kind=WP) + real(A(3, 2), kind=WP)
       com(7) = -AIMAG(A(2, 3)) + AIMAG(A(3, 2))
-      com(8) = real(A(0, 0), kind=WP) + real(A(2, 2), kind=WP) - (2.0_WP / (3.0_WP**0.5_WP)) * real(A(3, 3), kind=WP)
+      com(8) = real(A(1, 1), kind=WP) + real(A(2, 2), kind=WP) - (2.0_WP / (3.0_WP**0.5_WP)) * real(A(3, 3), kind=WP)
    end subroutine colourDecomp
 end module FLUE_SU3MatrixOps

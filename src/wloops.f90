@@ -8,8 +8,9 @@
 !! which would give you the plaquette function
 
 module FLUE_wloops
-   use FLUE_constants, only: WP, WC
-   use FLUE_SU3MatrixOps, only: MultiplyMatMat, MultiplyMatdagMatdag, RealTraceMultMatMat, Ident, tracelessconjgsubtract
+   use FLUE_constants, only: WP, WC, SP
+   use FLUE_SU3MatrixOps, only: MultiplyMatMat, MultiplyMatdagMatdag, RealTraceMultMatMat, Ident, tracelessconjgsubtract, colourDecomp, RealTraceMat
+   use M_stopwatch, only: watchtype, create_watch, start_watch, stop_watch, destroy_watch, read_watch
    implicit none(external)
    public
 
@@ -48,6 +49,7 @@ contains
          ! now multiply it into U_xd from the right
          call MultiplyMatMat(U_xd, bmat, amat)
       end do
+      U_xd = transpose(U_xd)
    end function genericPath
 
    subroutine genPlaquette(data, NT, NX, NY, NZ, muStart, muEnd, nuEnd, sumTrP, nP, time)
@@ -64,9 +66,10 @@ contains
       integer, dimension(4) :: plaqPath, coordBase
       real(kind=WP) :: P
       ! Timers
-      real(kind=WP) :: start, end
-      !   write(*,*) data(1,1,1,1,1,1,1)
-      call CPU_TIME(start)
+      type(watchtype) :: watch
+      real(Kind=SP) :: watchtime
+      call create_watch(watch)
+      call start_watch(watch)      
       dataShape = (/NT, NX, NY, NZ, 4, 3, 3/)
       !# hold the sum
       sumTrP = 0.0_WP
@@ -76,26 +79,35 @@ contains
       do mu = muStart, muEnd
          do nu = mu + 1, nuEnd
             plaqPath = (/mu, nu, -mu, -nu/)
-            do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt)
+            do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt) local(coordBase, plaq, P) local_init(nnx, nny, nnz, nnt) reduce(+:sumTrP,nP)
                coordBase = (/nnt, nnx, nny, nnz/)
                plaq = genericPath(data, coordBase, plaqPath)
+               ! write(*,*) plaq
                call RealTraceMultMatMat(P, Ident, plaq)
+               !if (nnx == 1 .and. nny == 1 .and. nnz == 1 .and. nnt == 1 .and. mu == 2 .and. nu == 3) then
+               !   write(*,*) '9P', 9.0 * P
+               !end if
                sumTrP = sumTrP + P
                nP = nP + 1
             end do
          end do
       end do
-      call CPU_TIME(end)
-      time = end - start
+      call stop_watch(watch)
+      call read_watch(watchTime, watch, 'wall')
+      time = 0.0_WP
+      time = watchTime
+      !time = end - start
    end subroutine genPlaquette
 
-   pure function cloverLoopMuNuCoord(data, NT, NX, NY, NZ, mu, nu) result(U_xd)
+   function cloverLoopMuNuCoord(data, NT, NX, NY, NZ, mu, nu) result(U_xd)
       complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3), intent(in) :: data
       integer, intent(in) :: NT, NX, NY, NZ, mu, nu
       integer, dimension(4) :: coord
       complex(kind=WC), dimension(NT, NX, NY, NZ, 3, 3) :: U_xd
+      complex(kind=WC), dimension(3,3) :: clovLeaf, thisU
       integer, dimension(4, 4) :: plaqPath
       integer, dimension(4) :: coordBase
+      complex(kind=WC) :: c12, c13, c23
       ! counters
       integer :: nnx, nny, nnz, nnt
       ! top left
@@ -106,42 +118,114 @@ contains
       plaqPath(3, :) = (/-mu, -nu, mu, nu/)
       ! bottom right
       plaqPath(4, :) = (/-nu, mu, nu, -mu/)
-
-      do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt)
+      do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt) default(none) local_init(nnx, nny, nnz, nnt, plaqPath) local(coordBase, clovLeaf, trcnsub, thisU, c12, c13, c23) shared(U_xd)
          ! Calculate the clover for this coordinate
          coordBase = (/nnt, nnx, nny, nnz/)
-         U_xd(nnt, nnx, nny, nnz, :, :) = genericPath(data, coordBase, plaqPath(1, :))
-         U_xd(nnt, nnx, nny, nnz, :, :) = U_xd(nnt, nnx, nny, nnz, :, :) &
-                                          + genericPath(data, coordBase, plaqPath(2, :))
-         U_xd(nnt, nnx, nny, nnz, :, :) = U_xd(nnt, nnx, nny, nnz, :, :) &
-                                          + genericPath(data, coordBase, plaqPath(3, :))
-         U_xd(nnt, nnx, nny, nnz, :, :) = U_xd(nnt, nnx, nny, nnz, :, :) &
-                                          + genericPath(data, coordBase, plaqPath(4, :))
+         ! 1
+         clovLeaf = genericPath(data, coordBase, plaqPath(1, :))
+         thisU = -clovLeaf
+         ! 2
+         clovLeaf = genericPath(data, coordBase, plaqPath(2, :))
+         thisU = thisU - clovLeaf
+         ! 3
+         clovLeaf = genericPath(data, coordBase, plaqPath(3, :))
+         thisU = thisU - clovLeaf
+         ! 4
+         clovLeaf = genericPath(data, coordBase, plaqPath(4, :))
+         thisU = thisU - clovLeaf
+         ! Projection & factors
+         ! projection to anti-hermition but not traceless matrix
+         ! as in Borsanyi wilson_flow.c
+         ! a_chm = 0.5*( a - conj(b))
+         c12 = 0.5_WP * (thisU(1,2) - conjg(thisU(2,1)))
+         c13 = 0.5_WP * (thisU(1,3) - conjg(thisU(3,1)))
+         c23 = 0.5_WP * (thisU(2,3) - conjg(thisU(3,2)))
+         thisU(1,2) = c12
+         thisU(1,3) = c13
+         thisU(2,3) = c23
+         thisU(2,1) = -conjg(c12)
+         thisU(3,1) = -conjg(c13)
+         thisU(3,2) = -conjg(c23)
+         thisU(1,1) = cmplx(0.0_WP, aimag(thisU(1,1)))
+         thisU(2,2) = cmplx(0.0_WP, aimag(thisU(2,2)))
+         thisU(3,3) = cmplx(0.0_WP, aimag(thisU(3,3)))
+         U_xd(nnt, nnx, nny, nnz, :, :) = cmplx(0.0, 1.0) * thisU * 0.25_WP
       end do
-   end function cloverLoopMuNuCoord
+    end function cloverLoopMuNuCoord
 
-   pure function magnetic(data, NT, NX, NY, NZ) result(B)
+
+    function plaquetteMuNuCoord(data, NT, NX, NY, NZ, mu, nu) result(U_xd)
+      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3), intent(in) :: data
+      integer, intent(in) :: NT, NX, NY, NZ, mu, nu
+      integer, dimension(4) :: coord
+      complex(kind=WC), dimension(NT, NX, NY, NZ, 3, 3) :: U_xd
+      complex(kind=WC), dimension(3,3) :: clovLeaf
+      integer, dimension(4) :: plaqPath
+      integer, dimension(4) :: coordBase
+      complex(kind=WC) :: c12, c13, c23
+      ! counters
+      integer :: nnx, nny, nnz, nnt
+
+      ! top left
+      plaqPath = (/nu, -mu, -nu, mu/)
+      do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt) default(none) local_init(nnx, nny, nnz, nnt, plaqPath) local(coordBase, clovLeaf, c12, c13, c23) shared(U_xd)
+         ! Calculate the clover for this coordinate
+         coordBase = (/nnt, nnx, nny, nnz/)
+         clovLeaf = genericPath(data, coordBase, plaqPath)
+
+         ! Projection & factors
+         ! projection to anti-hermition but not traceless matrix
+         ! as in Borsanyi wilson_flow.c
+         ! a_chm = 0.5*( a - conj(b))
+         c12 = 0.5_WP * (clovLeaf(1,2) - conjg(clovLeaf(2,1)))
+         c13 = 0.5_WP * (clovLeaf(1,3) - conjg(clovLeaf(3,1)))
+         c23 = 0.5_WP * (clovLeaf(2,3) - conjg(clovLeaf(3,2)))
+         clovLeaf(1,2) = c12
+         clovLeaf(1,3) = c13
+         clovLeaf(2,3) = c23
+         clovLeaf(2,1) = -conjg(c12)
+         clovLeaf(3,1) = -conjg(c13)
+         clovLeaf(3,2) = -conjg(c23)
+         clovLeaf(1,1) = cmplx(0.0_WP, aimag(clovLeaf(1,1)))
+         clovLeaf(2,2) = cmplx(0.0_WP, aimag(clovLeaf(2,2)))
+         clovLeaf(3,3) = cmplx(0.0_WP, aimag(clovLeaf(3,3)))
+         U_xd(nnt, nnx, nny, nnz, :, :) = cmplx(0.0, 1.0) * clovLeaf * 0.5_WP
+      end do
+      !stop
+    end function plaquetteMuNuCoord
+
+   function magnetic(data, NT, NX, NY, NZ) result(B)
       complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3), intent(in) :: data
       integer, intent(in) :: NT, NX, NY, NZ
       real(kind=WP) :: B
       !
-      complex(kind=WP), dimension(NT, NX, NY, NZ, 3, 3, 3) :: BField
+      complex(kind=WC), dimension(NT, NX, NY, NZ, 3, 3, 3) :: BField
+      complex(kind=WC), dimension(NT, NX, NY, NZ, 3, 8) :: BFieldAdjoint
       !complex(kind=WP), dimension(NT,NX,NY,NZ,3,3,3) :: BDag
-      complex(kind=WP), dimension(NT, NX, NY, NZ, 3) :: BBDagTraceless
+      !complex(kind=WP), dimension(NT, NX, NY, NZ, 3) :: BBDagTraceless
+      !real(kind=WP), dimension(NT, NX, NY, NZ, 3, 3, 3) :: BBDagTraceless
+      complex(kind=WC), dimension(3,3) :: tempEval
+      complex(kind=WC), dimension(8) :: com
+      real(kind=WP) :: cloverPlaq, tempPl
+      real(kind=WP) :: iiclov
       ! counter
       integer :: nnx, nny, nnz, nnt, ii
+
+      complex(kind=WC) :: ztemp12, ztemp23, ztemp31, temp11, temp22
+      real(kind=WP) :: trace
+      
       BField(:, :, :, :, :, :, 1) = cloverLoopMuNuCoord(data, NT, NX, NY, NZ, 2, 3)
       BField(:, :, :, :, :, :, 2) = cloverLoopMuNuCoord(data, NT, NX, NY, NZ, 2, 4)
       BField(:, :, :, :, :, :, 3) = cloverLoopMuNuCoord(data, NT, NX, NY, NZ, 3, 4)
+      !BField(:, :, :, :, :, :, 1) = plaquetteMuNuCoord(data, NT, NX, NY, NZ, 2, 3)
+      !BField(:, :, :, :, :, :, 2) = plaquetteMuNuCoord(data, NT, NX, NY, NZ, 2, 4)
+      !BField(:, :, :, :, :, :, 3) = plaquetteMuNuCoord(data, NT, NX, NY, NZ, 3, 4)
 
-      do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt, ii=1:3)
-         !BDag(nnt, nnx, nny, nnz, :, :, ii) = conjg(transpose(BField(nnt, nnx, nny, nnz, :, :, ii)))
-         call TraceLessConjgSubtract( &
-            BBDagTraceless(nnt, nnx, nny, nnz, ii), &
-            BField(nnt, nnx, nny, nnz, :, :, ii), &
-            BField(nnt, nnx, nny, nnz, :, :, ii))
+      do concurrent(nny=1:ny, nnz=1:nz, nnt=1:nt, nnx=1:nx, ii=1:3) default(none) local_init(nnx, nny, nnz, nnt, ii) local(tempEval, com, tempPl, ztemp12, ztemp23, ztemp31, temp11, temp22, temp33, trace) reduce(+:cloverPlaq)
+         call RealTraceMultMatMat(tempPl, BField(nnt, nnx, nny, nnz, :, :, ii), BField(nnt, nnx, nny, nnz, :, :, ii))
+         cloverPlaq = cloverPlaq + tempPl
       end do
-      B = 0.25_WP * real(SUM(BField), kind=WP) / real(NT * NX * NY * NZ * 3, kind=WP)
+      B = cloverPlaq / real(NT*NX*NY*NZ, kind=WP)
    end function magnetic
 
    pure function periodCoord(coord, dataShape)
@@ -535,8 +619,10 @@ contains
       complex(kind=WC), dimension(3, 3) :: Umu_xnu, Unu_x, UmudagUnudag
       real(kind=WP) :: P
       ! Timers
-      real(kind=WP) :: start, end
-      call CPU_TIME(start)
+      type(watchtype) :: watch
+      real(Kind=SP) :: watchtime
+      call create_watch(watch)
+      call start_watch(watch)
       dataShape = SHAPE(data)
       !# hold the sum
       sumTrP = 0.0_WP
@@ -598,6 +684,9 @@ contains
                         call MultiplyMatdagMatdag(UmudagUnudag, Umu_xnu, Unu_x)
                         !# multiply two halves together, take trace
                         call RealTraceMultMatMat(P, UmuUnu, UmudagUnudag)
+                        !if (nx == 1 .and. ny == 1 .and. nz == 1 .and. nt == 1 .and. mu == 2 .and. nu == 3) then
+                           !write(*,*) 'plaquette 9P', 9.0 * P
+                        !end if
                         sumTrP = sumTrP + P
                         nP = nP + 1
                      end do
@@ -606,8 +695,10 @@ contains
             end do
          end do
       end do
-      call CPU_TIME(end)
-      time = end - start
+      call stop_watch(watch)
+      call read_watch(watchTime, watch, 'wall')
+      time = 0.0_WP
+      time = watchTime
    end subroutine plaquette
 
    subroutine polyakov(data, sumTrP, nP, time)

@@ -34,6 +34,7 @@ stdlib = { path = "../stdlib" }
 csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
 fftpack = { git="https://github.com/fortran-lang/fftpack.git" }
 toml-f      = { git = "https://github.com/toml-f/toml-f" }
+M_stopwatch        = { git = "https://github.com/urbanjost/M_stopwatch.git", branch= "main"}
 
 #[[executable]]
 #name="Flue"
