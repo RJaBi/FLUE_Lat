@@ -8,6 +8,8 @@ program calcB
                    ReadGaugeField_ILDG, ReadGaugeField_OpenQCD, genPlaquette, plaquette, &
                    magnetic
    use tomlf, only: toml_table, toml_load, toml_array, get_value, toml_path
+   use stdlib_io_npy, only: load_npy
+   use csv_module, only: csv_file
    implicit none(external)
    ! IO vars
    character(len=128) :: tomlName
@@ -18,11 +20,13 @@ program calcB
    ! What are we doing?
    integer :: nFixes, nTrans
    character(len=128), dimension(:), allocatable :: fixLabels
-   character(len=:), allocatable :: gaugePath, gaugeFormat, transFormat
-   character(len=512), dimension(:), allocatable :: transFiles
+   character(len=:), allocatable :: gaugePath, gaugeFormat, cfgListFile
    procedure(ReadGaugeInterface), pointer :: readGauge
-   complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: U, UT
-   complex(kind=WC), dimension(:, :, :, :, :, :), allocatable :: G
+   complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: U
+   type(csv_file) :: csvf
+   logical :: status_ok
+   character(len=128), dimension(:), allocatable :: cfgList
+   character(len=512) :: gaugeFile
    ! lattice dimensions
    integer :: NT, NS
    ! counters
@@ -78,52 +82,71 @@ program calcB
       call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugeFormat'), gaugeFormat)
       call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NT'), NT)
       call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NS'), NS)
-      ! Now do stuff
-      select case (gaugeFormat)
-      case ('cssmILDG')
-         ReadGauge => ReadGaugeField_ILDG
-         plaqFactor = 9.0_WP
-      case ('openqcd')
-         readGauge => ReadGaugeField_OpenQCD
-         plaqFactor = 1.0_WP
-      case default
-         write (*, *) 'gaugeFormat ', TRIM(gaugeFormat), ' not supported. Exiting'
-         stop
-      end select
-      ! allocate space for the gaugefield
-      allocate (U(NT, NS, NS, NS, 4, 3, 3))
-      U = ReadGauge(gaugePath, NS, NS, NS, NT)
+      call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'cfgList'), cfglistFile)
+      ! Get list of configurations
+      write (*, *) 'cfgListFile is ', TRIM(cfgListFile)
+      call csvf%read(TRIM(cfgListFile), status_ok=status_ok)
+      call csvf%get(1, cfgList, status_ok)
+      call csvf%destroy()
+      ! loop over them
+      do mu = 1, SIZE(cfgList)
+         write (*, *) mu, TRIM(cfgList(mu))
+         gaugeFile = TRIM(gaugePath)//'/'//TRIM(cfgList(mu))
+         ! Now do stuff
+         select case (gaugeFormat)
+         case ('cssmILDG')
+            ReadGauge => ReadGaugeField_ILDG
+            plaqFactor = 1.0_WP
+         case ('openqcd')
+            readGauge => ReadGaugeField_OpenQCD
+            plaqFactor = 1.0_WP
+         case ('littlenpy')
+            readGauge => npyFunctionWrapper
+            plaqFactor = 1.0_WP
+         case default
+            write (*, *) 'gaugeFormat ', TRIM(gaugeFormat), ' not supported. Exiting'
+            stop
+         end select
+         ! allocate space for the gaugefield
+         allocate (U(NT, NS, NS, NS, 4, 3, 3))
+         U = ReadGauge(TRIM(gaugeFile), NS, NS, NS, NT)
+         call genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
+         aplaq = plaqFactor * sumTrp / real(nP, kind=WP)
+         call genPlaquette(U, NT, NS, NS, NS, 1, 2, 4, sumTrP, nP, time)
+         splaq = plaqFactor * sumTrp / real(nP, kind=WP)
+         call genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrP, nP, time)
+         tplaq = plaqFactor * sumTrp / real(nP, kind=WP)
+         write (*, *) 'U  Plaquette for', ' is ', aplaq, 'and took', time, 'seconds'
+         write (*, *) 'U SPlaquette for', ' is ', splaq, 'and took', time, 'seconds'
+         write (*, *) 'U TPlaquette for', ' is ', tplaq, 'and took', time, 'seconds'
+         write (*, *) 'magnetic is'
+         aplaq = magnetic(U, NT, NS, NS, NS)
+         write (*, *) 'magnetic', aplaq
+         deallocate (U)
 
-      write (*, *) 'For gauge format ', TRIM(gaugeFormat)
-      write (*, *) 'Factor on plaquette is ', plaqFactor
+      end do
 
-!PLAQ!      write (*, *) 'Using plaquette'
-!PLAQ!      call plaquette(U, 1, 4, 4, sumTrP, nP, time)
-!PLAQ!      !call plaquette(U, 1, 2, 2, sumTrP, nP, time)
-!PLAQ!      aplaq = plaqFactor * sumTrp / nP
-!PLAQ!      call plaquette(U, 1, 2, 4, sumTrP, nP, time)
-!PLAQ!      splaq = plaqFactor * sumTrp / nP
-!PLAQ!      call plaquette(U, 1, 1, 4, sumTrP, nP, time)
-!PLAQ!      tplaq = plaqFactor * sumTrp / nP
-!PLAQ!      write (*, *) 'U  Plaquette for', ' is ', aplaq, 'and took', time, 'seconds'
-!PLAQ!      write (*, *) 'U SPlaquette for', ' is ', splaq, 'and took', time, 'seconds'
-!PLAQ!      write (*, *) 'U TPlaquette for', ' is ', tplaq, 'and took', time, 'seconds'
-      write (*, *) 'Using genPlaquette'
-      call genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
-      !call genPlaquette(U, 1, 2, 2, sumTrP, nP, time)
-      aplaq = plaqFactor * sumTrp / nP
-      call genPlaquette(U, NT, NS, NS, NS, 1, 2, 4, sumTrP, nP, time)
-      splaq = plaqFactor * sumTrp / nP
-      call genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrP, nP, time)
-      tplaq = plaqFactor * sumTrp / nP
-      write (*, *) 'U  Plaquette for', ' is ', aplaq, 'and took', time, 'seconds'
-      write (*, *) 'U SPlaquette for', ' is ', splaq, 'and took', time, 'seconds'
-      write (*, *) 'U TPlaquette for', ' is ', tplaq, 'and took', time, 'seconds'
-      !write(*,*) 'here?'
-      !write(*,*) 'out', NT, NS, NS, NS
-      write (*, *) 'magnetic is ', magnetic(U, NT, NS, NS, NS) / 1.5_WP
-      deallocate (U)
    end do
 contains
+
+   function npyFunctionWrapper(filename, NX, NY, NZ, NT) result(G_x)
+      character(len=*), intent(in) :: filename
+      integer, intent(in) :: NX, NY, NZ, NT
+      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: G_x
+      complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: GNPY
+      !counters
+      integer :: xx, yy, zz, tt, aa, bb, mu
+      integer, dimension(7) :: PYShape
+      call load_npy(filename, GNPY)
+      pyShape = SHAPE(GNPY)
+      if (pyShape(1) < pyShape(7)) then
+         ! For some reason, load_npy sometimes loads the array in opposite order..
+         do concurrent(tt=1:NT, xx=1:NS, yy=1:NS, zz=1:NS, mu=1:4, aa=1:3, bb=1:3)
+            G_x(tt, xx, yy, zz, mu, aa, bb) = GNPY(bb, aa, mu, zz, yy, xx, tt)
+         end do
+      else
+         G_x = GNPY
+      end if
+   end function npyFunctionWrapper
 
 end program calcB
