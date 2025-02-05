@@ -6,7 +6,7 @@
 program calcB
    use FLUE, only: WP, WC, writeCompiler, writeGit, &
                    ReadGaugeField_ILDG, ReadGaugeField_OpenQCD, genPlaquette, plaquette, &
-                   magnetic
+                   magnetic, complement, jackknife_wp
    use tomlf, only: toml_table, toml_load, toml_array, get_value, toml_path
    use stdlib_io_npy, only: load_npy
    use csv_module, only: csv_file
@@ -30,11 +30,16 @@ program calcB
    ! lattice dimensions
    integer :: NT, NS
    ! counters
-   integer :: ii, nn, mu
+   integer :: ii, nn, mu, icon
    ! plaq
-   real(kind=WP) :: plaqFactor, aplaq, splaq, tplaq
+   real(kind=WP) :: plaqFactor
    real(kind=WP) :: time, sumTrP
    integer :: nP
+   ! jack variables
+   real(kind=WP), dimension(:), allocatable :: B, aplaq, splaq, tplaq
+   real(kind=WP), dimension(:), allocatable :: BJ, aplaqJ, splaqJ, tplaqJ
+   real(kind=WP) :: BErr, aplaqErr, splaqErr, tplaqErr
+   integer :: ncon
 
    abstract interface
       function ReadGaugeInterface(filename, NX, NY, NZ, NT) result(U_xd)
@@ -88,10 +93,15 @@ program calcB
       call csvf%read(TRIM(cfgListFile), status_ok=status_ok)
       call csvf%get(1, cfgList, status_ok)
       call csvf%destroy()
+      ncon = SIZE(cfgList)
+      ! config data
+      allocate (B(ncon), aplaq(ncon), splaq(ncon), tplaq(ncon))
+      ! jackknifes
+      allocate (BJ(0:ncon), aplaqJ(0:ncon), splaqJ(0:ncon), tplaqJ(0:ncon))
       ! loop over them
-      do mu = 1, SIZE(cfgList)
-         write (*, *) mu, TRIM(cfgList(mu))
-         gaugeFile = TRIM(gaugePath)//'/'//TRIM(cfgList(mu))
+      do icon = 1, ncon
+         write (*, *) icon, TRIM(cfgList(icon))
+         gaugeFile = TRIM(gaugePath)//'/'//TRIM(cfgList(icon))
          ! Now do stuff
          select case (gaugeFormat)
          case ('cssmILDG')
@@ -111,21 +121,43 @@ program calcB
          allocate (U(NT, NS, NS, NS, 4, 3, 3))
          U = ReadGauge(TRIM(gaugeFile), NS, NS, NS, NT)
          call genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
-         aplaq = plaqFactor * sumTrp / real(nP, kind=WP)
+         aplaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
          call genPlaquette(U, NT, NS, NS, NS, 1, 2, 4, sumTrP, nP, time)
-         splaq = plaqFactor * sumTrp / real(nP, kind=WP)
+         splaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
          call genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrP, nP, time)
-         tplaq = plaqFactor * sumTrp / real(nP, kind=WP)
-         write (*, *) 'U  Plaquette for', ' is ', aplaq, 'and took', time, 'seconds'
-         write (*, *) 'U SPlaquette for', ' is ', splaq, 'and took', time, 'seconds'
-         write (*, *) 'U TPlaquette for', ' is ', tplaq, 'and took', time, 'seconds'
-         write (*, *) 'magnetic is'
-         aplaq = magnetic(U, NT, NS, NS, NS)
-         write (*, *) 'magnetic', aplaq
+         tplaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
+         !write (*, *) 'U  Plaquette for', ' is ', aplaq(icon), 'and took', time, 'seconds'
+         !write (*, *) 'U SPlaquette for', ' is ', splaq(icon), 'and took', time, 'seconds'
+         !write (*, *) 'U TPlaquette for', ' is ', tplaq(icon), 'and took', time, 'seconds'
+         !write (*, *) 'magnetic is'
+         B(icon) = magnetic(U, NT, NS, NS, NS)
+         !write (*, *) 'magnetic', B(icon)
          deallocate (U)
-
       end do
+      ! Take jackknifes
+      ! Do mean first
+      call Complement(BJ(0), B)
+      call Complement(aplaqJ(0), aplaq)
+      call Complement(splaqJ(0), splaq)
+      call Complement(tplaqJ(0), tplaq)
+      ! now 1st order jackknifes
+      call Complement(ncon, BJ(1:), B)
+      call Complement(ncon, aplaqJ(1:), aplaq)
+      call Complement(ncon, splaqJ(1:), splaq)
+      call Complement(ncon, tplaqJ(1:), tplaq)
+      ! Now calculate uncertainties
+      call Jackknife_wp(ncon, BJ, BErr)
+      call Jackknife_wp(ncon, aplaqJ, aplaqErr)
+      call Jackknife_wp(ncon, splaqJ, splaqErr)
+      call Jackknife_wp(ncon, tplaqJ, tplaqErr)
+      write (*, *) 'B is ', BJ(0), ' +- ', BErr
+      write (*, *) 'aplaq is ', aplaqJ(0), ' +- ', aplaqErr
+      write (*, *) 'splaq is ', splaqJ(0), ' +- ', splaqErr
+      write (*, *) 'tplaq is ', tplaqJ(0), ' +- ', tplaqErr
 
+      deallocate (B, aplaq, splaq, tplaq)
+      deallocate (BJ, aplaqJ, splaqJ, tplaqJ)
+      deallocate (cfgList)
    end do
 contains
 
