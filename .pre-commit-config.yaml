@@ -68,7 +68,8 @@ repos:
   - id: compile-fpm
     name: Test successful compilation with fpm
     #entry: fpm build --flag "-ffree-line-length-none -fcoarray=single"
-    entry: fpm build --flag "-ffree-line-length-none" --profile debug --compiler gfortran
+    #entry: fpm build --flag "-ffree-line-length-none" --profile debug --compiler gfortran
+    entry: fpm build --flag "-qopenmp" --profile release --compiler ifx
     language: system
     pass_filenames: false
     always_run: true

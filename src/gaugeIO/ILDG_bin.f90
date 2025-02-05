@@ -7,6 +7,7 @@ module FLUE_ILDG_bin
    private
    public :: ReadGaugeField_ILDG
    public :: ReadGaugeTransformation_cola
+   public :: FixSU3Matrix
 
 contains
 
@@ -51,7 +52,8 @@ contains
                      case (4)
                         nu = 1
                      end select
-                     U_xd(it, ix, iy, iz, nu, :, :) = URead(:, :, mu, ix, iy, iz, it)
+                     U_xd(it, ix, iy, iz, nu, :, :) = TRANSPOSE(URead(:, :, mu, ix, iy, iz, it))
+                     call FixSU3Matrix(U_xd(it, ix, iy, iz, nu, :, :))
                   end do
                end do
             end do
@@ -102,7 +104,7 @@ contains
 
    end function ReadGaugeTransformation_cola
 
-   ! stripped from colour and de-colour vectored
+   ! stripped from cola and de-colour vectored
    pure subroutine orthogonalise_vectors(w, v)
 
       complex(kind=WC), dimension(3), intent(inout) :: w
@@ -114,7 +116,7 @@ contains
       w = w - v * vdotw
 
    end subroutine orthogonalise_vectors
-   ! stripped from colour and de-colour vectored
+   ! stripped from cola and de-colour vectored
    pure subroutine vector_product(x, v, w)
 
       complex(kind=WC), dimension(3), intent(out) :: x
@@ -131,5 +133,29 @@ contains
       end do
 
    end subroutine vector_product
+
+   ! stripped from cola and de-colour vectored
+   subroutine FixSU3Matrix(U_x)
+      complex(kind=WC), dimension(3, 3), intent(inout) :: U_x
+      complex(kind=WC), dimension(3) :: v1, v2, v3
+      v1 = U_x(1, :)
+      call normalise_vector(v1)
+      v2(:) = U_x(2, :)
+      call orthogonalise_vectors(v2, v1)
+      call normalise_vector(v2)
+      call vector_product(v3, v1, v2)
+      call normalise_vector(v3)
+      U_x(1, :) = v1(:)
+      U_x(2, :) = v2(:)
+      U_x(3, :) = v3(:)
+   end subroutine FixSU3Matrix
+
+   ! stripped from cola and de-colour vectored
+   subroutine normalise_vector(v)
+      complex(kind=WC), dimension(3), intent(inout) :: v
+      real(WP) :: norm
+      norm = SQRT(SUM(real(v)**2 + AIMAG(v)**2))
+      v = v / norm
+   end subroutine normalise_vector
 
 end module FLUE_ILDG_bin

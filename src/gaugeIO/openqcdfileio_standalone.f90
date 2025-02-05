@@ -1,6 +1,7 @@
 !! Functions to read openQCD format gaugefields
 module FLUE_openQCDFileIO_SA
    use FLUE_constants, only: WP, WC
+   use FLUE_ILDG_bin, only: FixSU3Matrix
    implicit none(external)
    private
    public :: ReadGaugeField_OpenQCD
@@ -68,11 +69,12 @@ contains
                      U_xd(it, ix, iy, iz, mu, :, :) = UTmp
                      read (infl) UTmp
                      U_xd(jt, jx, jy, jz, mu, :, :) = UTmp
+
                      U_xd(it, ix, iy, iz, mu, :, :) = TRANSPOSE(U_xd(it, ix, iy, iz, mu, :, :))
                      U_xd(jt, jx, jy, jz, mu, :, :) = TRANSPOSE(U_xd(jt, jx, jy, jz, mu, :, :))
-
-                     !call FixSU3Matrix(U_g(mu,ix,iy,iz,it))
-                     !call FixSU3Matrix(U_g(mu,jx,jy,jz,jt))
+                     ! Welll FixSU3Matrix did nothing to the average plaquette value
+                     call FixSU3Matrix(U_xd(it, ix, iy, iz, mu, :, :))
+                     call FixSU3Matrix(U_xd(jt, jx, jy, jz, mu, :, :))
                   end do
                end do; end do; end do; end do
 
