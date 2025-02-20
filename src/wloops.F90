@@ -87,7 +87,7 @@ contains
                do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt)
 #endif
                   coordBase = (/nnt, nnx, nny, nnz/)
-                  !plaq = genericPath(data, coordBase, plaqPath)
+                  plaq = genericPath(data, coordBase, plaqPath)
 
                   call RealTraceMultMatMat(P, Ident, plaq)
                   sumTrP = sumTrP + P
