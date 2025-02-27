@@ -30,9 +30,9 @@ source-dir="src"
 [dependencies]
 #stdlib = "*"
 #openmp = "*"
-stdlib = { path = "../stdlib" }
+#stdlib = { path = "../stdlib" }
 csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
-fftpack = { git="https://github.com/fortran-lang/fftpack.git" }
+#fftpack = { git="https://github.com/fortran-lang/fftpack.git" }
 toml-f      = { git = "https://github.com/toml-f/toml-f" }
 M_stopwatch        = { git = "https://github.com/urbanjost/M_stopwatch.git", branch= "main"}
 
@@ -44,7 +44,9 @@ M_stopwatch        = { git = "https://github.com/urbanjost/M_stopwatch.git", bra
 [preprocess]
 [preprocess.cpp]
 suffixes = ["F90"]
-macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
+#macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
+macros=['SETGITHASH=Yes']
+#macros=['SETGITHASH=Yes', 'AMD=1']
 
 # fortitude-lint
 [extra.fortitude.check]

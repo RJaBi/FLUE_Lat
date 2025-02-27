@@ -1,6 +1,7 @@
 
-fixNum = 5
-fixLabels = [ 'k13700', 'G2L-128', 'G2L-56', 'G2L-36', 'G2L-8']
+fixNum = 1
+fixLabels = ['G2L-8']
+#fixLabels = [ 'k13700', 'G2L-128', 'G2L-56', 'G2L-36', 'G2L-8']
 
 
 [fix.G2L-8]

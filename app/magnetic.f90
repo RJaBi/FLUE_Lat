@@ -7,16 +7,15 @@ program calcB
    use FLUE, only: WP, WC, writeCompiler, writeGit, &
                    ReadGaugeField_ILDG, ReadGaugeField_OpenQCD, genPlaquette, plaquette, &
                    magnetic, complement, jackknife_wp
-   use tomlf, only: toml_table, toml_load, toml_array, get_value, toml_path
-   use stdlib_io_npy, only: load_npy
+   !use tomlf, only: toml_table, toml_load, toml_array, get_value, toml_path
    use csv_module, only: csv_file
    implicit none(external)
    ! IO vars
    character(len=128) :: tomlName
    character(len=:), allocatable :: strRead
    ! toml vars
-   type(toml_table), allocatable :: table
-   type(toml_array), pointer :: top_array
+   !type(toml_table), allocatable :: table
+   !type(toml_array), pointer :: top_array
    ! What are we doing?
    integer :: nFixes, nTrans
    character(len=128), dimension(:), allocatable :: fixLabels
@@ -63,18 +62,20 @@ program calcB
       write (*, *) 'i.e. fpm run uzerobar -- mydir/input.toml'
       stop
    end if
-
-   call toml_load(table, tomlName)
-   call get_value(table, 'fixNum', nFixes)
+!   call toml_load(table, tomlName) ! this works
+   !write(*,*) 'here?'
+   !call get_value(table, 'fixNum', nFixes) ! this does not
+   nFixes = 1
    write (*, *) 'We will analyse ', nFixes, ' different cases'
-   call get_value(table, 'fixLabels', top_array)
+   !call get_value(table, 'fixLabels', top_array)
    allocate (fixLabels(nFixes))
    write (*, *) 'These are'
    do ii = 1, nFixes
-      call get_value(top_array, ii, strRead)
+      !call get_value(top_array, ii, strRead)
       fixLabels(ii) = strRead
-      write (*, *) TRIM(fixLabels(ii))
+      !write (*, *) TRIM(fixLabels(ii))
    end do
+   fixLabels(1) = 'G2L-8'
    ! Now let's do the load and do the analysis
    ! Rather than pre-load and do all analysis at once
    !allocate (aplaq(nFixes), splaq(nFixes), tplaq(nFixes))
@@ -83,11 +84,16 @@ program calcB
       write (*, *) ''
       write (*, *) ii, fixLabels(ii)
       ! Get singleton variables
-      call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugePath'), gaugePath)
-      call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugeFormat'), gaugeFormat)
-      call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NT'), NT)
-      call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NS'), NS)
-      call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'cfgList'), cfglistFile)
+      !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugePath'), gaugePath)
+      gaugePath = '/home/ryan/Documents/2025/conf/Gen2L/8x32/'
+      !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugeFormat'), gaugeFormat)
+      gaugeFormat = 'openqcd'
+      !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NT'), NT)
+      NT = 8
+      !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NS'), NS)
+      NS = 32
+      !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'cfgList'), cfglistFile)
+      cfglistFile = '/home/ryan/Documents/2025/conf/Gen2L/G2l_8x32.list'
       ! Get list of configurations
       write (*, *) 'cfgListFile is ', TRIM(cfgListFile)
       call csvf%read(TRIM(cfgListFile), status_ok=status_ok)
@@ -110,9 +116,6 @@ program calcB
          case ('openqcd')
             readGauge => ReadGaugeField_OpenQCD
             plaqFactor = 1.0_WP
-         case ('littlenpy')
-            readGauge => npyFunctionWrapper
-            plaqFactor = 1.0_WP
          case default
             write (*, *) 'gaugeFormat ', TRIM(gaugeFormat), ' not supported. Exiting'
             stop
@@ -122,6 +125,7 @@ program calcB
          U = ReadGauge(TRIM(gaugeFile), NS, NS, NS, NT)
          call genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
          aplaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
+         write (*, *) sumTrp, nP
          call genPlaquette(U, NT, NS, NS, NS, 1, 2, 4, sumTrP, nP, time)
          splaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
          call genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrP, nP, time)
@@ -159,26 +163,5 @@ program calcB
       deallocate (BJ, aplaqJ, splaqJ, tplaqJ)
       deallocate (cfgList)
    end do
-contains
-
-   function npyFunctionWrapper(filename, NX, NY, NZ, NT) result(G_x)
-      character(len=*), intent(in) :: filename
-      integer, intent(in) :: NX, NY, NZ, NT
-      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: G_x
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: GNPY
-      !counters
-      integer :: xx, yy, zz, tt, aa, bb, mu
-      integer, dimension(7) :: PYShape
-      call load_npy(filename, GNPY)
-      pyShape = SHAPE(GNPY)
-      if (pyShape(1) < pyShape(7)) then
-         ! For some reason, load_npy sometimes loads the array in opposite order..
-         do concurrent(tt=1:NT, xx=1:NS, yy=1:NS, zz=1:NS, mu=1:4, aa=1:3, bb=1:3)
-            G_x(tt, xx, yy, zz, mu, aa, bb) = GNPY(bb, aa, mu, zz, yy, xx, tt)
-         end do
-      else
-         G_x = GNPY
-      end if
-   end function npyFunctionWrapper
 
 end program calcB
