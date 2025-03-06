@@ -48,7 +48,10 @@ contains
       !allocate(U_xd(nxdim,nydim,nzdim,ntdim,4,3,3))
 
       ! z varies quickest, then y, then x, then t
-      do it = 1, ntdim; do ix = 1, nxdim; do iy = 1, nydim; do iz = 1, nzdim
+      do it = 1, ntdim
+         do ix = 1, nxdim
+            do iy = 1, nydim
+               do iz = 1, nzdim
                   if (MODULO(ix + iy + iz + it - 4, 2) == 0) cycle  ! Format only considers odd points
 
                   do id = 1, 4
@@ -73,10 +76,17 @@ contains
                      U_xd(it, ix, iy, iz, mu, :, :) = TRANSPOSE(U_xd(it, ix, iy, iz, mu, :, :))
                      U_xd(jt, jx, jy, jz, mu, :, :) = TRANSPOSE(U_xd(jt, jx, jy, jz, mu, :, :))
                      ! Welll FixSU3Matrix did nothing to the average plaquette value
-                     call FixSU3Matrix(U_xd(it, ix, iy, iz, mu, :, :))
-                     call FixSU3Matrix(U_xd(jt, jx, jy, jz, mu, :, :))
+                     UTmp = U_xd(it, ix, iy, iz, mu, :, :)
+                     call FixSU3Matrix(UTmp)
+                     U_xd(it, ix, iy, iz, mu, :, :) = UTmp
+                     UTmp = U_xd(jt, jx, jy, jz, mu, :, :)
+                     call FixSU3Matrix(UTmp)
+                     U_xd(jt, jx, jy, jz, mu, :, :) = UTmp
                   end do
-               end do; end do; end do; end do
+               end do
+            end do
+         end do
+      end do
 
       close (infl)
 

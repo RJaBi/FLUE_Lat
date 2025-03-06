@@ -8,7 +8,6 @@ program calcB
                    ReadGaugeField_ILDG, ReadGaugeField_OpenQCD, genPlaquette, plaquette, &
                    magnetic, complement, jackknife_wp
    !use tomlf, only: toml_table, toml_load, toml_array, get_value, toml_path
-   use csv_module, only: csv_file
    implicit none(external)
    ! IO vars
    character(len=128) :: tomlName
@@ -22,8 +21,7 @@ program calcB
    character(len=:), allocatable :: gaugePath, gaugeFormat, cfgListFile
    procedure(ReadGaugeInterface), pointer :: readGauge
    complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: U
-   type(csv_file) :: csvf
-   logical :: status_ok
+   integer :: iunit
    character(len=128), dimension(:), allocatable :: cfgList
    character(len=512) :: gaugeFile
    ! lattice dimensions
@@ -72,7 +70,7 @@ program calcB
    write (*, *) 'These are'
    do ii = 1, nFixes
       !call get_value(top_array, ii, strRead)
-      fixLabels(ii) = strRead
+      !fixLabels(ii) = strRead
       !write (*, *) TRIM(fixLabels(ii))
    end do
    fixLabels(1) = 'G2L-8'
@@ -96,10 +94,13 @@ program calcB
       cfglistFile = '/home/ryan/Documents/2025/conf/Gen2L/G2l_8x32.list'
       ! Get list of configurations
       write (*, *) 'cfgListFile is ', TRIM(cfgListFile)
-      call csvf%read(TRIM(cfgListFile), status_ok=status_ok)
-      call csvf%get(1, cfgList, status_ok)
-      call csvf%destroy()
-      ncon = SIZE(cfgList)
+      open (newunit=iunit, file=TRIM(cfgListFile), status='OLD')
+      ncon = number_of_lines_in_file(iunit)
+      allocate (cfgList(ncon))
+      do icon = 1, ncon
+         read (iunit, fmt='(a)') cfgList(icon)
+      end do
+      close (iunit)
       ! config data
       allocate (B(ncon), aplaq(ncon), splaq(ncon), tplaq(ncon))
       ! jackknifes
@@ -163,5 +164,40 @@ program calcB
       deallocate (BJ, aplaqJ, splaqJ, tplaqJ)
       deallocate (cfgList)
    end do
+
+contains
+
+   !*****************************************************************************************
+   !>
+   !  Returns the number of lines in a text file.
+   !
+   !@note It rewinds the file back to the beginning when finished.
+
+   !
+   ! Taken from Jacob William's csv-fortran
+   !
+
+   function number_of_lines_in_file(iunit) result(n_lines)
+
+      implicit none(external)
+
+      integer, intent(in) :: iunit   !! the file unit number
+     !! (assumed to be open)
+      integer :: n_lines   !! the number of lines in the file
+
+      character(len=1) :: tmp
+      integer :: istat
+
+      rewind (iunit)
+      n_lines = 0
+      do
+         read (iunit, fmt='(A1)', iostat=istat) tmp
+         if (is_iostat_end(istat)) exit
+         n_lines = n_lines + 1
+      end do
+      rewind (iunit)
+
+   end function number_of_lines_in_file
+   !*****************************************************************************************
 
 end program calcB

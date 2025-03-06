@@ -29,11 +29,11 @@ source-dir="src"
 
 [dependencies]
 #stdlib = "*"
-#openmp = "*"
+openmp = "*"
 #stdlib = { path = "../stdlib" }
-csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
+#csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
 #fftpack = { git="https://github.com/fortran-lang/fftpack.git" }
-toml-f      = { git = "https://github.com/toml-f/toml-f" }
+#toml-f      = { git = "https://github.com/toml-f/toml-f" }
 M_stopwatch        = { git = "https://github.com/urbanjost/M_stopwatch.git", branch= "main"}
 
 #[[executable]]
@@ -45,11 +45,16 @@ M_stopwatch        = { git = "https://github.com/urbanjost/M_stopwatch.git", bra
 [preprocess.cpp]
 suffixes = ["F90"]
 #macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
-macros=['SETGITHASH=Yes']
+#macros=['SETGITHASH=Yes']
 #macros=['SETGITHASH=Yes', 'AMD=1']
+macros=['SETGITHASH=Yes', 'OMP=1']
 
 # fortitude-lint
 [extra.fortitude.check]
 line-length = 132
-ignore = ["S041", "S051", "M022"]
+ignore = [
+       "MOD011",  # allows (/ /)
+       "MOD021",  # allows .gt.
+       "C132"   # allows default public accessiblility
+       ]
 preview = true
