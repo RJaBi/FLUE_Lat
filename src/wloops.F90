@@ -82,7 +82,7 @@ contains
             plaqPath = (/mu, nu, -mu, -nu/)
 #ifdef LOCALITYSUPPORT
             do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt) &
-               local(coordBase, plaq, P) local_init(nnx, nny, nnz, nnt) reduce(+:sumTrP, nP)
+               local(coordBase, plaq, P) reduce(+:sumTrP, nP)
 #else
                do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt)
 #endif
@@ -125,8 +125,8 @@ contains
             plaqPath(4, :) = (/-nu, mu, nu, -mu/)
 #ifdef LOCALITYSUPPORT
             do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt) &
-               default(none) local_init(nnx, nny, nnz, nnt, plaqPath) &
-               local(coordBase, clovLeaf, trcnsub, thisU, c12, c13, c23) shared(U_xd)
+               default(none) local_init(plaqPath) &
+               local(coordBase, clovLeaf, thisU, c12, c13, c23) shared(U_xd)
 #else
                do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt)
 #endif
@@ -255,10 +255,15 @@ contains
 #ifdef LOCALITYSUPPORT
                   do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt) &
                      default(none) &
-                     local_init(nnx, nny, nnz, nnt, path1x1, path1x2, path2x2, path1x3, path3x3) &
-                     local(coordBase, clovLeaf, trcnsub, thisU, c12, c13, c23, workU, t1, t2) shared(U_xd)
+                     local_init(path1x1, path1x2, path2x2, path1x3, path3x3) &
+                     local(coordBase, clovLeaf, thisU, c12, c13, c23, workU, t1, t2) &
+                     shared(data, U_xd)
 #else
-                     do nnx = 1, nx; do nny = 1, ny; do nnz = 1, nz; do nnt = 1, nt;
+                     do nnx = 1, nx
+                        do nny = 1, ny
+                           do nnz = 1, nz
+                              do nnt = 1, nt
+
 #endif
 
                                  ! Calculate the clover 1x1 for this coordinate
@@ -375,7 +380,10 @@ contains
 #ifdef LOCALITYSUPPORT
                               end do
 #else
-                           end do; end do; end do; end do
+                           end do
+                        end do
+                     end do
+                  end do
 #endif
                end function Loop5MuNuCoord
 
@@ -396,7 +404,7 @@ contains
                   plaqPath = (/nu, -mu, -nu, mu/)
 #ifdef LOCALITYSUPPORT
                   do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt) &
-                     default(none) local_init(nnx, nny, nnz, nnt, plaqPath) &
+                     default(none) local_init(plaqPath) &
                      local(coordBase, clovLeaf, c12, c13, c23) shared(U_xd)
 #else
                      do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt)
@@ -456,7 +464,7 @@ contains
                         cloverPlaq = 0.0_WP
 #ifdef LOCALITYSUPPORT
                         do concurrent(nny=1:ny, nnz=1:nz, nnt=1:nt, nnx=1:nx, ii=1:3) &
-                           default(none) local_init(nnx, nny, nnz, nnt, ii) &
+                           default(none) shared(BField) &
                            local(tempEval, com, tempPl, ztemp12, ztemp23, ztemp31, temp11, temp22, temp33, trace) &
                            reduce(+:cloverPlaq)
 #else

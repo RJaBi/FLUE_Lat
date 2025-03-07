@@ -33,7 +33,8 @@ source-dir="src"
 stdlib = { path = "../stdlib" }
 csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
 fftpack = { git="https://github.com/fortran-lang/fftpack.git" }
-toml-f      = { git = "https://github.com/toml-f/toml-f" }
+#toml-f      = { git = "https://github.com/toml-f/toml-f" }
+toml-f = { path='../toml-f'}
 M_stopwatch        = { git = "https://github.com/urbanjost/M_stopwatch.git", branch= "main"}
 
 #[[executable]]
@@ -49,5 +50,9 @@ macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
 # fortitude-lint
 [extra.fortitude.check]
 line-length = 132
-ignore = ["S041", "S051", "M022"]
+ignore = [
+       "MOD011", # old-style-array-literal
+       "MOD021", # deprecated-relational-operator
+       "C132",   # default-public-accessibility
+]
 preview = true
