@@ -1,7 +1,11 @@
 !! A module to write the git and compiler versions
 !! Is pre-processed by the C pre-processor
 module FLUE_version
+#ifdef lFORTRAN
+   use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT
+#else
    use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, compiler_version, compiler_options
+#endif
    implicit none(external)
    private
 
