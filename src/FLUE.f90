@@ -2,7 +2,9 @@ module FLUE
    use FLUE_ILDG_bin, only: ReadGaugeField_ILDG, ReadGaugeTransformation_cola, FixSU3Matrix
    use FLUE_openQCDFileIO_SA, only: ReadGaugeField_OpenQCD
    use FLUE_gluonProp, only: scalarGluonProp, calc_mom_space_scalarD
-   use FLUE_wloops, only: plaquette, polyakov, genPlaquette, magnetic, genericPath, periodCoord
+   use FLUE_wloops, only: plaquette, polyakov, genPlaquette, magnetic, genericPath, periodCoord, &
+                          cloverLoopMuNuCoord, Loop5MuNuCoord
+   use FLUE_glueLoops, only: coordMuNuInterface, genSpaceAverageTr, genPlaquetteMuNu
    use FLUE_SU3MatrixOps, only: Ident, MultiplyMatMat, MultiplyMatDagMatDag, TraceMultMatMat, RealTraceMultMatMat, &
         & TracelessConjgSubtract, colourDecomp, RealTraceMat
    use FLUE_gpManip, only: Q_Average, cone_cut
