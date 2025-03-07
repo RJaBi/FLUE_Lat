@@ -126,7 +126,6 @@ program calcB
          U = ReadGauge(TRIM(gaugeFile), NS, NS, NS, NT)
          call genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
          aplaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
-         write (*, *) sumTrp, nP
          call genPlaquette(U, NT, NS, NS, NS, 1, 2, 4, sumTrP, nP, time)
          splaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
          call genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrP, nP, time)
