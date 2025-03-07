@@ -44,10 +44,9 @@ M_stopwatch        = { git = "https://github.com/urbanjost/M_stopwatch.git", bra
 [preprocess]
 [preprocess.cpp]
 suffixes = ["F90"]
-#macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
+macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
 #macros=['SETGITHASH=Yes']
-#macros=['SETGITHASH=Yes', 'AMD=1']
-macros=['SETGITHASH=Yes', 'OMP=1']
+#macros=['SETGITHASH=Yes', 'OMP=1']
 #macros=['SETGITHASH=Yes', 'lFORTRAN=1']
 
 # fortitude-lint
