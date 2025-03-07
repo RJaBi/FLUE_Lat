@@ -20,12 +20,25 @@ program superMWE
 #ifdef AMD
    do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt) &
       reduce(+:sumTrP, nP)
+#elif OMP
+      !$omp parallel do collapse(4) reduction(+:sumTrP,nP)
+      do nnx = 1, nx
+         do nny = 1, ny
+            do nnz = 1, nz
+               do nnt = 1, nt
 #else
-      do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt)
+                  do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt)
 #endif
-         sumTrP = sumTrP + 1.0_WP
-         nP = nP + 1
+                     sumTrP = sumTrP + 1.0_WP
+                     nP = nP + 1
+#ifdef OMP
+                  end do
+               end do
+            end do
+         end do
+#else
       end do
+#endif
 
       write (*, *) 'Done', sumTrP, nP
 

@@ -29,7 +29,7 @@ source-dir="src"
 
 [dependencies]
 #stdlib = "*"
-openmp = "*"
+#openmp = "*"
 #stdlib = { path = "../stdlib" }
 #csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
 #fftpack = { git="https://github.com/fortran-lang/fftpack.git" }
