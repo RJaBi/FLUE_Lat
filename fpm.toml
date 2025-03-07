@@ -55,6 +55,7 @@ line-length = 132
 ignore = [
        "MOD011",  # allows (/ /)
        "MOD021",  # allows .gt.
-       "C132"   # allows default public accessiblility
+       "C132",    # allows default public accessiblility
+       "E001",    # ignores syntax errors - useful as pre-processor support is tough
        ]
 preview = true
