@@ -6,7 +6,7 @@
 program glue
    use FLUE, only: WP, WC, writeCompiler, writeGit, &
                    ReadGaugeField_ILDG, ReadGaugeField_OpenQCD, &
-                   genPlaquette, Loop5MuNuCoord, cloverLoopMuNuCoord, &
+                   genPlaquette, &
                    coordMuNuInterface, genSpaceAverageTr, genPlaquetteMuNu, &
                    complement, jackknife_wp
    !use tomlf, only: toml_table, toml_load, toml_array, get_value, toml_path
@@ -81,7 +81,7 @@ program glue
    write (*, *) 'These are'
    do ii = 1, nFixes
       !call get_value(top_array, ii, strRead)
-      strRead = 'G2L-8'
+      strRead = 'G2L-128'
       fixLabels(ii) = strRead
       write (*, *) TRIM(fixLabels(ii))
    end do
@@ -94,11 +94,11 @@ program glue
       write (*, *) ii, fixLabels(ii)
       ! Get singleton variables
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugePath'), gaugePath)
-      gaugePath = '/home/ryan/Documents/2025/conf/Gen2L/8x32/'
+      gaugePath = '/home/ryan/Documents/2025/conf/Gen2L/128x32/'
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugeFormat'), gaugeFormat)
       gaugeFormat = 'openqcd'
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NT'), NT)
-      NT = 8
+      NT = 128
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NS'), NS)
       NS = 32
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'cfgList'), cfglistFile)
@@ -109,7 +109,7 @@ program glue
       !call csvf%destroy()
       !ncon = SIZE(cfgList)
 
-      cfglistFile = '/home/ryan/Documents/2025/conf/Gen2L/G2l_8x32.list'
+      cfglistFile = '/home/ryan/Documents/2025/conf/Gen2L/G2l_128x32.list'
       ! Get list of configurations
       write (*, *) 'cfgListFile is ', TRIM(cfgListFile)
       open (newunit=iunit, file=TRIM(cfgListFile), status='OLD')
@@ -157,15 +157,15 @@ program glue
          ! B(icon) = magnetic(U, NT, NS, NS, NS)
          !write (*, *) 'magnetic', B(icon)
 
-         GlueOp => Loop5MuNuCoord
-         write (*, *) 'loop5'
-         opTrace(icon, :) = genSpaceAverageTr(glueOP, U, NT, NS, NS, NS, 1, 2)
-         write (*, *) opTrace(icon, :)
-         write (*, *) ''
-         write (*, *) 'clover'
-         GlueOp => cloverLoopMuNuCoord
-         opTrace(icon, :) = genSpaceAverageTr(glueOP, U, NT, NS, NS, NS, 1, 2)
-         write (*, *) opTrace(icon, :)
+         !GlueOp => Loop5MuNuCoord
+         !write (*, *) 'loop5'
+         !opTrace(icon, :) = genSpaceAverageTr(glueOP, U, NT, NS, NS, NS, 1, 2)
+         !write (*, *) opTrace(icon, :)
+         !write (*, *) ''
+         !write (*, *) 'clover'
+         !GlueOp => cloverLoopMuNuCoord
+         !opTrace(icon, :) = genSpaceAverageTr(glueOP, U, NT, NS, NS, NS, 1, 2)
+         !write (*, *) opTrace(icon, :)
          write (*, *) 'plaq'
          GlueOp => genPlaquetteMuNu
          opTrace(icon, :) = genSpaceAverageTr(glueOP, U, NT, NS, NS, NS, 1, 2)
@@ -197,10 +197,15 @@ program glue
       call Jackknife_wp(ncon, splaqJ, splaqErr)
       call Jackknife_wp(ncon, tplaqJ, tplaqErr)
 
-      do tau = 1, NT
+      do tau = 2, 2 !NT
          do tauJ = 1, NT / 2 ! integer division
             tau1 = MOD(tau + tauJ - 2, NT) + 1
             !write(*,*) tau, tauJ, tau1, opTraceJ(0, tau), opTraceJ(0, tau1)
+            !write(*,*) sum(opTraceJ(:, tau)* opTraceJ(:, tau1))/ncon
+            !write(*,*) sum(opTraceJ(:, tau)) * sum(opTraceJ(:, tau1)) * 1.0_WP/ncon**2.0_WP
+            !write(*,*) ''
+            write (*, *) SUM(opTraceJ(:, tau) * opTraceJ(:, tau1)) / ncon - &
+               SUM(opTraceJ(:, tau)) * SUM(opTraceJ(:, tau1)) * 1.0_WP / ncon**2.0_WP
          end do
       end do
 
