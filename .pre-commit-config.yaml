@@ -53,6 +53,13 @@ repos:
   - id:  giticket
 
 
+
+- repo: https://github.com/igorshubovych/markdownlint-cli
+  rev: v0.44.0
+  hooks:
+  - id: markdownlint
+
+
 - repo: https://github.com/fortran-lang/fprettify
   rev: v0.3.7
   hooks:
@@ -74,16 +81,28 @@ repos:
     pass_filenames: false
     always_run: true
 
-- repo: local
+
+
+repos:
+- repo: https://github.com/PlasmaFAIR/fortitude-pre-commit
+  # Fortitude version.
+  rev: v0.7.1
   hooks:
-  - id: fortitude-lint
-    name: Run Fortitude linter
-    entry: fortitude check --fix --progress-bar=ascii --output-format=concise --line-length=132
-    language: system
-    pass_filenames: yes
-    always_run: true
-    files: \.[fF]\d*$
-    #files: ^(?!build/).*\.([fF]\d*)$
-    #files: ^(?!\./build/).*\.([fF]\d*)$
-    #files: ^(?!.*\/build\/).*\.([fF]\d*)$
-    #files: ^src/.*\.([fF]\d*)$
+    - id: fortitude
+      args: ["--fix", "--output-format=concise", "--progress-bar=ascii"]
+
+
+#- repo: local
+#  hooks:
+#  - id: fortitude-lint
+#    name: Run Fortitude linter
+#    entry: fortitude check --fix --progress-bar=ascii --output-format=concise --line-length=132
+#    language: system
+#    pass_filenames: yes
+#    always_run: true
+#    files: \.[fF]\d*$
+#    #files: ^(?!build/).*\.([fF]\d*)$
+#    #files: ^(?!\./build/).*\.([fF]\d*)$
+#    #files: ^(?!.*\/build\/).*\.([fF]\d*)$
+#    #files: ^src/.*\.([fF]\d*)$
+#
