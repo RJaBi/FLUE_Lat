@@ -73,7 +73,9 @@ program calcB
       !fixLabels(ii) = strRead
       !write (*, *) TRIM(fixLabels(ii))
    end do
-   fixLabels(1) = 'G2L-8'
+   !fixLabels(1) = 'G2L-8'
+   !fixLabels(1) = 'G2L-36'
+   fixLabels(1) = 'G2L-128'
    ! Now let's do the load and do the analysis
    ! Rather than pre-load and do all analysis at once
    !allocate (aplaq(nFixes), splaq(nFixes), tplaq(nFixes))
@@ -83,15 +85,22 @@ program calcB
       write (*, *) ii, fixLabels(ii)
       ! Get singleton variables
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugePath'), gaugePath)
-      gaugePath = '/home/ryan/Documents/2025/conf/Gen2L/8x32/'
+      !gaugePath = '/home/ryan/Documents/2025/conf/Gen2L/8x32/'
+      gaugePath = '/Shared/celts/Gen2L/8x32/'
+      !gaugePath = '/Shared/celts/Gen2L/36x32/'
+      !gaugePath = '/Shared/celts/Gen2L/128x32/'
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugeFormat'), gaugeFormat)
       gaugeFormat = 'openqcd'
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NT'), NT)
       NT = 8
+      !NT = 36
+      !NT = 128
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NS'), NS)
       NS = 32
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'cfgList'), cfglistFile)
-      cfglistFile = '/home/ryan/Documents/2025/conf/Gen2L/G2l_8x32.list'
+      cfglistFile = '/Shared/celts/Gen2L/8x32.list'
+      !cfglistFile = '/Shared/celts/Gen2L/36x32.list'
+      !cfglistFile = '/Shared/celts/Gen2L/128x32.list'
       ! Get list of configurations
       write (*, *) 'cfgListFile is ', TRIM(cfgListFile)
       open (newunit=iunit, file=TRIM(cfgListFile), status='OLD')
