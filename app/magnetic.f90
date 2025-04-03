@@ -86,21 +86,21 @@ program calcB
       ! Get singleton variables
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugePath'), gaugePath)
       !gaugePath = '/home/ryan/Documents/2025/conf/Gen2L/8x32/'
-      gaugePath = '/Shared/celts/Gen2L/8x32/'
+      !gaugePath = '/Shared/celts/Gen2L/8x32/'
       !gaugePath = '/Shared/celts/Gen2L/36x32/'
-      !gaugePath = '/Shared/celts/Gen2L/128x32/'
+      gaugePath = '/Shared/celts/Gen2L/128x32/'
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugeFormat'), gaugeFormat)
       gaugeFormat = 'openqcd'
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NT'), NT)
-      NT = 8
+      !NT = 8
       !NT = 36
-      !NT = 128
+      NT = 128
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NS'), NS)
       NS = 32
       !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'cfgList'), cfglistFile)
-      cfglistFile = '/Shared/celts/Gen2L/8x32.list'
+      !cfglistFile = '/Shared/celts/Gen2L/8x32.list'
       !cfglistFile = '/Shared/celts/Gen2L/36x32.list'
-      !cfglistFile = '/Shared/celts/Gen2L/128x32.list'
+      cfglistFile = '/Shared/celts/Gen2L/128x32.list'
       ! Get list of configurations
       write (*, *) 'cfgListFile is ', TRIM(cfgListFile)
       open (newunit=iunit, file=TRIM(cfgListFile), status='OLD')
@@ -133,16 +133,20 @@ program calcB
          ! allocate space for the gaugefield
          allocate (U(NT, NS, NS, NS, 4, 3, 3))
          U = ReadGauge(TRIM(gaugeFile), NS, NS, NS, NT)
-         call genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
-         aplaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
-         call genPlaquette(U, NT, NS, NS, NS, 1, 2, 4, sumTrP, nP, time)
-         splaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
-         call genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrP, nP, time)
-         tplaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
+    !     write(*,*) 'before genplaq 1'
+   !      call genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
+  !       aplaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
+!         write(*,*) 'before genplaq 2'
+!         call genPlaquette(U, NT, NS, NS, NS, 1, 2, 4, sumTrP, nP, time)
+!         splaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
+!         write(*,*) 'before genplaq 3'
+!         call genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrP, nP, time)
+ !        tplaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)
          !write (*, *) 'U  Plaquette for', ' is ', aplaq(icon), 'and took', time, 'seconds'
          !write (*, *) 'U SPlaquette for', ' is ', splaq(icon), 'and took', time, 'seconds'
          !write (*, *) 'U TPlaquette for', ' is ', tplaq(icon), 'and took', time, 'seconds'
          !write (*, *) 'magnetic is'
+         write(*,*) 'before magnetic'
          B(icon) = magnetic(U, NT, NS, NS, NS)
          !write (*, *) 'magnetic', B(icon)
          deallocate (U)
