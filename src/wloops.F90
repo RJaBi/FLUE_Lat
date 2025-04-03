@@ -21,6 +21,9 @@ contains
       complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(in) :: data
       integer, dimension(4), intent(in) :: coordBase
       integer, dimension(:), intent(in) :: path
+#ifdef OMPOff
+      !$omp declare target
+#endif
       complex(kind=WC), dimension(3, 3) :: U_xd
       ! internal
       complex(kind=WC), dimension(3, 3) :: amat, bmat
@@ -29,8 +32,15 @@ contains
       ! counters
       integer :: pp
       integer :: mu
+#ifdef OMPOff
+      coord(1) = coordBase(1)
+      coord(2) = coordBase(2)
+      coord(3) = coordBase(3)
+      coord(4) = coordBase(4)
+#else
       coord = coordBase
-      U_xd = Ident
+#endif      
+      U_xd(:,:) = Ident(:,:)
       ! Do this to prevent the array temporary in periodCoord
       dataShape = SHAPE(data)
       do pp = 1, SIZE(path)
@@ -51,10 +61,11 @@ contains
             coord = periodCoord(coord, datashape)
          end if
          ! now multiply it into U_xd from the right
-         call MultiplyMatMat(U_xd, bmat, amat)
+         U_xd = matmul(bmat, amat)
+         !call MultiplyMatMat(U_xd, bmat, amat)
       end do
       U_xd = TRANSPOSE(U_xd)
-   end function genericPath
+    end function genericPath
 
    subroutine genPlaquette(data, NT, NX, NY, NZ, muStart, muEnd, nuEnd, sumTrP, nP, time)
       complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3), intent(in) :: data
@@ -82,11 +93,18 @@ contains
       do mu = muStart, muEnd
          do nu = mu + 1, nuEnd
             plaqPath = (/mu, nu, -mu, -nu/)
+            write(*,*) plaqPath
 #ifdef  LOCALITYSUPPORT
             do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt) &
                local(coordBase, plaq, P) reduce(+:sumTrP, nP) shared(data)
 #elif OMP
                !$omp parallel do collapse(4) reduction(+:sumTrp,nP) shared(data) private(coordBase, plaq,P)
+                              do nnx = 1, nx
+                  do nny = 1, ny
+                     do nnz = 1, nz
+                        do nnt = 1, nt
+#elif OMPOff_no
+               !$omp target teams distribute parallel do collapse(4) reduction(+:sumTrp,nP) shared(data) private(coordBase, plaq,P) num_threads(256) thread_limit(256)
                do nnx = 1, nx
                   do nny = 1, ny
                      do nnz = 1, nz
@@ -101,6 +119,7 @@ contains
                                        plaq = genericPath(data, coordBase, plaqPath)
 
                                        call RealTraceMultMatMat(P, Ident, plaq)
+
                                        !sumTrP = sumTrP + 1
                                        sumTrP = sumTrP + P
                                        nP = nP + 1
@@ -296,13 +315,22 @@ contains
             local(coordBase, clovLeaf, thisU, c12, c13, c23, workU) shared(U_xd, data)
 #elif OMP
             !$omp parallel do collapse(4) shared(data,U_xd) default(none)&
-            !$ompprivate(coordBase, clovLeaf, thisU, c12, c13, c23, workU) &
+            !$omp private(coordBase, clovLeaf, thisU, c12, c13, c23, workU) &
             !$omp firstprivate(path1x1, path1x2, path2x2, path1x3, path3x3, &
             !$omp nt, nx, ny, nz)
             do nnx = 1, nx
                do nny = 1, ny
                   do nnz = 1, nz
                      do nnt = 1, nt
+#elif OMPOff
+                        !$omp target teams distribute parallel do collapse(4) default(none)&
+                        !$omp private(coordBase, clovLeaf, thisU, c12, c13, c23, workU) &
+                        !$omp shared(data,U_xd,path1x1, path1x2, path2x2, path1x3, path3x3, &
+                        !$omp nt, nx, ny, nz) num_threads(256) thread_limit(256)
+               do nnx = 1, nx
+                  do nny = 1, ny
+                     do nnz = 1, nz
+                        do nnt = 1, nt
 #else
                         do nnx = 1, nx
                            do nny = 1, ny
@@ -486,7 +514,9 @@ contains
                               !complex(kind=WP), dimension(NT,NX,NY,NZ,3,3,3) :: BDag
                               !complex(kind=WP), dimension(NT, NX, NY, NZ, 3) :: BBDagTraceless
                               !real(kind=WP), dimension(NT, NX, NY, NZ, 3, 3, 3) :: BBDagTraceless
-                              complex(kind=WC), dimension(3, 3) :: tempEval
+#ifdef OMPOff_no
+                              complex(kind=WC), dimension(:, :), allocatable :: tempEval
+#endif 
                               complex(kind=WC), dimension(8) :: com
                               real(kind=WP) :: cloverPlaq, tempPl
                               real(kind=WP) :: iiclov
@@ -505,10 +535,16 @@ contains
                               ! match 12
                               BField(:, :, :, :, :, :, 3) = Loop5MuNuCoord(data, NT, NX, NY, NZ, 4, 3)
                               cloverPlaq = 0.0_WP
+
+#ifdef OMPOff_no
+                              !omp allocate(tempEval) align(64)
+                              allocate(tempEval(3,3))
+#endif 
+                              
 #ifdef LOCALITYSUPPORT
                               do concurrent(nny=1:ny, nnz=1:nz, nnt=1:nt, nnx=1:nx, ii=1:3) &
                                  default(none) shared(BField) &
-                                 local(tempEval, com, tempPl, ztemp12, ztemp23, ztemp31, temp11, temp22, temp33, trace) &
+                                 local(com, tempPl, ztemp12, ztemp23, ztemp31, temp11, temp22, temp33, trace) &
                                  reduce(+:cloverPlaq)
 #elif OMP
                                  !$omp parallel do collapse(5) default(none) &
@@ -519,6 +555,16 @@ contains
                                        do nnz = 1, nz
                                           do nnt = 1, nt
                                              do ii = 1, 3
+#elif OMPOff_no
+                                                !$omp target teams distribute parallel do collapse(5) default(none) &
+                                                !$omp reduction(+:cloverPlaq) shared(BField,nx,ny,nz,nt) &
+                                                !$omp private(tempPL, tempEval) &
+                                                !$omp num_threads(256) thread_limit(256)
+               do nnx = 1, nx
+                  do nny = 1, ny
+                     do nnz = 1, nz
+                        do nnt = 1, nt
+                           do ii =1, 3
 #else
                                                 do nnx = 1, nx
                                                    do nny = 1, ny
@@ -527,9 +573,26 @@ contains
                                                             do ii = 1, 3
 
 #endif
-                                                            call RealTraceMultMatMat(tempPl, BField(nnt, nnx, nny, nnz, :, :, ii), &
-                                                                                        BField(nnt, nnx, nny, &
-                                                                                               nnz, :, :, ii))
+#ifdef OMPOff_no
+                                                               tempEval(1,1) = BField(nnt, nnx, nny, nnz, 1, 1, ii)
+                                                               tempEval(1,2) = BField(nnt, nnx, nny, nnz, 1, 2, ii)
+                                                               tempEval(1,3) = BField(nnt, nnx, nny, nnz, 1, 3, ii)
+
+
+                                                               tempEval(2,1) = BField(nnt, nnx, nny, nnz, 2, 1, ii)
+                                                               tempEval(2,2) = BField(nnt, nnx, nny, nnz, 2, 2, ii)
+                                                               tempEval(2,3) = BField(nnt, nnx, nny, nnz, 2, 3, ii)
+
+                                                               tempEval(3,1) = BField(nnt, nnx, nny, nnz, 3, 1, ii)
+                                                               tempEval(3,2) = BField(nnt, nnx, nny, nnz, 3, 2, ii)
+                                                               tempEval(3,3) = BField(nnt, nnx, nny, nnz, 3, 3, ii)
+                                                               call RealTraceMultMatMat(tempPl, tempEval, tempEval)
+#else
+                                                               call RealTraceMultMatMat(tempPl, &
+                                                                    BField(nnt, nnx, nny, nnz, :, :, ii), &
+                                                                    BField(nnt, nnx, nny, &
+                                                                    nnz, :, :, ii))
+#endif
                                                                cloverPlaq = cloverPlaq - tempPl
 #ifdef LOCALITYSUPPORT
                                                             end do
@@ -547,6 +610,9 @@ contains
                                                 integer, dimension(7), intent(in) :: dataShape
                                                 integer, dimension(4), intent(in) :: coord
                                                 integer, dimension(4) :: periodCoord
+#ifdef OMPOff
+                                                !$omp declare target
+#endif
                                                 ! A lazy function to handle the periodic boundary conditions
                                                 ! dataShape is (NT, nx, ny, nz, 4, 3, 3)
                                                 ! coord is (nt, nx, ny, nz)
@@ -554,7 +620,14 @@ contains
                                                 ! if so sets it to 1
                                                 ! i.e. only handles steps of 1
                                                 integer :: cc
+#ifdef OMPOff
+                                                periodCoord(1) = coord(1)
+                                                periodCoord(2) = coord(2)
+                                                periodCoord(3) = coord(3)
+                                                periodCoord(4) = coord(4)
+#else                                                
                                                 periodCoord = coord
+#endif                                                
                                                 do cc = 1, SIZE(coord)
                                                    if (coord(cc) > dataShape(cc)) then
                                                       periodCoord(cc) = 1

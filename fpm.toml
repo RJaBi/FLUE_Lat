@@ -46,7 +46,8 @@ M_stopwatch        = { git = "https://github.com/urbanjost/M_stopwatch.git", bra
 suffixes = ["F90"]
 #macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
 #macros=['SETGITHASH=Yes']
-macros=['SETGITHASH=Yes', 'OMP=1']
+#macros=['SETGITHASH=Yes', 'OMP=1']
+macros=['SETGITHASH=Yes', 'OMPOff=1']
 #macros=['SETGITHASH=Yes', 'lFORTRAN=1']
 
 # fortitude-lint
@@ -57,8 +58,10 @@ ignore = [
        "MOD021",  # allows .gt.
        "C132",    # allows default public accessiblility
        "E001",    # ignores syntax errors - useful as pre-processor support is tough
+       "C003",    # implicit none(external) not well supported by AMD
        ]
 preview = true
+fix = true
 [extra.fortitude.check.per-file-ignores]
 # the c_wrapper gets parsed with f2py which can be a bit fussy
 "c_wrapper/FLUE_c.f90" = [

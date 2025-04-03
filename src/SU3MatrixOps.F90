@@ -19,6 +19,9 @@ contains
    pure subroutine MultiplyMatMat(MM, left, right)
       complex(kind=WC), dimension(3, 3), intent(in) :: left, right
       complex(kind=WC), dimension(3, 3), intent(out) :: MM
+#ifdef OMPOff
+      !$omp declare target
+#endif
       !"""
       !Multiple left by right. Assumes 3x3 (colour) (complex) matrices
       !"""
@@ -34,7 +37,7 @@ contains
       MM(1, 3) = left(1, 1) * right(1, 3) + left(1, 2) * right(2, 3) + left(1, 3) * right(3, 3)
       MM(2, 3) = left(2, 1) * right(1, 3) + left(2, 2) * right(2, 3) + left(2, 3) * right(3, 3)
       MM(3, 3) = left(3, 1) * right(1, 3) + left(3, 2) * right(2, 3) + left(3, 3) * right(3, 3)
-   end subroutine MultiplyMatMat
+    end subroutine MultiplyMatMat
 
    pure subroutine MultiplyMatdagMatdag(MM, left, right)
       complex(kind=WC), dimension(3, 3), intent(in) :: left, right
@@ -70,6 +73,9 @@ contains
    pure subroutine TraceMultMatMat(TrMM, left, right)
       complex(kind=WC), dimension(3, 3), intent(in) :: left, right
       complex(kind=WC), intent(out) :: TrMM
+#ifdef OMPOff
+      !$omp declare target
+#endif
       !"""
       !# !Takes the trace of (3,3) complex numbers left, right multiplied together
       !Tr(left*right)
@@ -83,6 +89,9 @@ contains
       complex(kind=WC), dimension(3, 3), intent(in) :: left, right
       real(kind=WP), intent(out) :: RTrMM
       complex(kind=WC) :: TrMM
+#ifdef OMPOff
+      !$omp declare target
+#endif
       !"""
       !# !Takes the real trace of (3,3) complex numbers left, right multiplied together
       !Real(Tr(left*right))
