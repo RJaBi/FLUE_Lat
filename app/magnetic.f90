@@ -51,55 +51,55 @@ program calcB
 
    call writeCompiler()
    call writeGit()
-   write (*, *) ''
+   write (*, *) ""
 
    if (COMMAND_ARGUMENT_COUNT() > 0) then
       call GET_COMMAND_ARGUMENT(1, tomlName)
-      write (*, *) 'Reading toml file from ', TRIM(tomlName)
+      write (*, *) "Reading toml file from ", TRIM(tomlName)
    else
-      write (*, *) 'Pass the full path to the input toml on the command line'
-      write (*, *) 'i.e. fpm run uzerobar -- mydir/input.toml'
+      write (*, *) "Pass the full path to the input toml on the command line"
+      write (*, *) "i.e. fpm run uzerobar -- mydir/input.toml"
       stop
    end if
-!   call toml_load(table, tomlName) ! this works
+   call toml_load(table, tomlName) ! this works
    !write(*,*) 'here?'
-   !call get_value(table, 'fixNum', nFixes) ! this does not
-   nFixes = 1
-   write (*, *) 'We will analyse ', nFixes, ' different cases'
-   !call get_value(table, 'fixLabels', top_array)
+   call get_value(table, "fixNum", nFixes) ! this does not
+   !nFixes = 1
+   write (*, *) "We will analyse ", nFixes, " different cases"
+   call get_value(table, "fixLabels", top_array)
    allocate (fixLabels(nFixes))
-   write (*, *) 'These are'
+   write (*, *) "These are"
    do ii = 1, nFixes
-      !call get_value(top_array, ii, strRead)
-      !fixLabels(ii) = strRead
+      call get_value(top_array, ii, strRead)
+      fixLabels(ii) = strRead
       !write (*, *) TRIM(fixLabels(ii))
    end do
-   fixLabels(1) = 'G2L-8'
+   !fixLabels(1) = 'G2L-8'
    ! Now let's do the load and do the analysis
    ! Rather than pre-load and do all analysis at once
    !allocate (aplaq(nFixes), splaq(nFixes), tplaq(nFixes))
    do ii = 1, nFixes
-      write (*, *) ''
-      write (*, *) ''
+      write (*, *) ""
+      write (*, *) ""
       write (*, *) ii, fixLabels(ii)
       ! Get singleton variables
-      !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugePath'), gaugePath)
-      gaugePath = '/home/ryan/Documents/2025/conf/Gen2L/8x32/'
-      !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'gaugeFormat'), gaugeFormat)
-      gaugeFormat = 'openqcd'
-      !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NT'), NT)
-      NT = 8
-      !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'NS'), NS)
-      NS = 32
-      !call get_value(table, toml_path('fix', TRIM(fixLabels(ii)), 'cfgList'), cfglistFile)
-      cfglistFile = '/home/ryan/Documents/2025/conf/Gen2L/G2l_8x32.list'
+      call get_value(table, toml_path("fix", TRIM(fixLabels(ii)), "gaugePath"), gaugePath)
+      !gaugePath = '/home/ryan/Documents/2025/conf/Gen2L/8x32/'
+      call get_value(table, toml_path("fix", TRIM(fixLabels(ii)), "gaugeFormat"), gaugeFormat)
+      gaugeFormat = "openqcd"
+      call get_value(table, toml_path("fix", TRIM(fixLabels(ii)), "NT"), NT)
+      !NT = 8
+      call get_value(table, toml_path("fix", TRIM(fixLabels(ii)), "NS"), NS)
+      !NS = 32
+      call get_value(table, toml_path("fix", TRIM(fixLabels(ii)), "cfgList"), cfglistFile)
+      !cfglistFile = '/home/ryan/Documents/2025/conf/Gen2L/G2l_8x32.list'
       ! Get list of configurations
-      write (*, *) 'cfgListFile is ', TRIM(cfgListFile)
-      open (newunit=iunit, file=TRIM(cfgListFile), status='OLD')
+      write (*, *) "cfgListFile is ", TRIM(cfgListFile)
+      open (newunit=iunit, file=TRIM(cfgListFile), status="OLD")
       ncon = number_of_lines_in_file(iunit)
       allocate (cfgList(ncon))
       do icon = 1, ncon
-         read (iunit, fmt='(a)') cfgList(icon)
+         read (iunit, fmt="(a)") cfgList(icon)
       end do
       close (iunit)
       ! config data
@@ -109,17 +109,17 @@ program calcB
       ! loop over them
       do icon = 1, ncon
          write (*, *) icon, TRIM(cfgList(icon))
-         gaugeFile = TRIM(gaugePath)//'/'//TRIM(cfgList(icon))
+         gaugeFile = TRIM(gaugePath)//"/"//TRIM(cfgList(icon))
          ! Now do stuff
          select case (gaugeFormat)
-         case ('cssmILDG')
+         case ("cssmILDG")
             ReadGauge => ReadGaugeField_ILDG
             plaqFactor = 1.0_WP
-         case ('openqcd')
+         case ("openqcd")
             readGauge => ReadGaugeField_OpenQCD
             plaqFactor = 1.0_WP
          case default
-            write (*, *) 'gaugeFormat ', TRIM(gaugeFormat), ' not supported. Exiting'
+            write (*, *) "gaugeFormat ", TRIM(gaugeFormat), " not supported. Exiting"
             stop
          end select
          ! allocate space for the gaugefield
@@ -155,10 +155,10 @@ program calcB
       call Jackknife_wp(ncon, aplaqJ, aplaqErr)
       call Jackknife_wp(ncon, splaqJ, splaqErr)
       call Jackknife_wp(ncon, tplaqJ, tplaqErr)
-      write (*, *) 'B is ', BJ(0), ' +- ', BErr
-      write (*, *) 'aplaq is ', aplaqJ(0), ' +- ', aplaqErr
-      write (*, *) 'splaq is ', splaqJ(0), ' +- ', splaqErr
-      write (*, *) 'tplaq is ', tplaqJ(0), ' +- ', tplaqErr
+      write (*, *) "B is ", BJ(0), " +- ", BErr
+      write (*, *) "aplaq is ", aplaqJ(0), " +- ", aplaqErr
+      write (*, *) "splaq is ", splaqJ(0), " +- ", splaqErr
+      write (*, *) "tplaq is ", tplaqJ(0), " +- ", tplaqErr
 
       deallocate (B, aplaq, splaq, tplaq)
       deallocate (BJ, aplaqJ, splaqJ, tplaqJ)
@@ -191,7 +191,7 @@ contains
       rewind (iunit)
       n_lines = 0
       do
-         read (iunit, fmt='(A1)', iostat=istat) tmp
+         read (iunit, fmt="(A1)", iostat=istat) tmp
          if (is_iostat_end(istat)) exit
          n_lines = n_lines + 1
       end do

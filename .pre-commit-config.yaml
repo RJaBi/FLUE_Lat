@@ -86,7 +86,7 @@ repos:
 repos:
 - repo: https://github.com/PlasmaFAIR/fortitude-pre-commit
   # Fortitude version.
-  rev: v0.7.1
+  rev: v0.7.5
   hooks:
     - id: fortitude
       args: ["--fix", "--output-format=concise", "--progress-bar=ascii"]

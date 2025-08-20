@@ -1,5 +1,4 @@
 # FLUE
-
 Code to calculate various gluonic quantities in lattice QCD. These include quantities such as various wilson loops or $F_{\mu\nu}$. See the first table below.
 
 

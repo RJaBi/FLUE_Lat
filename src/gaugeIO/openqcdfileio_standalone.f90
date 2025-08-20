@@ -1,4 +1,4 @@
-!! Functions to read openQCD format gaugefields
+!! Functions to read & write openQCD format gaugefields
 module FLUE_openQCDFileIO_SA
    use FLUE_constants, only: WP, WC
    use FLUE_ILDG_bin, only: FixSU3Matrix
@@ -51,9 +51,9 @@ contains
       else
          fixSU3Set = .true.
       end if
-      
-      write (*, *) 'here ', TRIM(filename)
-      open (infl, file=TRIM(filename), form='unformatted', access='stream', status='old', action='read', convert='little_endian')
+
+      write (*, *) "here ", TRIM(filename)
+      open (infl, file=TRIM(filename), form="unformatted", access="stream", status="old", action="read", convert="little_endian")
       read (infl) ntdim, nxdim, nydim, nzdim, plaq
 
       !allocate(U_xd(nxdim,nydim,nzdim,ntdim,4,3,3))
@@ -127,22 +127,23 @@ contains
 
       allocate(U(NT, NX, NY, NZ, 4, 3, 3))
       U = U_xd
-      
+
       ! Calculate the plaquette as needed by oqcd header
       call genPlaquette(U, NT, NX, NY, NZ, 1, 4, 4, sumTrp, NP, time)
       plaq = sumTrp / real(NP, kind=WC)
 
 
 
-      
+
       !write (*, *) 'here ', TRIM(filename)
-      open (infl, file=TRIM(filename), form='unformatted', access='stream', status='replace', action='write', convert='little_endian')
+      open (infl, file=TRIM(filename), form="unformatted", access="stream", &
+           status="replace", action="write", convert="little_endian")
       write (infl) nt, nx, ny, nz, plaq
 
       !allocate(U(nxdim,nydim,nzdim,ntdim,4,3,3))
 
       U = CSHIFT(U, 1, dim=5)
-      
+
       ! z varies quickest, then y, then x, then t
       do it = 1, nt
          do ix = 1, nx
@@ -167,12 +168,12 @@ contains
 
                      U(it, ix, iy, iz, mu, :, :) = TRANSPOSE(U(it, ix, iy, iz, mu, :, :))
                      U(jt, jx, jy, jz, mu, :, :) = TRANSPOSE(U(jt, jx, jy, jz, mu, :, :))
-                     
+
                      UTmp = U(it, ix, iy, iz, mu, :, :)
                      write (infl) UTmp
                      UTmp = U(jt, jx, jy, jz, mu, :, :)
                      write (infl) UTmp
-                     
+
 
                   end do
                end do
@@ -184,6 +185,6 @@ contains
 
 
     end subroutine WriteGaugeField_OpenQCD
-    
+
 
 end module FLUE_openQCDFileIO_SA

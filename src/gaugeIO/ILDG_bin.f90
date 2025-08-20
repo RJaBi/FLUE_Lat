@@ -1,8 +1,8 @@
-!! Functions to read (maybe write later) ILDG binary data formats
+!! Functions to read (maybe write later) ILDG binary data formats as from cola
 module FLUE_ILDG_bin
    use FLUE_constants, only: WP, WC
    !use stdlib_linalg, only: det
-   use ISO_FORTRAN_ENV, only: compiler_version, compiler_options, OUTPUT_UNIT
+   use, intrinsic :: ISO_FORTRAN_ENV, only: compiler_version, compiler_options, OUTPUT_UNIT
    implicit none(external)
    private
    public :: ReadGaugeField_ILDG
@@ -28,10 +28,8 @@ contains
       else
          fixSU3Set = .true.
       end if
-      
       ! First read the gaugefield
       write (OUTPUT_UNIT, *) TRIM(filename)
-
       matrix_len = 16 * 3 * 3
       irecl = matrix_len * 4 * NX * NY * NZ
       ! write(*,*) matrix_len, irecl, 3, 3, 4, nx, ny, nz, nt
@@ -101,7 +99,10 @@ contains
       end do
       close (101)
       G_tr(1:nx, 1:ny, 1:nz, 1:nt, :, :) = CMPLX(ReG(1:nx, 1:ny, 1:nz, 1:nt, :, :), ImG(1:nx, 1:ny, 1:nz, 1:nt, :, :), kind=WC)
-      do it = 1, nt; do iz = 1, nz; do iy = 1, ny; do ix = 1, nx
+      do it = 1, nt
+         do iz = 1, nz
+            do iy = 1, ny
+               do ix = 1, nx
                   v1 = G_tr(ix, iy, iz, it, :, 1)
                   v2 = G_tr(ix, iy, iz, it, :, 2)
                   call orthogonalise_vectors(v2, v1)
@@ -110,7 +111,10 @@ contains
                   G_x(it, ix, iy, iz, 1, :) = v1
                   G_x(it, ix, iy, iz, 2, :) = v2
                   G_x(it, ix, iy, iz, 3, :) = v3
-               end do; end do; end do; end do
+               end do
+            end do
+         end do
+      end do
       deallocate (G_tr, ReG, ImG)
 
    end function ReadGaugeTransformation_cola

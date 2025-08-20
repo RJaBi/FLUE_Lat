@@ -12,7 +12,7 @@ module FLUE
    use FLUE_version, only: writeCompiler, writeGit
    implicit none(external)
 
-   character(len=*), parameter :: version = "0.1.0"
+   character(len=*), parameter :: version = "0.1.1"
    public
    !public :: calc_mom_space_scalarD
    !public :: Ident, MultiplyMatMat, MultiplyMatdagMatdag, TraceMultMatMat, RealTraceMultMatMat, TraceLessConjgSubtract, colourDecomp

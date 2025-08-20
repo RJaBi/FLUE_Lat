@@ -1,10 +1,10 @@
 name = "FLUE"
-version = "0.1.0"
+version = "0.1.1"
 license = "MIT"
 author = "Ryan Bignell"
 maintainer = "ryan07bignell+github@gmail.com"
-copyright = "Copyright 2024, Ryan Bignell & Ben Page"
-description = "Calculate and analysis the Gluon Propagator from Landau Gauge Fixed anisotropic lattice QCD"
+copyright = "Copyright 2024, Ryan Bignell"
+description = "Calculate and analysis Gluonic properties for lattice QCD"
 categories = ["Physics"]
 keywords = ["lattice", "lattice QCD", "Gluon", "anisotropic", "FASTSUM"]
 homepage = "https://fastsum.gitlab.io/"
@@ -57,6 +57,8 @@ ignore = [
        "MOD021",  # allows .gt.
        "C132",    # allows default public accessiblility
        "E001",    # ignores syntax errors - useful as pre-processor support is tough
+       "S241",    # allows strings with single quotes,
+       "C011",    # allows missing default in select case statements
        ]
 preview = true
 [extra.fortitude.check.per-file-ignores]
