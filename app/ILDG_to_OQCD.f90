@@ -71,7 +71,8 @@ contains
     if (present(stat) )then
        read(str,*,iostat=stat)  int
        if (stat /= 0) then
-          write(*,*) "iostat is ", stat
+          str = 'iostat was not equal to 0'
+!          write(*,*) "iostat is ", stat
        end if
     else
        read(str,*)  int

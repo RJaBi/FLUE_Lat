@@ -7,14 +7,14 @@ program calcB
    use FLUE, only: WP, WC, writeCompiler, writeGit, &
                    ReadGaugeField_ILDG, ReadGaugeField_OpenQCD, genPlaquette, plaquette, &
                    magnetic, complement, jackknife_wp
-   !use tomlf, only: toml_table, toml_load, toml_array, get_value, toml_path
+   use tomlf, only: toml_table, toml_load, toml_array, get_value, toml_path
    implicit none(external)
    ! IO vars
    character(len=128) :: tomlName
    character(len=:), allocatable :: strRead
    ! toml vars
-   !type(toml_table), allocatable :: table
-   !type(toml_array), pointer :: top_array
+   type(toml_table), allocatable :: table
+   type(toml_array), pointer :: top_array
    ! What are we doing?
    integer :: nFixes, nTrans
    character(len=128), dimension(:), allocatable :: fixLabels
