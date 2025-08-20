@@ -18,9 +18,14 @@ Code to calculate various gluonic quantities in lattice QCD. These include quant
 
 
 ---
-## Gauge IO
+## Gauge Formats
 
 The supported formats are `openqcd` and an ILDG-like binary format. This is the ILDG binary data format, but in big-endian.
+
+| Format   | Read    | Write   |
+|----------|---------|---------|
+| openqcd  | &check; | &check; |
+| ildg-bin | &check; | &cross; |
 
 ---
 
@@ -40,3 +45,8 @@ If using the intel compiler (ifx) you can enable openMP style parallelism with d
 suffixes = ["F90"]
 macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
 ```
+
+| Program      | purpose						  | args		       |
+|--------------|----------------------------------------------------------|----------------------------|
+| magnetic     | Calculate's the magnetic portion of Fmunu                | mag.toml		       |
+| ILDG_to_OQCD | Convert a gauge field ILDG-bin in big endian to openqcd  | inputFile outputFile NT NS |

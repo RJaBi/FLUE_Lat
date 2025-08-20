@@ -11,15 +11,24 @@ module FLUE_ILDG_bin
 
 contains
 
-   function ReadGaugeField_ILDG(filename, NX, NY, NZ, NT) result(U_xd)
+   function ReadGaugeField_ILDG(filename, NX, NY, NZ, NT, fixSU3) result(U_xd)
       character(len=*), intent(in) :: filename
       integer, intent(in) :: NX, NY, NZ, NT
+      logical, optional, intent(in) :: fixSU3
       complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U_xd
       complex(kind=WC), dimension(3, 3, 4, NX, NY, NZ, NT) :: URead
       integer, parameter :: infl = 101
       integer :: matrix_len, irecl
       ! counters
       integer :: it, ix, iy, iz, mu, nu
+      logical :: fixSU3Set
+
+      if (present(fixSU3)) then
+         fixSU3Set = fixSU3
+      else
+         fixSU3Set = .true.
+      end if
+      
       ! First read the gaugefield
       write (OUTPUT_UNIT, *) TRIM(filename)
 
@@ -53,7 +62,9 @@ contains
                         nu = 1
                      end select
                      U_xd(it, ix, iy, iz, nu, :, :) = TRANSPOSE(URead(:, :, mu, ix, iy, iz, it))
-                     call FixSU3Matrix(U_xd(it, ix, iy, iz, nu, :, :))
+                     if (fixSU3Set) then
+                        call FixSU3Matrix(U_xd(it, ix, iy, iz, nu, :, :))
+                     end if
                   end do
                end do
             end do

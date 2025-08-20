@@ -39,11 +39,12 @@ program calcB
    integer :: ncon
 
    abstract interface
-      function ReadGaugeInterface(filename, NX, NY, NZ, NT) result(U_xd)
+      function ReadGaugeInterface(filename, NX, NY, NZ, NT, fixSU3) result(U_xd)
          import :: WC
          implicit none(external)
          character(len=*), intent(in) :: filename
          integer, intent(in) :: NX, NY, NZ, NT
+         logical, optional, intent(in) :: fixSU3
          complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U_xd
       end function ReadGaugeInterface
    end interface
