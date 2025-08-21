@@ -1,7 +1,7 @@
 !! Functions to read & write openQCD format gaugefields
 module FLUE_openQCDFileIO_SA
    use FLUE_constants, only: WP, WC
-   use FLUE_ILDG_bin, only: FixSU3Matrix
+   use FLUE_SU3MatrixOps, only: FixSU3Matrix
    use FLUE_wloops, only: genPlaquette
    implicit none(external)
    private

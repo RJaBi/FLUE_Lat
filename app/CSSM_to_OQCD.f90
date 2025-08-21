@@ -1,21 +1,16 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! Convert ildg-bin big endian gaugefield to openqcd format
+!! Convert CSSM gaugefield to openqcd format
 !! Ryan Bignell 2025
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-program ILDG_To_OQCD
+program CSSM_To_OQCD
   use FLUE, only: WP, WC, writeCompiler, writeGit, &
-       ReadGaugeField_ILDG, writeGaugeField_OpenQCD  !CHECKS! ,&
-!Checks!       ReadGaugeField_OpenQCD, genPlaquette
+       ReadGaugeField_CSSM, writeGaugeField_OpenQCD
   implicit none(external)
   ! IO vars
   character(len=256) :: inputFile, outputFile, NTS, NSS
   complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: U1
-!Checks!  complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: U2
   integer :: NT, NS
-!Checks!  ! Plaqeutte holders
-!Checks!  real(kind=WP) :: sumTrP, time
-  !Checks!  integer :: nP
 
   call writeCompiler()
   call writeGit()
@@ -39,25 +34,9 @@ program ILDG_To_OQCD
   end if
 
   allocate(U1(NT, NS, NS, NS, 4, 3, 3))
-  U1 = ReadGaugeField_ILDG(trim(inputFile), NS, NS, NS, NT, fixSU3=.false.)
-
-!Checks!  call genPlaquette(U1, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
-!Checks!  write(*,*) sumTrp / real(nP, kind=WP)
+  U1 = ReadGaugeField_CSSM(trim(inputFile), NS, NS, NS, NT, fixSU3=.true.)
 
   call writeGaugeField_OpenQCD(trim(outputFile), U1, NS, NS, NS, NT)
-
-
-!Checks!  allocate(U2(NT, NS, NS, NS, 4, 3, 3))
-!Checks!  U2 = ReadGaugeField_OpenQCD(trim(outputFile), NS, NS, NS, NT, fixSU3=.false.)
-!Checks!
-!Checks!  call genPlaquette(U2, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
-!Checks!  write(*,*) sumTrp / real(nP, kind=WP)
-!Checks!
-!Checks!  if (any(U1 /= U2)) then
-!Checks!     write(*,*) 'bad'
-!Checks!  else
-!Checks!     write(*,*) 'good'
-!Checks!  end if
 
 contains
 
@@ -80,4 +59,4 @@ contains
     end if
   end subroutine str2int
 
-end program ILDG_To_OQCD
+end program CSSM_To_OQCD

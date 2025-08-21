@@ -1,6 +1,6 @@
 !! Constants module
 module FLUE_constants
-   use, intrinsic :: ISO_C_BINDING, only: C_DOUBLE, C_DOUBLE_COMPLEX, C_FLOAT
+   use, intrinsic :: ISO_C_BINDING, only: C_DOUBLE, C_DOUBLE_COMPLEX, C_FLOAT, C_INT
    implicit none(external)
    public
 
@@ -11,5 +11,5 @@ module FLUE_constants
    real(kind=WP), parameter :: PI = ACOS(-1.0_WP)
 
    integer, parameter :: SP = C_FLOAT
-   
+
 end module FLUE_constants

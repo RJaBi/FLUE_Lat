@@ -1,20 +1,79 @@
 ! Some subroutines that act on SU(3) (3x3 complex) matrices
+! Or on SU(3) 'color-vectors' (3 complex)
 module FLUE_SU3MatrixOps
-   use FLUE_constants, only: WC, WP
-   implicit none(external)
-   ! Strictly this matrix visually is the tranpose in memory
-   ! but as this is the identity it doesnt matter
-   complex(kind=WC), dimension(3, 3), parameter :: Ident = RESHAPE(source=[ &
-                                                                   (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
-                                                                   (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
-                                                                   (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP)], &
-                                                                   shape=[3, 3])
-   !private
-
-   !public :: TracelessConjgSubtract, colourDecomp
-   public
+  use FLUE_constants, only: WC, WP
+  implicit none(external)
+  ! Strictly this matrix visually is the tranpose in memory
+  ! but as this is the identity it doesnt matter
+  complex(kind=WC), dimension(3, 3), parameter :: Ident = RESHAPE(source=[ &
+       (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
+       (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
+       (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP)], &
+       shape=[3, 3])
+  private
+  public :: Ident, MultiplyMatMat, MultiplyMatDagMatDag, &
+       TraceMultMatMat, RealTraceMultMatMat, TracelessConjgSubtract, &
+       colourDecomp, RealTraceMat
+  public :: FixSU3Matrix
+  public :: orthogonalise_vectors, vector_product
 
 contains
+
+     ! stripped from cola and de-colour vectored
+   pure subroutine orthogonalise_vectors(w, v)
+
+      complex(kind=WC), dimension(3), intent(inout) :: w
+      complex(kind=WC), dimension(3), intent(in) :: v
+      complex(kind=WC) :: vdotw
+
+      vdotw = SUM(CONJG(v) * w)
+
+      w = w - v * vdotw
+
+   end subroutine orthogonalise_vectors
+   ! stripped from cola and de-colour vectored
+   pure subroutine vector_product(x, v, w)
+
+      complex(kind=WC), dimension(3), intent(out) :: x
+      complex(kind=WC), dimension(3), intent(in) :: v, w
+      integer :: ic, jc, kc
+
+      integer, parameter :: nc = 3
+
+      do ic = 1, nc
+         jc = MODULO(ic, 3) + 1
+         kc = MODULO(jc, 3) + 1
+
+         x(ic) = CONJG(v(jc) * w(kc) - v(kc) * w(jc))
+      end do
+
+   end subroutine vector_product
+
+   ! stripped from cola and de-colour vectored
+   subroutine FixSU3Matrix(U_x)
+      complex(kind=WC), dimension(3, 3), intent(inout) :: U_x
+      complex(kind=WC), dimension(3) :: v1, v2, v3
+      v1 = U_x(1, :)
+      call normalise_vector(v1)
+      v2(:) = U_x(2, :)
+      call orthogonalise_vectors(v2, v1)
+      call normalise_vector(v2)
+      call vector_product(v3, v1, v2)
+      call normalise_vector(v3)
+      U_x(1, :) = v1(:)
+      U_x(2, :) = v2(:)
+      U_x(3, :) = v3(:)
+   end subroutine FixSU3Matrix
+
+   ! stripped from cola and de-colour vectored
+   subroutine normalise_vector(v)
+      complex(kind=WC), dimension(3), intent(inout) :: v
+      real(WP) :: norm
+      norm = SQRT(SUM(real(v)**2 + AIMAG(v)**2))
+      v = v / norm
+   end subroutine normalise_vector
+
+
 
    pure subroutine MultiplyMatMat(MM, left, right)
       complex(kind=WC), dimension(3, 3), intent(in) :: left, right
