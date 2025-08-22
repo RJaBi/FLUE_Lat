@@ -1,5 +1,5 @@
 module FLUE
-  use FLUE_ILDG_bin, only: ReadGaugeField_ILDG
+  use FLUE_ILDG_bin, only: ReadGaugeField_ILDG, writeGaugeField_ILDG
   use FLUE_CSSM_bin, only: ReadGaugeTransformation_cola, ReadGaugeField_CSSM
    use FLUE_openQCDFileIO_SA, only: ReadGaugeField_OpenQCD, writeGaugeField_OpenQCD
    use FLUE_gluonProp, only: scalarGluonProp, calc_mom_space_scalarD
