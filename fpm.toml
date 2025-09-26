@@ -46,7 +46,7 @@ M_stopwatch        = { git = "https://github.com/urbanjost/M_stopwatch.git", bra
 suffixes = ["F90"]
 #macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
 #macros=['SETGITHASH=Yes']
-macros=['SETGITHASH=Yes', 'OMP=1']
+#macros=['SETGITHASH=Yes', 'OMP=1']
 #macros=['SETGITHASH=Yes', 'lFORTRAN=1']
 
 # fortitude-lint
