@@ -6,7 +6,7 @@ module FLUE_constants
 
    ! These are used
    integer, parameter :: WP = C_DOUBLE
-   integer, parameter :: WC = C_DOUBLE
+   integer, parameter :: WC = C_DOUBLE_COMPLEX
    !real(WP) :: pi = 3.1415926535897932384626433_WP
    real(kind=WP), parameter :: PI = ACOS(-1.0_WP)
 

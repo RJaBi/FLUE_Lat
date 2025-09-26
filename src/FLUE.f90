@@ -1,4 +1,7 @@
 module FLUE
+
+  use FLUE_SU2_HKLS, only: ReadGaugeField_HKLS, WriteGaugeField_HKLS
+  use FLUE_SU2_wloops, only: SU2_genPlaquette
   use FLUE_ILDG_bin, only: ReadGaugeField_ILDG, writeGaugeField_ILDG
   use FLUE_CSSM_bin, only: ReadGaugeTransformation_cola, ReadGaugeField_CSSM
    use FLUE_openQCDFileIO_SA, only: ReadGaugeField_OpenQCD, writeGaugeField_OpenQCD
