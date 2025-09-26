@@ -1,7 +1,10 @@
 module FLUE_SU2_CSSM
   use FLUE_constants, only: WP, WC
+  use FLUE_SU2_wloops, only: SU2_genPlaquette
   implicit none(external)
   private
+
+  public :: writeGaugeField_SU2_CSSM
 
 contains
 
@@ -13,14 +16,22 @@ contains
       real(kind=WP), intent(in) :: beta
       ! for writing
       complex(kind=WC), dimension(NX, NY, NZ, NT, 4, 2, 2) :: UWrite
-      real(kind=WP), , dimension(NX, NY, NZ, NT, 4, 2, 2) :: UWReal, UWImag
+      real(kind=WP), dimension(NX, NY, NZ, NT, 4, 2, 2) :: UWReal, UWImag
       !complex(kind=WC), dimension(4) :: UTmp
       integer, parameter :: infl = 107
       ! counters
       integer :: it, ix, iy, iz
       ! plaq like variables
       real(kind=WP) :: lastPlaq, plaqbarAvg, uzero
+      real(kind=WP) :: time, sumtrp
+      integer :: nP
 
+      call SU2_genPlaquette(U_xd, NT, NX, NY, NZ, 1, 4, 4, sumTrP, nP, time)
+
+      lastPlaq = sumtrp / real(nP, kind=WP)
+      plaqbarAvg = lastplaq
+
+      uzero = plaqbarAvg **0.25_WP
 
       ! Re-order links
       do ix=1, NX
@@ -42,7 +53,7 @@ contains
       ! write links
       write(infl) UWReal
       write(infl) UWImag
-      write(infl) lastPlaq, plabarAvg, uzero
+      write(infl) lastPlaq, plaqbarAvg, uzero
       close(infl)
     end subroutine WriteGaugeField_SU2_CSSM
 

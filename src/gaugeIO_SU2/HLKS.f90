@@ -20,7 +20,8 @@ contains
       integer(kind=C_LONG), intent(out) :: seed
       ! for reading
       complex(kind=C_DOUBLE_COMPLEX), dimension(NX, NY, NZ, NT, 4, 2) :: UHold
-      complex(kind=C_DOUBLE_COMPLEX), dimension(4) :: UTmp
+      !complex(kind=C_DOUBLE_COMPLEX), dimension(4) :: UTmp
+      complex(kind=C_DOUBLE_COMPLEX):: UTmp
       integer, parameter :: infl = 107
       ! counters
       integer :: it, ix, iy, iz, mu, ab, aa, bb
@@ -29,12 +30,14 @@ contains
 
       read(infl) old_nproc
       do ab = 1 , 2
-         do it=1, NT
-            do iz=1, NZ
-               do iy=1,NY
-                  do ix=1, NX
-                     read(infl) UTmp
-                     UHold(ix, iy, iz, it, :, ab) = UTmp
+         do mu=1, 4
+            do it=1, NT
+               do iz=1, NZ
+                  do iy=1,NY
+                     do ix=1, NX
+                        read(infl) UTmp
+                        UHold(ix, iy, iz, it, mu, ab) = UTmp
+                     end do
                   end do
                end do
             end do
@@ -71,7 +74,7 @@ contains
       integer(kind=C_LONG), intent(in) :: seed
       ! for writing
       complex(kind=C_DOUBLE_COMPLEX), dimension(NX, NY, NZ, NT, 4, 2) :: UHold
-      complex(kind=C_DOUBLE_COMPLEX), dimension(4) :: UTmp
+      complex(kind=C_DOUBLE_COMPLEX):: UTmp
       integer, parameter :: infl = 107
       ! counters
       integer :: it, ix, iy, iz, mu, ab, aa, bb
@@ -95,12 +98,14 @@ contains
 
       write(infl) old_nproc
       do ab = 1 , 2
-         do it=1, NT
-            do iz=1, NZ
-               do iy=1,NY
-                  do ix=1, NX
-                     UTmp = UHold(ix, iy, iz, it, :, ab)
-                     write(infl) UTmp
+         do mu=1, 4
+            do it=1, NT
+               do iz=1, NZ
+                  do iy=1,NY
+                     do ix=1, NX
+                        UTmp = UHold(ix, iy, iz, it, mu, ab)
+                        write(infl) UTmp
+                     end do
                   end do
                end do
             end do

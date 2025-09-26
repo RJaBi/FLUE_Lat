@@ -6,7 +6,7 @@
 program SU2_HKLS_to_CSSM
   use, intrinsic :: ISO_C_BINDING, only: C_INT, C_DOUBLE_COMPLEX, C_LONG
   use FLUE, only: WP, WC, writeCompiler, writeGit, &
-       ReadGaugeField_HKLS, WriteGaugeField_HKLS, Su2_genPlaquette
+       ReadGaugeField_HKLS, WriteGaugeField_SU2_CSSM
   implicit none(external)
   ! IO vars
   character(len=256) :: inputFile, outputFile, NTS, NSS
@@ -50,20 +50,9 @@ program SU2_HKLS_to_CSSM
   allocate(U1(NT, NS, NS, NS, 4, 2, 2))
   call ReadGaugeField_HKLS(trim(inputFile), NS, NS, NS, NT, U1, seed, old_nproc)
 
-  call writeGaugeField_HKLS(trim(outputFile), NS, NS, NS, NT, U1, seed, old_nproc)
+  ! call writeGaugeField_HKLS(trim(outputFile), NS, NS, NS, NT, U1, seed, old_nproc)
 
-  allocate(U2(NT, NS, NS, NS, 4, 2, 2))
-  call ReadGaugeField_HKLS(trim(inputFile), NS, NS, NS, NT, U2, seed2, old_nproc2)
-
-  write(*,*) 'space'
-  call SU2_genPlaquette(U1, NT, NS, NS, NS, 2, 4, 4, sumTrP, nP, time)
-  write(*,*) sumTrP, nP, sumTrP/nP, time
-  write(*,*) 'time'
-  call SU2_genPlaquette(U1, NT, NS, NS, NS, 1, 1, 4, sumTrP, nP, time)
-  write(*,*) sumTrP, nP, sumTrP/nP, time
-  write(*,*) 'total'
-  call SU2_genPlaquette(U1, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
-  write(*,*) sumTrP, nP, sumTrP/nP, time
+  call writeGaugeField_SU2_CSSM(trim(inputFile), NS, NS, NS, NT, U1, 5, 1.9_WP)
 
 
 contains

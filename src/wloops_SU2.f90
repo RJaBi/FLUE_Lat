@@ -51,7 +51,7 @@ contains
          U_xd = matmul(bmat, amat)
       end do
       ! Why was this transpose here?
-      ! U_xd = TRANSPOSE(U_xd)
+      U_xd = TRANSPOSE(U_xd)
     end function SU2_genericPath
 
    subroutine SU2_genPlaquette(data, NT, NX, NY, NZ, muStart, muEnd, nuEnd, sumTrP, nP, time)
@@ -87,7 +87,8 @@ contains
                         coordBase = (/nnt, nnx, nny, nnz/)
                         plaq = SU2_genericPath(data, coordBase, plaqPath)
                         P = real(plaq(1,1) + plaq(2,2), kind=WP)
-                        ! write(*,*) coordBase, P
+                        ! Account for colours
+                        P = 0.5_WP * P
                         sumTrP = sumTrP + P
                         nP = nP + 1
                      end do
