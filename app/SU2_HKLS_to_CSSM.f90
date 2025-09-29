@@ -52,7 +52,7 @@ program SU2_HKLS_to_CSSM
 
   ! call writeGaugeField_HKLS(trim(outputFile), NS, NS, NS, NT, U1, seed, old_nproc)
 
-  call writeGaugeField_SU2_CSSM(trim(inputFile), NS, NS, NS, NT, U1, 5, 1.9_WP)
+  call writeGaugeField_SU2_CSSM(trim(outputFile), NS, NS, NS, NT, U1, 5, 1.9_WP)
 
 
 contains
