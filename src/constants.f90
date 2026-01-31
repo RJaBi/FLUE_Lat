@@ -9,6 +9,7 @@ module FLUE_constants
    integer, parameter :: WC = C_DOUBLE_COMPLEX
    !real(WP) :: pi = 3.1415926535897932384626433_WP
    real(kind=WP), parameter :: PI = ACOS(-1.0_WP)
+   real(kind=WP), parameter :: TWO_PI = 2.0_WP * PI
 
    integer, parameter :: SP = C_FLOAT
 
