@@ -1,5 +1,4 @@
 ! Some subroutines that act on SU(3) (3x3 complex) matrices
-! Or on SU(3) 'color-vectors' (3 complex)
 module FLUE_SU3MatrixOps
   use FLUE_constants, only: WC, WP
   implicit none(external)
@@ -21,36 +20,26 @@ contains
 
      ! stripped from cola and de-colour vectored
    pure subroutine orthogonalise_vectors(w, v)
-
       complex(kind=WC), dimension(3), intent(inout) :: w
       complex(kind=WC), dimension(3), intent(in) :: v
       complex(kind=WC) :: vdotw
-
       vdotw = SUM(CONJG(v) * w)
-
       w = w - v * vdotw
-
    end subroutine orthogonalise_vectors
    ! stripped from cola and de-colour vectored
    pure subroutine vector_product(x, v, w)
-
       complex(kind=WC), dimension(3), intent(out) :: x
       complex(kind=WC), dimension(3), intent(in) :: v, w
       integer :: ic, jc, kc
-
       integer, parameter :: nc = 3
-
       do ic = 1, nc
          jc = MODULO(ic, 3) + 1
          kc = MODULO(jc, 3) + 1
-
          x(ic) = CONJG(v(jc) * w(kc) - v(kc) * w(jc))
       end do
-
    end subroutine vector_product
-
    ! stripped from cola and de-colour vectored
-   subroutine FixSU3Matrix(U_x)
+   pure subroutine FixSU3Matrix(U_x)
       complex(kind=WC), dimension(3, 3), intent(inout) :: U_x
       complex(kind=WC), dimension(3) :: v1, v2, v3
       v1 = U_x(1, :)
@@ -64,17 +53,14 @@ contains
       U_x(2, :) = v2(:)
       U_x(3, :) = v3(:)
    end subroutine FixSU3Matrix
-
    ! stripped from cola and de-colour vectored
-   subroutine normalise_vector(v)
+   pure subroutine normalise_vector(v)
       complex(kind=WC), dimension(3), intent(inout) :: v
       real(WP) :: norm
       norm = SQRT(SUM(real(v)**2 + AIMAG(v)**2))
       v = v / norm
-   end subroutine normalise_vector
-
-
-
+    end subroutine normalise_vector
+    ! explicitly unroll 3x3 matrix mult
    pure subroutine MultiplyMatMat(MM, left, right)
       complex(kind=WC), dimension(3, 3), intent(in) :: left, right
       complex(kind=WC), dimension(3, 3), intent(out) :: MM
@@ -94,7 +80,7 @@ contains
       MM(2, 3) = left(2, 1) * right(1, 3) + left(2, 2) * right(2, 3) + left(2, 3) * right(3, 3)
       MM(3, 3) = left(3, 1) * right(1, 3) + left(3, 2) * right(2, 3) + left(3, 3) * right(3, 3)
    end subroutine MultiplyMatMat
-
+   ! A^\dag B^\dag
    pure subroutine MultiplyMatdagMatdag(MM, left, right)
       complex(kind=WC), dimension(3, 3), intent(in) :: left, right
       complex(kind=WC), dimension(3, 3), intent(out) :: MM
