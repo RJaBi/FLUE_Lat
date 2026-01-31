@@ -6,8 +6,9 @@
 program calcB
    use FLUE, only: WP, WC, writeCompiler, writeGit, &
                    ReadGaugeField_ILDG, ReadGaugeField_OpenQCD, genPlaquette, plaquette, &
-                   magnetic, complement, jackknife_wp
+                   magnetic
    use tomlf, only: toml_table, toml_load, toml_array, get_value, toml_path
+   use FJSample, only: complement, jackError
    implicit none(external)
    ! IO vars
    character(len=128) :: tomlName
@@ -151,10 +152,10 @@ program calcB
       call Complement(ncon, splaqJ(1:), splaq)
       call Complement(ncon, tplaqJ(1:), tplaq)
       ! Now calculate uncertainties
-      call Jackknife_wp(ncon, BJ, BErr)
-      call Jackknife_wp(ncon, aplaqJ, aplaqErr)
-      call Jackknife_wp(ncon, splaqJ, splaqErr)
-      call Jackknife_wp(ncon, tplaqJ, tplaqErr)
+      call jackError(ncon, BJ, BErr)
+      call jackError(ncon, aplaqJ, aplaqErr)
+      call jackError(ncon, splaqJ, splaqErr)
+      call jackError(ncon, tplaqJ, tplaqErr)
       write (*, *) "B is ", BJ(0), " +- ", BErr
       write (*, *) "aplaq is ", aplaqJ(0), " +- ", aplaqErr
       write (*, *) "splaq is ", splaqJ(0), " +- ", splaqErr

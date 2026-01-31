@@ -14,7 +14,6 @@ module FLUE
         orthogonalise_vectors, vector_product
    use FLUE_gpManip, only: Q_Average, cone_cut
    use FLUE_mom, only: get_qhat
-   use FLUE_jack, only: complement, jackknife_wp
    use FLUE_constants, only: WP, WC, PI, SP, C_INT
    use FLUE_version, only: writeCompiler, writeGit
    implicit none(external)
