@@ -1,16 +1,10 @@
-! Some subroutines that act on SU(3) (3x3 complex) matrices
+! Some subroutines that act upon and create SU(3) (3x3 complex) matrices
 module FLUE_SU3MatrixOps
+  use FLUE_matrixConstants, only: Ident3x3
   use FLUE_constants, only: WC, WP
   implicit none(external)
-  ! Strictly this matrix visually is the tranpose in memory
-  ! but as this is the identity it doesnt matter
-  complex(kind=WC), dimension(3, 3), parameter :: Ident = RESHAPE(source=[ &
-       (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
-       (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
-       (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP)], &
-       shape=[3, 3])
   private
-  public :: Ident, MultiplyMatMat, MultiplyMatDagMatDag, &
+  public :: MultiplyMatMat, MultiplyMatDagMatDag, &
        TraceMultMatMat, RealTraceMultMatMat, TracelessConjgSubtract, &
        colourDecomp, RealTraceMat
   public :: FixSU3Matrix
@@ -145,7 +139,7 @@ contains
       ! TrSub = A - B^dagger - Tr(A-B^dagger) / 3.0
       !
       TrSub = left - CONJG(TRANSPOSE(right))
-      call TraceMultMatMat(TrMM, TrSub, Ident)
+      call TraceMultMatMat(TrMM, TrSub, Ident3x3)
       TrSub = TrSub - trMM / 3.0_WP
    end subroutine TraceLessConjgSubtract
 
