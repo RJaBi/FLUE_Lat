@@ -1,4 +1,8 @@
 # FLUE
+<p align="center">
+<img width="350" height="332.34" alt="lattice_062" src="https://github.com/user-attachments/assets/2ac702c1-28f7-430d-aa4a-2b508beaf639" />
+</p>
+
 Code to calculate various gluonic quantities in lattice QCD. These include quantities such as various wilson loops or $F_{\mu\nu}$. See the first table below. Primarily this supports $SU(3)$, but there is a limited amount of $SU(2)$ support.
 
 
