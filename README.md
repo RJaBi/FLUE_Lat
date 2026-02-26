@@ -1,9 +1,12 @@
-# FLUE
+[![Fortitude](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/PlasmaFAIR/fortitude/main/docs/assets/badge/v0.json)](https://github.com/PlasmaFAIR/fortitude)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
+# <img width="30" height="30" alt="FLUE Favicon" src="https://github.com/user-attachments/assets/407cb74b-5fdf-4ab4-b46c-79cee3e57c85" />LUE
 <p align="center">
-<img width="350" height="332.34" alt="lattice_062" src="https://github.com/user-attachments/assets/2ac702c1-28f7-430d-aa4a-2b508beaf639" />
+<img width="350" height="332.34" alt="FLUE Logo" src="https://github.com/user-attachments/assets/2ac702c1-28f7-430d-aa4a-2b508beaf639" />
 </p>
 
 Code to calculate various gluonic quantities in lattice QCD. These include quantities such as various wilson loops or $F_{\mu\nu}$. See the first table below. Primarily this supports $SU(3)$, but there is a limited amount of $SU(2)$ support.
+
 
 
 
