@@ -16,7 +16,7 @@ auto-examples = true
 module-naming = false
 
 [install]
-library = false
+library = true
 
 [fortran]
 implicit-typing = false
@@ -28,7 +28,7 @@ source-dir="src"
 
 [dependencies]
 stdlib = "*"
-openmp = "*"
+#openmp = "*"
 #stdlib = { path = "../stdlib" }
 #csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
 #fftpack = { git="https://github.com/fortran-lang/fftpack.git" }
@@ -44,7 +44,7 @@ FJsample = { git = "https://github.com/RJaBi/FJsample" }
 [preprocess]
 [preprocess.cpp]
 suffixes = ["F90"]
-macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
+#macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
 #macros=['SETGITHASH=Yes']
 #macros=['SETGITHASH=Yes', 'OMP=1']
 #macros=['SETGITHASH=Yes', 'lFORTRAN=1']

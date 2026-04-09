@@ -7,6 +7,12 @@ project('FLUE', 'c',
 
 add_languages('fortran', native: false)
 
+# Set the fortran compiler
+env = environment()
+FortCompiler = 'gfortran'
+env.set('FC', FortCompiler)
+env.set('FPM_FC', FortCompiler)
+
 meson_path = meson.current_build_dir()
 
 py_mod = import('python')
@@ -39,6 +45,8 @@ run_command(
     'install',
     '--profile',
     'release',
+    '--compiler',
+    FortCompiler,
     '--flag',
     fflags,
     '--c-flag',
@@ -49,7 +57,7 @@ run_command(
 )
 
 # f2py
-source_path = meson.global_source_root() / '..' / 'c_wrapper' / 'FLUE_c.f90'
+source_path = meson.project_source_root() / '..' / 'c_wrapper' / 'FLUE_c.f90'
 FLUE_c_f90 = files(source_path)
 
 FLUE_source = custom_target('FLUE_compiled.c',
@@ -73,19 +81,20 @@ py.install_sources(f_sources, subdir:'FLUE/compiled')
 main_sources = ['FLUE/__init__.py']
 py.install_sources(main_sources, subdir:'FLUE')
 
-gluonAna_sources = [
-  'FLUE/gluonAna/__init__.py',
-  'FLUE/gluonAna/gpManip.py',
-  'FLUE/gluonAna/momentum.py'
+gaugeIO_sources = [
+  'FLUE/gaugeIO/__init__.py',
+  'FLUE/gaugeIO/ildg.py',
+  'FLUE/gaugeIO/cssm.py',
+  'FLUE/gaugeIO/oqcd.py',
 ]
-py.install_sources(gluonAna_sources, subdir:'FLUE/gluonAna')
+py.install_sources(gaugeIO_sources, subdir:'FLUE/gaugeIO')
 
-gluonCalc_sources = [
-  'FLUE/gluonCalc/__init__.py',
-  'FLUE/gluonCalc/su3matrixops.py',
-  'FLUE/gluonCalc/gluonprop.py'
+wloops_sources = [
+  'FLUE/wloops/__init__.py',
+  'FLUE/wloops/plaquette.py',
 ]
-py.install_sources(gluonCalc_sources, subdir:'FLUE/gluonCalc')
+py.install_sources(wloops_sources, subdir:'FLUE/wloops')
+
 
 
 # Extension fortran module
