@@ -7,6 +7,7 @@
 
 Code to calculate various gluonic quantities in lattice QCD. These include quantities such as various wilson loops or $F_{\mu\nu}$. See the first table below. Primarily this supports $SU(3)$, but there is a limited amount of $SU(2)$ support.
 
+**Note you may need to set the stacksize to larger (unlimited is easiest) to use this code**
 
 
 
