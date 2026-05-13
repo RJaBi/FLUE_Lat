@@ -2,7 +2,7 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
 # <img width="30" height="30" alt="FLUE Favicon" src="https://github.com/user-attachments/assets/407cb74b-5fdf-4ab4-b46c-79cee3e57c85" />LUE
 <p align="center">
-<img width="350" height="332.34" alt="FLUE Logo" src="https://github.com/user-attachments/assets/2ac702c1-28f7-430d-aa4a-2b508beaf639" />
+  <img width="3845" height="1027" alt="FLUE banner" src="https://github.com/user-attachments/assets/afea2fee-3099-41f6-b1d0-1634a8d89e6e" />
 </p>
 
 Code to calculate various gluonic quantities in lattice QCD. These include quantities such as various wilson loops or $F_{\mu\nu}$. See the first table below. Primarily this supports $SU(3)$, but there is a limited amount of $SU(2)$ support.
@@ -70,14 +70,14 @@ suffixes = ["F90"]
 macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
 ```
 
-| Program          | purpose					                                    	  | args		                   |
-|------------------|----------------------------------------------------------|----------------------------|
-| magnetic         | Calculate's the magnetic portion of Fmunu                | mag.toml		               |
-| ILDG_to_OQCD     | Convert a gauge field ILDG-bin in big endian to openqcd  | inputFile outputFile NT NS |
-| CSSM_to_OQCD     | Convert a gauge field cssm to openqcd                    | inputFile outputFile NT NS |
-| OQCD_to_ILDG     | Convert a gauge field openqcd to ILDG-bin in big endian  | inputFile outputFile NT NS |
-| SU2_HKLS_to_CSSM | Convert a $SU(2)$ gaugefield in HKLS to cssm             | inputFile outputFile NT NS |
-| OQCD_stoutSmear  | Stout smear (spatial) a openqcd gauge field and print average unsmeared and smeared plaquette values | inputFile rho nSweeps NT NS |
+| Program          | purpose					                                    	                                               | args		                     |
+|------------------|-------------------------------------------------------------------------------------------------------|-----------------------------|
+| magnetic         | Calculate's the magnetic portion of Fmunu                                                             | mag.toml		                 |
+| ILDG_to_OQCD     | Convert a gauge field ILDG-bin in big endian to openqcd                                               | inputFile outputFile NT NS  |
+| CSSM_to_OQCD     | Convert a gauge field cssm to openqcd                                                                 | inputFile outputFile NT NS  |
+| OQCD_to_ILDG     | Convert a gauge field openqcd to ILDG-bin in big endian                                               | inputFile outputFile NT NS  |
+| SU2_HKLS_to_CSSM | Convert a $SU(2)$ gaugefield in HKLS to cssm                                                          | inputFile outputFile NT NS  |
+| OQCD_stoutSmear  | Stout smear (spatial) an openqcd gauge field and print average unsmeared and smeared plaquette values | inputFile rho nSweeps NT NS |
 ----
 # Python Support
 
