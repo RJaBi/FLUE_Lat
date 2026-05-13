@@ -50,8 +50,6 @@ contains
          ! now multiply it into U_xd from the right
          U_xd = matmul(bmat, amat)
       end do
-      ! Why was this transpose here?
-      U_xd = TRANSPOSE(U_xd)
     end function SU2_genericPath
 
    subroutine SU2_genPlaquette(data, NT, NX, NY, NZ, muStart, muEnd, nuEnd, sumTrP, nP, time)

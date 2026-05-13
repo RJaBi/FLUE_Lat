@@ -54,7 +54,6 @@ module flue_wloops
          ! now multiply it into U_xd from the right
          call multiplymatmat(u_xd, bmat, amat)
       end do
-      u_xd = transpose(u_xd)
    end function genericpath
 
    subroutine genplaquette(data, nt, nx, ny, nz, mustart, muend, nuend, sumtrp, np, time)
@@ -445,7 +444,6 @@ module flue_wloops
       integer :: nnx, nny, nnz, nnt
       ! top left
       ! Untested
-      stop
       plaqpath = (/nu, -mu, -nu, mu/)
 #ifdef LOCALITYSUPPORT
       do concurrent(nnx = 1:nx, nny = 1:ny, nnz = 1:nz, nnt = 1:nt) &
