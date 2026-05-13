@@ -9,10 +9,11 @@ module FLUE
   use FLUE_openQCDFileIO_SA, only: ReadGaugeField_OpenQCD, writeGaugeField_OpenQCD
    use FLUE_gluonProp, only: scalarGluonProp, calc_mom_space_scalarD
    use FLUE_wloops, only: plaquette, polyakov, genPlaquette, magnetic, genericPath, periodCoord
+   use FLUE_stoutSmearing, only: StoutSmearLinks
    use FLUE_SU3MatrixOps, only: MultiplyMatMat, MultiplyMatDagMatDag, &
         TraceMultMatMat, RealTraceMultMatMat, TracelessConjgSubtract, &
         colourDecomp, RealTraceMat, FixSU3Matrix, &
-        orthogonalise_vectors, vector_product
+        orthogonalise_vectors, vector_product, ExpIQ
    use FLUE_gpManip, only: Q_Average, cone_cut
    use FLUE_mom, only: get_qhat
    use FLUE_matrixConstants, only: Ident3x3, Ident2x2, sigma1, sigma2, sigma3

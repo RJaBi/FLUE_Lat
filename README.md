@@ -22,6 +22,7 @@ Code to calculate various gluonic quantities in lattice QCD. These include quant
 | W_munu                               | &check; &cross;       | Deprecated functions to do nMuxnNu wilson loops. Does not use generic path |
 | Gluon Propagtor                      | &cross;               | Work in progress - POSTPONED.                                              |
 | uzerobar			                       | &check;	             | Calculates u_0 using Landau gauge and plaquette definitions		            |
+| stout-link smearing | &check; | Stout smear (Morningstar & Peardon, [10.1103/PhysRevD.69.054501](https://doi.org/10.1103/PhysRevD.69.054501)) gauge links. Spatial link smearing only |
 
 Note that $SU(2)$ supporst only the `Generic path based wilson line` and the `generic path plaquette`. $SU(2)$ modules and routines have SU2 in the name.
 
@@ -76,7 +77,7 @@ macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
 | CSSM_to_OQCD     | Convert a gauge field cssm to openqcd                    | inputFile outputFile NT NS |
 | OQCD_to_ILDG     | Convert a gauge field openqcd to ILDG-bin in big endian  | inputFile outputFile NT NS |
 | SU2_HKLS_to_CSSM | Convert a $SU(2)$ gaugefield in HKLS to cssm             | inputFile outputFile NT NS |
-
+| OQCD_stoutSmear  | Stout smear (spatial) a openqcd gauge field and print average unsmeared and smeared plaquette values | inputFile rho nSweeps NT NS |
 ----
 # Python Support
 

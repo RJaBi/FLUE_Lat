@@ -6,9 +6,10 @@ module FLUE_SU3MatrixOps
   private
   public :: MultiplyMatMat, MultiplyMatDagMatDag, &
        TraceMultMatMat, RealTraceMultMatMat, TracelessConjgSubtract, &
-       colourDecomp, RealTraceMat
+       colourDecomp, RealTraceMat, MultiplyMatMatDag, TraceMat
   public :: FixSU3Matrix
   public :: orthogonalise_vectors, vector_product
+  public :: ProjectToSU3Algebra, ExpIQ
 
 contains
 
@@ -74,7 +75,29 @@ contains
       MM(2, 3) = left(2, 1) * right(1, 3) + left(2, 2) * right(2, 3) + left(2, 3) * right(3, 3)
       MM(3, 3) = left(3, 1) * right(1, 3) + left(3, 2) * right(2, 3) + left(3, 3) * right(3, 3)
    end subroutine MultiplyMatMat
-   ! A^\dag B^\dag
+
+
+   pure subroutine MultiplyMatMatDag(MM, left, right)
+   ! A B^\dag
+      complex(kind=WC), dimension(3, 3), intent(in) :: left, right
+      complex(kind=WC), dimension(3, 3), intent(out) :: MM
+      !"""
+      !Multiple left by right^\dagger. Assumes 3x3 (colour) (complex) matrices
+      !"""
+      !# do the maths for the colour matrices
+      MM(1, 1) = left(1, 1) * conjg(right(1, 1)) + left(1, 2) * conjg(right(1, 2)) + left(1, 3) * conjg(right(1, 3))
+      MM(2, 1) = left(2, 1) * conjg(right(1, 1)) + left(2, 2) * conjg(right(1,2)) + left(2, 3) * conjg(right(1, 3))
+      MM(3, 1) = left(3, 1) * conjg(right(1, 1)) + left(3, 2) * conjg(right(1,2)) + left(3, 3) * conjg(right(1, 3))
+      !# second index
+      MM(1, 2) = left(1, 1) * conjg(right(2, 1)) + left(1, 2) * conjg(right(2, 2)) + left(1, 3) * conjg(right(2, 3))
+      MM(2, 2) = left(2, 1) * conjg(right(2, 1)) + left(2, 2) * conjg(right(2, 2)) + left(2, 3) * conjg(right(2, 3))
+      MM(3, 2) = left(3, 1) * conjg(right(2, 1)) + left(3, 2) * conjg(right(2, 2)) + left(3, 3) * conjg(right(2, 3))
+      !# third index
+      MM(1, 3) = left(1, 1) * conjg(right(3, 1)) + left(1, 2) * conjg(right(3,2 )) + left(1, 3) * conjg(right(3, 3))
+      MM(2, 3) = left(2, 1) * conjg(right(3, 1)) + left(2, 2) * conjg(right(3,2)) + left(2, 3) * conjg(right(3, 3))
+      MM(3, 3) = left(3, 1) * conjg(right(3, 1)) + left(3, 2) * conjg(right(3,2)) + left(3, 3) * conjg(right(3, 3))
+   end subroutine MultiplyMatMatDag
+
    pure subroutine MultiplyMatdagMatdag(MM, left, right)
       complex(kind=WC), dimension(3, 3), intent(in) :: left, right
       complex(kind=WC), dimension(3, 3), intent(out) :: MM
@@ -96,15 +119,26 @@ contains
       MM(3, 3) = CONJG(left(1, 3) * right(3, 1) + left(2, 3) * right(3, 2) + left(3, 3) * right(3, 3))
    end subroutine MultiplyMatdagMatdag
 
-   pure subroutine RealTraceMat(TrMM, left)
+   pure function RealTraceMat(left) result(trMM)
       complex(kind=WC), dimension(3, 3), intent(in) :: left
-      real(kind=WP), intent(out) :: TrMM
+      real(kind=WP):: TrMM
+      !"""
+      !# !Takes the real part of the trace of (3,3) complex numbers left
+      ! Tr(left)
+      !"""
+      TrMM = real(left(1, 1) + left(2, 2) + left(3, 3), kind=WP)
+end function RealTraceMat
+
+   pure function TraceMat(left) result(trMM)
+      complex(kind=WC), dimension(3, 3), intent(in) :: left
+      complex(kind=WC):: TrMM
       !"""
       !# !Takes the trace of (3,3) complex numbers left
       ! Tr(left)
       !"""
-      TrMM = real(left(1, 1) + left(2, 2) + left(3, 3), kind=WP)
-   end subroutine RealTraceMat
+      TrMM = left(1, 1) + left(2, 2) + left(3, 3)
+end function TraceMat
+
 
    pure subroutine TraceMultMatMat(TrMM, left, right)
       complex(kind=WC), dimension(3, 3), intent(in) :: left, right
@@ -159,4 +193,74 @@ contains
       com(7) = -AIMAG(A(2, 3)) + AIMAG(A(3, 2))
       com(8) = real(A(1, 1), kind=WP) + real(A(2, 2), kind=WP) - (2.0_WP / (3.0_WP**0.5_WP)) * real(A(3, 3), kind=WP)
    end subroutine colourDecomp
+
+   pure function ExpIQ(Q) result(V)
+      complex(kind=WC), dimension(3,3), intent(in) :: Q
+      complex(kind=WC), dimension(3,3) :: V
+      !"""
+      !Compute the matrix exponential $V=exp(iQ)$ where Q is hermitian
+      !"""
+      real(kind=WP), parameter :: eps = epsilon(1.0_WP)
+      complex(kind=WC), dimension(3,3) :: Q2, Q3
+      real(kind=WP) :: c0, c1, c0Max
+      real(kind=WP) :: w, u, w2, u2
+      real(kind=WP) :: xi0, pm, theta
+      complex(kind=WC), dimension(3) :: h, f
+      integer :: jj  ! a counter
+      ! First compute Q^2 and Q^3
+      call MultiplyMatMat(Q2, Q, Q)
+      call MultiplyMatMat(Q3, Q2, Q)
+      ! Get the terms from the characteristic polynomial
+      c0 = (1.0_WP/3.0_WP) * RealTraceMat(Q3)
+      c1 = 0.5_WP * RealTraceMat(Q2)
+      ! handle sign of c0
+      pm = sign(1.0_WP, real(c0, kind=WP))
+      c0 = abs(c0)
+      ! Compute auxillary angle theta
+      c0Max = 2.0_WP * (c1 / 3.0_WP)**(1.5_WP)
+      if (c0Max < eps) then
+         theta = 0.0_WP
+      else
+         ! Force the argument of acos to between [-1, 1]
+         theta = acos(min(1.0_WP, max(-1.0_WP, c0/c0Max)))
+         !theta = acos(c0/c0Max)
+      end if
+      ! Compute u and w
+      u = sqrt(c1/3.0_WP) * cos(theta / 3.0_WP)
+      w = sqrt(c1) * sin(theta / 3.0_WP)
+      u2 = u**2.0_WP
+      w2 = w**2.0_WP
+      ! Compute auxillary function xi0
+      ! note this is not anisotropy
+      ! USe Taylor expansion for small w to avoid cancellation errors
+      if (abs(w) .le. 0.05_WP) then
+         xi0 = 1.0_WP - (1.0_WP/6.0_WP) * w2 * (1.0_WP - (1.0_WP/20.0_WP) * w2 * (1.0_WP - (1.0_WP / 42.0_WP) * w2))
+      else
+         xi0 = sin(w) / w
+      end if
+      ! Compute the h-coefficients which are intermediate coefficients
+      h(1) = (u2 - w2)*exp(cmplx(0.0_WP,2.0_WP,kind=WC)*u) + &
+          (8.0_WP*u2*cos(w) + cmplx(0.0_WP,2.0_WP,kind=WC)*u*(3.0_WP*u2 + w2)*xi0)*exp(-cmplx(0.0_WP,1.0_WP,kind=WC)*u)
+      h(2) = 2.0_WP*u*exp(cmplx(0.0_WP,2.0_WP,kind=WC)*u) - &
+          (2.0_WP*u*cos(w) - cmplx(0.0_WP,1.0_WP,kind=WC)*(3.0_WP*u2 - w2)*xi0)*exp(-cmplx(0.0,1.0_WP,kind=WC)*u)
+      h(3) = exp(cmplx(0.0_WP,2.0_WP,kind=WC)*u) - &
+          (cos(w) + cmplx(0.0_WP,3.0_WP,kind=WC)*u*xi0)*exp(-cmplx(0.0_WP,1.0_WP,kind=WC)*u)
+      ! Normallise
+      if ( real(c0max, kind=WP) < eps ) then
+       f(1) = 1.0_WP
+       f(2:3) = 0.0_WP
+    else
+       f(:) = h(:)/(9.0_WP*u2-w2)
+    end if
+    if (pm < 0.0_WP) then
+      do jj=1, 3
+         f(jj) = ((-1.0_WP)**(jj-1)) * conjg(f(jj))
+      end do
+   end if
+   ! Form the result
+   V = f(1) * Ident3x3 + f(2) * Q + f(3) * Q2
+
+end function ExpIQ
+
+
 end module FLUE_SU3MatrixOps
