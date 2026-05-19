@@ -62,6 +62,7 @@ module FLUE_c
     complex(kind = C_DOUBLE_COMPLEX), dimension(nt,nx,ny,nz,4,3,3), intent(in) :: data
     real(kind=C_DOUBLE), intent(in) :: rho
     integer(kind=C_INT), intent(in) :: nSweeps
+    integer(kind=C_INT), intent(in) :: nx, ny, nz, nt
     complex(kind = C_DOUBLE_COMPLEX), dimension(nt,nx,ny,nz,4,3,3), intent(out) :: usmeared
     call StoutSmearLinks(data, rho, nSweeps, usmeared)
   end subroutine stoutsmearlinks_c
