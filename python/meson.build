@@ -91,11 +91,15 @@ py.install_sources(gaugeIO_sources, subdir:'FLUE/gaugeIO')
 
 wloops_sources = [
   'FLUE/wloops/__init__.py',
-  'FLUE/wloops/plaquette.py',
-]
+  'FLUE/wloops/plaquette.py',]
 py.install_sources(wloops_sources, subdir:'FLUE/wloops')
 
+gauge_sources = [
+  'FLUE/gauge/__init__.py',
+  'FLUE/gauge/stout.py',
+]
 
+py.install_sources(gauge_sources, subdir:'FLUE/gauge')
 
 # Extension fortran module
 inc_np = include_directories(incdir_numpy, incdir_f2py, 'fpm_build' / 'include')

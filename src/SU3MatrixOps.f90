@@ -1,15 +1,15 @@
 ! Some subroutines that act upon and create SU(3) (3x3 complex) matrices
 module FLUE_SU3MatrixOps
-  use FLUE_matrixConstants, only: Ident3x3
   use FLUE_constants, only: WC, WP
-  implicit none(external)
+  use FLUE_matrixConstants, only: Ident3x3
+  implicit none(type, external)
   private
   public :: MultiplyMatMat, MultiplyMatDagMatDag, &
        TraceMultMatMat, RealTraceMultMatMat, TracelessConjgSubtract, &
        colourDecomp, RealTraceMat, MultiplyMatMatDag, TraceMat
   public :: FixSU3Matrix
   public :: orthogonalise_vectors, vector_product
-  public :: ProjectToSU3Algebra, ExpIQ
+  public :: ExpIQ
 
 contains
 

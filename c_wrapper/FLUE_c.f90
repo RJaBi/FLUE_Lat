@@ -4,7 +4,7 @@ module FLUE_c
    use FLUE, only: ReadGaugeField_ILDG, writeGaugeField_ILDG, &
         ReadGaugeField_OpenQCD, writeGaugeField_OpenQCD, &
         ReadGaugefield_CSSM, &
-        genplaquette
+        genplaquette, StoutSmearLinks
    implicit none(external)
    public
 
@@ -57,5 +57,13 @@ module FLUE_c
     integer(kind=C_INT), intent(out) :: np
     call genplaquette(data, nt, nx, ny, nz, mustart, muend, nuend, sumtrp, np, time)
   end subroutine genplaquette_c
+
+  subroutine stoutsmearlinks_c(data, rho, nSweeps, nt, nx, ny, nz, usmeared)
+    complex(kind = C_DOUBLE_COMPLEX), dimension(nt,nx,ny,nz,4,3,3), intent(in) :: data
+    real(kind=C_DOUBLE), intent(in) :: rho
+    integer(kind=C_INT), intent(in) :: nSweeps
+    complex(kind = C_DOUBLE_COMPLEX), dimension(nt,nx,ny,nz,4,3,3), intent(out) :: usmeared
+    call StoutSmearLinks(data, rho, nSweeps, usmeared)
+  end subroutine stoutsmearlinks_c
 
 end module FLUE_c

@@ -111,7 +111,11 @@ IO Routines:
 
 plaquette routines:
 
-`plaq(U)/splaq(U)/tplaq(U)` which are the average of all plaquettes, space-space plaquettes and space-time plaquettes respectively.
+`plaq(U)/splaq(U)/tplaq(U)` returns the average of all plaquettes, space-space plaquettes and space-time plaquettes respectively.
+
+'gauge' routines:
+
+`stoutSmearLinks(U, rho, nweeps)` returns a new copy of the gaugefield which has been stout-linked smeared (spatial links).
 
 The IO routines return a numpy array of type double precision complex, of shape `(NT, NS, NS, NS, 4, 3, 3)`
 

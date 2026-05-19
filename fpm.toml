@@ -65,5 +65,6 @@ preview = true
 # the c_wrapper gets parsed with f2py which can be a bit fussy
 "c_wrapper/FLUE_c.f90" = [
     "C003", # 'implicit none' missing 'external'
+    "C001", # 'implicit none' missing 'type'
     "C131", # module missing default accessibility statement
 ]

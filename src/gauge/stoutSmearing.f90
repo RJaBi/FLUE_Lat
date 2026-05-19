@@ -2,7 +2,7 @@ module FLUE_stoutSmearing
 use FLUE_constants, only: WP, WC
 use FLUE_matrixConstants, only: Ident3x3
 use flue_wloops, only: genericPath
-use FLUE_SU3MatrixOps, only: MultiplyMatMatDag, ProjectToSU3Algebra, ExpIQ, MultiplyMatMat, FixSU3Matrix, TraceMat
+use FLUE_SU3MatrixOps, only: MultiplyMatMatDag, ExpIQ, MultiplyMatMat, FixSU3Matrix, TraceMat
 use stdlib_linalg, only: is_hermitian
 implicit none (type, external)
 private
