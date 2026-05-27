@@ -6,9 +6,9 @@
 program OQCD_to_ILDG
   use FLUE, only: WP, WC, writeCompiler, writeGit, &
       readGaugeField_OpenQCD, &
-      plaquette, &
+      genPlaquette, &
       StoutSmearLinks
-  implicit none(external)
+  implicit none(type, external)
   ! IO vars
    character(len=256) :: inputFile, NTS, NSS, rhoS, nSmearS
   complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: U1, USmeared
@@ -43,16 +43,16 @@ integer :: nplaq
      stop
   end if
 
-  allocate(U1(NT, NS, NS, NS, 4, 3, 3))
+  allocate(U1(3, 3, 4, NT, NS, NS, NS))
   allocate(USmeared, mold=U1)
   U1 = ReadGaugeField_OpenQCD(trim(inputFile), NS, NS, NS, NT, fixSU3=.true.)
 
   ! First calculate the unsmeared plaquette
-  call plaquette(U1, 1, 4, 4, plaq, nplaq, time)
+  call genPlaquette(U1, NT, NS, NS, NS, 1, 4, 4, plaq, nplaq, time)
   ! Now do some smearing
   call StoutSmearLinks(U1, rho, nSmear, USmeared)
   ! Now calculate smeared plaquette
-  call plaquette(USmeared, 1, 4, 4, plaqSmear, nplaq, time)
+  call genPlaquette(USmeared, NT, NS, NS, NS, 1, 4, 4, plaqSmear, nplaq, time)
   plaq = plaq / real(nplaq, kind=WP)
   plaqSmear = plaqSmear / real(nplaq, kind=WP)
   write(*,*) 'unsmeared'

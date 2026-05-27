@@ -6,7 +6,7 @@
 program OQCD_to_ILDG
   use FLUE, only: WP, WC, writeCompiler, writeGit, &
        writeGaugeField_ILDG, readGaugeField_OpenQCD, readGaugeField_ILDG
-  implicit none(external)
+  implicit none(type, external)
   ! IO vars
   character(len=256) :: inputFile, outputFile, NTS, NSS
   complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: U1
@@ -34,13 +34,13 @@ program OQCD_to_ILDG
      stop
   end if
 
-  allocate(U1(NT, NS, NS, NS, 4, 3, 3))
+  allocate(U1(3, 3, 4, NT, NS, NS, NS))
   U1 = ReadGaugeField_OpenQCD(trim(inputFile), NS, NS, NS, NT, fixSU3=.true.)
 
   call writeGaugeField_ILDG(trim(outputFile), U1, NS, NS, NS, NT, fixSU3=.false.)
 
 !CHECKS!
-!CHECKS!  allocate(U2(NT, NS, NS, NS, 4, 3, 3))
+!CHECKS!  allocate(U2(3, 3, 4, NT, NS, NS, NS))
 !CHECKS!  U2 = ReadGaugeField_ILDG(trim(outputFile), NS, NS, NS, NT, fixSU3=.false.)
 !CHECKS!
 !CHECKS!    if (any(U1 /= U2)) then

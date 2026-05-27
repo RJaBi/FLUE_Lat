@@ -4,12 +4,12 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 program calcB
+   use FJSample, only: complement, jackError
    use FLUE, only: WP, WC, writeCompiler, writeGit, &
-                   ReadGaugeField_ILDG, ReadGaugeField_OpenQCD, genPlaquette, plaquette, &
+                   ReadGaugeField_ILDG, ReadGaugeField_OpenQCD, genPlaquette, &
                    magnetic
    use tomlf, only: toml_table, toml_load, toml_array, get_value, toml_path
-   use FJSample, only: complement, jackError
-   implicit none(external)
+   implicit none(type, external)
    ! IO vars
    character(len=128) :: tomlName
    character(len=:), allocatable :: strRead
@@ -42,11 +42,11 @@ program calcB
    abstract interface
       function ReadGaugeInterface(filename, NX, NY, NZ, NT, fixSU3) result(U_xd)
          import :: WC
-         implicit none(external)
+         implicit none(type, external)
          character(len=*), intent(in) :: filename
          integer, intent(in) :: NX, NY, NZ, NT
          logical, optional, intent(in) :: fixSU3
-         complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U_xd
+         complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ) :: U_xd
       end function ReadGaugeInterface
    end interface
 
@@ -124,7 +124,7 @@ program calcB
             stop
          end select
          ! allocate space for the gaugefield
-         allocate (U(NT, NS, NS, NS, 4, 3, 3))
+         allocate (U(3, 3, 4, NT, NS, NS, NS))
          U = ReadGauge(TRIM(gaugeFile), NS, NS, NS, NT)
          call genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
          aplaq(icon) = plaqFactor * sumTrp / real(nP, kind=WP)

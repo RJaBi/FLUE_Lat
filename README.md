@@ -10,18 +10,17 @@ Code to calculate various gluonic quantities in lattice QCD. These include quant
 **Note you may need to set the stacksize to larger (unlimited is easiest) to use this code**
 
 
-
 | Method                               | Implementation Status | Notes                                                                      |
 |--------------------------------------|-----------------------|----------------------------------------------------------------------------|
 | Generic 'path' based wilson line     | &check;               | Returns the multiplication along the path from a starting point            |
-| Plaquette (spatial, temporal, total) | &check;               | both generic path and hard coded versions                                  |
+| Plaquette (spatial, temporal, total) | &check;               |                                                                            |
 | Polyakov Loop                        | &check;               | hard coded only                                                            |
 | Clover Fmunu                         | &check; &cross;       | Function exists but is not currently used anywhere                         |
 | 5-loop improved Fmunu                | &check;               | hep-lat/0203008                                                            |
 | B^2 Calculation                      | &check;               | Currently using 5-loop Fmunu                                               |
-| W_munu                               | &check; &cross;       | Deprecated functions to do nMuxnNu wilson loops. Does not use generic path |
+| Wmunu                                | &check; &cross;       | Deprecated functions to do nMuxnNu wilson loops. Does not use generic path |
 | Gluon Propagtor                      | &cross;               | Work in progress - POSTPONED.                                              |
-| uzerobar			                       | &check;	             | Calculates u_0 using Landau gauge and plaquette definitions		            |
+| uzerobar			                   | &check;	           | Calculates u_0 using Landau gauge and plaquette definitions		        |
 | stout-link smearing | &check; | Stout smear (Morningstar & Peardon, [10.1103/PhysRevD.69.054501](https://doi.org/10.1103/PhysRevD.69.054501)) gauge links. Spatial link smearing only |
 
 Note that $SU(2)$ supporst only the `Generic path based wilson line` and the `generic path plaquette`. $SU(2)$ modules and routines have SU2 in the name.
@@ -37,6 +36,9 @@ The supported formats are `openqcd` and an ILDG-like binary format. This is the 
 | ildg-bin | &check; | &cross; |
 | cssm     | &check; | &cross; |
 
+
+The internal representation of a $SU(3)$ gaugefield is `(3, 3, 4, NT, NS, NS, NS)`.
+
 ---
 
 ---
@@ -48,12 +50,10 @@ The HKLS (Hands-Kim-Lawlor-Skullerud) supports the compact format used by [su2hm
 
 | Format   | Read    | Write   |
 |----------|---------|---------|
-| HKLS  | &check; | &check; |
-| cssm  | &cross; | &check; |
+| HKLS     | &check; | &check; |
+| cssm     | &cross; | &check; |
 
----
-
-Based upon [fortran_meson_py](https://github.com/SalvadorBrandolin/fortran_meson_py) with thanks to the [Fortran-Lang Discourse](https://fortran-lang.discourse.group/t/packaging-a-fpm-project-with-python-bindings-a-little-guide-and-insights-from-our-experience/8495/9)
+The internal representation of a $SU(3)$ gaugefield is `(NT, NS, NS, NS, 4, 2, 2)`.
 
 ----
 # Run
@@ -117,6 +117,6 @@ plaquette routines:
 
 `stoutSmearLinks(U, rho, nweeps)` returns a new copy of the gaugefield which has been stout-linked smeared (spatial links).
 
-The IO routines return a numpy array of type double precision complex, of shape `(NT, NS, NS, NS, 4, 3, 3)`
+The IO routines return a numpy array of type double precision complex, of shape `(NT, NS, NS, NS, 4, 3, 3)`. Note this is not the same as the Fortran, the translation is done in `c_wrapper/FLUE_c.f90`. This is so that it matches i.e. [lyncs_io](https://github.com/Lyncs-API/lyncs.io).
 
-This `f2py` and `meson` build approach is inspired by [fortran_meson_py](https://github.com/SalvadorBrandolin/fortran_meson_py/) by Salvador Brandolin
+This `f2py` and `meson` build approach is inspired by [fortran_meson_py](https://github.com/SalvadorBrandolin/fortran_meson_py/) by Salvador Brandolin with thanks to the [Fortran-Lang Discourse](https://fortran-lang.discourse.group/t/packaging-a-fpm-project-with-python-bindings-a-little-guide-and-insights-from-our-experience/8495/9)

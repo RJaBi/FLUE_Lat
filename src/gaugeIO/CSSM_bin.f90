@@ -16,7 +16,7 @@
 module FLUE_CSSM_bin
   use FLUE_constants, only: WP, WC, C_INT
   use FLUE_SU3MatrixOps, only: FixSU3Matrix, orthogonalise_vectors, vector_product
-  implicit none(external)
+  implicit none(type, external)
   private
   public :: ReadGaugeField_CSSM
   public :: ReadGaugeTransformation_cola
@@ -26,8 +26,7 @@ contains
      function ReadGaugeTransformation_cola(filename, NX, NY, NZ, NT) result(G_x)
       character(len=*), intent(in) :: filename
       integer, intent(in) :: NX, NY, NZ, NT
-      !complex(kind=WC), dimension(:,:,:,:,:,:) :: G_x
-      complex(kind=WC), dimension(NT, NX, NY, NZ, 3, 3) :: G_x
+      complex(kind=WC), dimension(3,3,NT, NX, NY, NZ) :: G_x
 
       real(WP), dimension(:, :, :, :, :, :), allocatable :: ReG, ImG
       integer :: ix, iy, iz, it, ic, irank
@@ -60,9 +59,9 @@ contains
                   call orthogonalise_vectors(v2, v1)
                   call vector_product(v3, v1, v2)
                   ! G_x is the transpose of G_tr
-                  G_x(it, ix, iy, iz, 1, :) = v1
-                  G_x(it, ix, iy, iz, 2, :) = v2
-                  G_x(it, ix, iy, iz, 3, :) = v3
+                  G_x(1, :, it, ix, iy, iz) = v1
+                  G_x(2, :, it, ix, iy, iz) = v2
+                  G_x(3, :, it, ix, iy, iz) = v3
                end do
             end do
          end do
@@ -75,7 +74,7 @@ contains
     character(len=*), intent(in) :: filename
     integer, intent(in) :: NX, NY, NZ, NT
     logical, optional, intent(in) :: fixSU3
-    complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U_xd
+    complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ) :: U_xd
     !
     integer, parameter :: infl = 101
     ! header
@@ -114,9 +113,9 @@ contains
                    v2 = cmplx(ReU(ix,iy,iz,it,mu,2,:),ImU(ix,iy,iz,it,mu,2,:),kind=WC)
                    call orthogonalise_vectors(v2, v1)
                    call vector_product(v3,v1,v2)
-                   U_xd(it,ix,iy,iz,mu,1,:) = v1
-                   U_xd(it,ix,iy,iz,mu,2,:) = v2
-                   U_xd(it,ix,iy,iz,mu,3,:) = v3
+                   U_xd(1, :, mu, it,ix,iy,iz) = v1
+                   U_xd(2, :, mu, it,ix,iy,iz) = v2
+                   U_xd(3, :, mu, it,ix,iy,iz) = v3
                 end do
              end do
           end do

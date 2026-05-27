@@ -7,7 +7,7 @@ program ILDG_To_OQCD
   use FLUE, only: WP, WC, writeCompiler, writeGit, &
        ReadGaugeField_ILDG, writeGaugeField_OpenQCD  !CHECKS! ,&
 !Checks!       ReadGaugeField_OpenQCD, genPlaquette
-  implicit none(external)
+  implicit none(type, external)
   ! IO vars
   character(len=256) :: inputFile, outputFile, NTS, NSS
   complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: U1
@@ -38,7 +38,7 @@ program ILDG_To_OQCD
      stop
   end if
 
-  allocate(U1(NT, NS, NS, NS, 4, 3, 3))
+  allocate(U1(3, 3, 4, NT, NS, NS, NS))
   U1 = ReadGaugeField_ILDG(trim(inputFile), NS, NS, NS, NT, fixSU3=.false.)
 
 !Checks!  call genPlaquette(U1, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)
@@ -47,7 +47,7 @@ program ILDG_To_OQCD
   call writeGaugeField_OpenQCD(trim(outputFile), U1, NS, NS, NS, NT)
 
 
-!Checks!  allocate(U2(NT, NS, NS, NS, 4, 3, 3))
+!Checks!  allocate(U2(3, 3, 4, NT, NS, NS, NS))
 !Checks!  U2 = ReadGaugeField_OpenQCD(trim(outputFile), NS, NS, NS, NT, fixSU3=.false.)
 !Checks!
 !Checks!  call genPlaquette(U2, NT, NS, NS, NS, 1, 4, 4, sumTrP, nP, time)

@@ -3,7 +3,7 @@ module FLUE_openQCDFileIO_SA
    use FLUE_constants, only: WP, WC
    use FLUE_SU3MatrixOps, only: FixSU3Matrix
    use FLUE_wloops, only: genPlaquette
-   implicit none(external)
+   implicit none(type, external)
    private
    public :: ReadGaugeField_OpenQCD
    public :: writeGaugeField_OpenQCD
@@ -28,11 +28,12 @@ contains
 !         matrix(1,3)*(matrix(2,1)*matrix(3,2) - matrix(2,2)*matrix(3,1))
 !  end function determinant
 
-   function ReadGaugeField_OpenQCD(filename, NX, NY, NZ, NT, fixSU3) result(U_xd)
+   function ReadGaugeField_OpenQCD(filename, NX, NY, NZ, NT, fixSU3) result(U_out)
       character(len=*), intent(in) :: filename
       integer, intent(in) :: NX, NY, NZ, NT
       logical, optional, intent(in) :: fixSU3
       complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U_xd
+      complex(kind=WC), dimension(3,3,4,NT,NX,NY,NZ) :: U_out
       !complex(kind=WP), dimension(:,:,:,:,:,:,:), allocatable :: U_xd
 
       complex(kind=WC), dimension(3, 3) :: UTmp
@@ -104,14 +105,21 @@ contains
       close (infl)
 
       U_xd = CSHIFT(U_xd, -1, dim=5)
+      do it=1,3
+         do iz=1,3
+            do mu=1, 4
+               U_out(it, iz, mu, :, :, :, :) = U_xd(:,:,:,:,mu, it, iz)
+            end do
+         end do
+      end do
 
     end function ReadGaugeField_OpenQCD
 
-    subroutine writeGaugeField_OpenQCD(filename, U_xd, NX, NY, NZ, NT)
-     character(len=*), intent(in) :: filename
-     complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3), intent(in) :: U_xd
+    subroutine writeGaugeField_OpenQCD(filename, U_in, NX, NY, NZ, NT)
+      character(len=*), intent(in) :: filename
+     complex(kind=WC), dimension(3, 3, 4,NT, NX, NY, NZ), intent(in) :: U_in
      integer, intent(in) :: NX, NY, NZ, NT
-     complex(kind=WP), dimension(:,:,:,:,:,:,:), allocatable :: U
+     complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U
 
       complex(kind=WC), dimension(3, 3) :: UTmp
       integer, parameter :: infl = 107
@@ -125,11 +133,16 @@ contains
       logical :: fixSU3Set
 
 
-      allocate(U(NT, NX, NY, NZ, 4, 3, 3))
-      U = U_xd
+      do it=1,3
+         do iz=1,3
+            do mu=1, 4
+               U(:, :, :, :, mu, it, iz) = U_in(it, iz, mu, :,:,:,:)
+            end do
+         end do
+      end do
 
       ! Calculate the plaquette as needed by oqcd header
-      call genPlaquette(U, NT, NX, NY, NZ, 1, 4, 4, sumTrp, NP, time)
+      call genPlaquette(U_in, NT, NX, NY, NZ, 1, 4, 4, sumTrp, NP, time)
       plaq = sumTrp / real(NP, kind=WC)
 
 

@@ -24,12 +24,12 @@ pure subroutine StoutSmearLinks(U, rho, nSweeps, USmeared)
     ! counters
     integer :: ISweep
     dataShape = shape(U)
-    nt = dataShape(1)
-    nx = dataShape(2)
-    ny = dataShape(3)
-    nz = dataShape(4)
+    nt = dataShape(4)
+    nx = dataShape(5)
+    ny = dataShape(6)
+    nz = dataShape(7)
     ! working arrays
-    allocate(UTemp(nt, nx, ny, nz, 4, 3, 3))
+    allocate(UTemp(3, 3, 4, nt, nx, ny, nz))
     ! Initialise with current field
     USmeared = U
     ! iterate over
@@ -56,15 +56,15 @@ pure subroutine StoutSmearOnce(U_old, rho, U_new)
 
     ! Get geometry
     dataShape = shape(U_old)
-    nt = dataShape(1)
-    nx = dataShape(2)
-    ny = dataShape(3)
-    nz = dataShape(4)
+    nt = dataShape(4)
+    nx = dataShape(5)
+    ny = dataShape(6)
+    nz = dataShape(7)
     ! initialise output with input
     ! this is a quick way get the temporal links
     U_new = U_old
     ! Allocate and compute SPATIAL staples
-    allocate(staples(nt,nx,ny,nz,3,3,3))
+    allocate(staples(3,3,3,nt,nx,ny,nz))
     call ComputeSpatialStaples(U_old, rho, Staples)
 
 #ifdef LOCALITYSUPPORT
@@ -78,9 +78,9 @@ pure subroutine StoutSmearOnce(U_old, rho, U_new)
                     do iz=1, nz
 #endif
     ! Get the current link
-    U_link = U_old(it,ix,iy,iz, mu, :, :)
+    U_link = U_old(:, :, mu, it, ix, iy, iz)
     ! Get staple sum
-    C = Staples(it, ix, iy, iz, mu-1, :, :)
+    C = Staples(:, :, mu-1, it, ix, iy, iz)
     ! Get the update term
     Q = computeQMatrix(U_link, C)
     V = ExpIQ(Q)
@@ -88,7 +88,7 @@ pure subroutine StoutSmearOnce(U_old, rho, U_new)
     call MultiplyMatMat(U_updated, V, U_link)
     ! Reunitarise
     call FixSU3Matrix(U_updated)
-    U_new(it,ix,iy,iz,mu,:,:) = U_updated
+    U_new(:, :, mu, it,ix,iy,iz) = U_updated
 #ifdef LOCALITYSUPPORT
     end do
 #else
@@ -116,10 +116,10 @@ pure subroutine ComputeSpatialStaples(data, rho, staples)
     ! holders
     complex(kind=WC), dimension(3,3) :: stapleFwd, stapleBwd
     dataShape = shape(data)
-    nt = dataShape(1)
-    nx = dataShape(2)
-    ny = dataShape(3)
-    nz = dataShape(4)
+    nt = dataShape(4)
+    nx = dataShape(5)
+    ny = dataShape(6)
+    nz = dataShape(7)
 
     staples = cmplx(0.0_WP, 0.0_WP, kind=WC)
 #ifdef LOCALITYSUPPORT
@@ -139,11 +139,11 @@ pure subroutine ComputeSpatialStaples(data, rho, staples)
             if (nu == mu) cycle
             ! Calculate forward staple
             stapleFwd = genericPath(data, coord, (/nu, mu, -nu/))
-            staples(it,ix,iy,iz,mu-1,:,:) = staples(it,ix,iy,iz,mu-1,:,:) &
+            staples(:,:,mu-1,it,ix,iy,iz) = staples(:,:,mu-1,it,ix,iy,iz) &
             + stapleFwd
             ! and the backward staple
             stapleBwd = genericPath(data, coord, (/-nu, mu, nu/))
-            staples(it,ix,iy,iz,mu-1,:,:) = staples(it,ix,iy,iz,mu-1,:,:) &
+            staples(:,:,mu-1,it,ix,iy,iz) = staples(:,:,mu-1,it,ix,iy,iz) &
                 + stapleBwd
         end do
     end do

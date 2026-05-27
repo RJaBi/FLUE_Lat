@@ -1,10 +1,10 @@
 !! Functions to read and write ILDG binary data formats as from cola
 module FLUE_ILDG_bin
-  use FLUE_constants, only: WP, WC
-  use FLUE_SU3MatrixOps, only: FixSU3Matrix
    !use stdlib_linalg, only: det
    use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT
-   implicit none(external)
+  use FLUE_constants, only: WP, WC
+  use FLUE_SU3MatrixOps, only: FixSU3Matrix
+   implicit none(type, external)
    private
    public :: ReadGaugeField_ILDG
    public :: writeGaugeField_ILDG
@@ -15,7 +15,7 @@ contains
     character(len=*), intent(in) :: filename
       integer, intent(in) :: NX, NY, NZ, NT
       logical, optional, intent(in) :: fixSU3
-      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U_xd
+      complex(kind=WC), dimension(3,3, 4, NT, NX, NY, NZ) :: U_xd
       complex(kind=WC), dimension(3, 3, 4, NX, NY, NZ, NT) :: URead
       integer, parameter :: infl = 101
       integer :: matrix_len, irecl
@@ -59,9 +59,9 @@ contains
                      case (4)
                         nu = 1
                      end select
-                     U_xd(it, ix, iy, iz, nu, :, :) = TRANSPOSE(URead(:, :, mu, ix, iy, iz, it))
+                     U_xd(:, :, nu, it, ix, iy, iz) = TRANSPOSE(URead(:, :, mu, ix, iy, iz, it))
                      if (fixSU3Set) then
-                        call FixSU3Matrix(U_xd(it, ix, iy, iz, nu, :, :))
+                        call FixSU3Matrix(U_xd(:, :, nu, it, ix, iy, iz))
                      end if
                   end do
                end do
@@ -75,7 +75,7 @@ contains
     character(len=*), intent(in) :: filename
       integer, intent(in) :: NX, NY, NZ, NT
       logical, optional, intent(in) :: fixSU3
-      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3), intent(in) :: U_xd
+      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ), intent(in) :: U_xd
       complex(kind=WC), dimension(3, 3, 4, NX, NY, NZ, NT) :: URead
       integer, parameter :: infl = 101
       integer :: matrix_len, irecl
@@ -109,7 +109,7 @@ contains
                      case (4)
                         nu = 1
                      end select
-                     URead(:,:,mu,ix,iy,iz,it) = transpose(U_xd(it,ix,iy,iz,nu,:,:))
+                     URead(:,:,mu,ix,iy,iz,it) = transpose(U_xd(:, :, nu, it,ix,iy,iz))
                      if (fixSU3Set) then
                         call FixSU3Matrix(URead(:,:,mu,ix,iy,iz,it))
                      end if
