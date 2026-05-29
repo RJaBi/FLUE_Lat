@@ -548,7 +548,7 @@ module flue_wloops
       integer, dimension(4) :: periodcoord
       integer :: cc
       ! A lazy function to handle the periodic boundary conditions
-      ! dataShape is (NT, nx, ny, nz, 4, 3, 3)
+      ! dataShape is (colour, colour, mu, NT, nx, ny, nz)
       ! coord is (nt, nx, ny, nz)
       ! checks if the value in coord is greater than corresponding N in datashape
       ! if so sets it to 1

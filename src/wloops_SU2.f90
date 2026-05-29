@@ -5,7 +5,7 @@ module FLUE_SU2_wloops
   use FLUE_constants, only: WP, WC, SP
   use FLUE_wloops, only: periodCoord
   use M_stopwatch, only: watchtype, create_watch, start_watch, stop_watch, destroy_watch, read_watch
-  implicit none(external)
+  implicit none(type, external)
 
   complex(kind=WC), dimension(2, 2), parameter :: Ident_SU2 = RESHAPE(source=[ &
        (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
@@ -41,9 +41,9 @@ contains
             coord = periodCoord(coord, datashape)
             ! get the link here going forward in mu
             ! and dagger it
-            amat = CONJG(TRANSPOSE(data(coord(1), coord(2), coord(3), coord(4), ABS(mu), :, :)))
+            amat = CONJG(TRANSPOSE(data(:, :, ABS(mu), coord(1), coord(2), coord(3), coord(4))))
          else
-            amat = data(coord(1), coord(2), coord(3), coord(4), mu, :, :)
+            amat = data(:, :, mu, coord(1), coord(2), coord(3), coord(4))
             coord = coord + pCoord
             coord = periodCoord(coord, datashape)
          end if
@@ -53,7 +53,7 @@ contains
     end function SU2_genericPath
 
    subroutine SU2_genPlaquette(data, NT, NX, NY, NZ, muStart, muEnd, nuEnd, sumTrP, nP, time)
-      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 2, 2), intent(in) :: data
+      complex(kind=WC), dimension(2, 2, 4, NT, NX, NY, NZ), intent(in) :: data
       integer, intent(in) :: muStart, muEnd, nuEnd
       integer, intent(in) :: NT, NX, NY, NZ
       real(kind=WP), intent(out) :: sumTrP, time
@@ -70,7 +70,7 @@ contains
       real(Kind=SP) :: watchtime
       call create_watch(watch)
       call start_watch(watch)
-      dataShape = (/NT, NX, NY, NZ, 4, 2, 2/)
+      dataShape = (/2, 2, 4, NT, NX, NY, NZ/)
       !# hold the sum
       sumTrP = 0.0_WP
       !# hold the number measured

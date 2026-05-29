@@ -7,7 +7,7 @@ program SU2_HKLS_to_CSSM
   use, intrinsic :: ISO_C_BINDING, only: C_INT, C_DOUBLE_COMPLEX, C_LONG
   use FLUE, only: WP, WC, writeCompiler, writeGit, &
        ReadGaugeField_HKLS, WriteGaugeField_SU2_CSSM
-  implicit none(external)
+  implicit none(type, external)
   ! IO vars
   character(len=256) :: inputFile, outputFile, NTS, NSS
   complex(C_DOUBLE_COMPLEX), dimension(:, :, :, :, :, :, :), allocatable :: U1, U2
@@ -47,10 +47,8 @@ program SU2_HKLS_to_CSSM
      stop
   end if
 
-  allocate(U1(NT, NS, NS, NS, 4, 2, 2))
+  allocate(U1(2, 2, 4, NT, NS, NS, NS))
   call ReadGaugeField_HKLS(trim(inputFile), NS, NS, NS, NT, U1, seed, old_nproc)
-
-  ! call writeGaugeField_HKLS(trim(outputFile), NS, NS, NS, NT, U1, seed, old_nproc)
 
   call writeGaugeField_SU2_CSSM(trim(outputFile), NS, NS, NS, NT, U1, 5, 1.9_WP)
 

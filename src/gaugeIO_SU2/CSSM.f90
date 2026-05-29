@@ -1,7 +1,7 @@
 module FLUE_SU2_CSSM
   use FLUE_constants, only: WP, WC
   use FLUE_SU2_wloops, only: SU2_genPlaquette
-  implicit none(external)
+  implicit none(type, external)
   private
 
   public :: writeGaugeField_SU2_CSSM
@@ -11,7 +11,7 @@ contains
   subroutine WriteGaugeField_SU2_CSSM(filename, NX, NY, NZ, NT, U_xd, nfig, beta)
       character(len=*), intent(in) :: filename
       integer, intent(in) :: NX, NY, NZ, NT
-      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 2, 2), intent(in) :: U_xd
+      complex(kind=WC), dimension(2, 2, 4, NT, NX, NY, NZ), intent(in) :: U_xd
       integer, intent(in) :: nfig
       real(kind=WP), intent(in) :: beta
       ! for writing
@@ -20,7 +20,7 @@ contains
       !complex(kind=WC), dimension(4) :: UTmp
       integer, parameter :: infl = 107
       ! counters
-      integer :: it, ix, iy, iz
+      integer :: it, ix, iy, iz, mu
       ! plaq like variables
       real(kind=WP) :: lastPlaq, plaqbarAvg, uzero
       real(kind=WP) :: time, sumtrp
@@ -38,7 +38,9 @@ contains
          do iy=1, NY
             do iz=1, NZ
                do it=1, NT
-                  UWrite(ix,iy,iz,it,:,:,:) = U_xd(it,ix,iy,iz,:,:,:)
+                  do mu=1, 4
+                     UWrite(ix,iy,iz,it,mu,:,:) = U_xd(:,:,mu,it,ix,iy,iz)
+                  end do
                end do
             end do
          end do

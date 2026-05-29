@@ -4,7 +4,7 @@ module FLUE_SU2_HKLS
    use FLUE_constants, only: WP, WC
    !use FLUE_SU3MatrixOps, only: FixSU3Matrix
    !use FLUE_wloops, only: genPlaquette
-   implicit none(external)
+   implicit none(type, external)
    private
    public :: ReadGaugeField_HKLS
    public :: writeGaugeField_HKLS
@@ -15,7 +15,7 @@ contains
    subroutine ReadGaugeField_HKLS(filename, NX, NY, NZ, NT, U_xd, seed, old_nproc)
       character(len=*), intent(in) :: filename
       integer, intent(in) :: NX, NY, NZ, NT
-      complex(kind=C_DOUBLE_COMPLEX), dimension(NT, NX, NY, NZ, 4, 2, 2), intent(out) :: U_xd
+      complex(kind=C_DOUBLE_COMPLEX), dimension(2, 2, 4, NT, NX, NY, NZ), intent(out) :: U_xd
       integer(kind=C_INT), intent(out) :: old_nproc
       integer(kind=C_LONG), intent(out) :: seed
       ! for reading
@@ -51,25 +51,24 @@ contains
             do iy=1,NY
                do ix=1, NX
                   ! Unpack
-                  U_xd(it, ix, iy, iz, :, 1, 1) = UHold(ix, iy, iz, it, :, 1)
-                  U_xd(it, ix, iy, iz, :, 2, 2) = conjg(UHold(ix, iy, iz, it, :, 1))
-                  U_xd(it, ix, iy, iz, :, 1, 2) = UHold(ix, iy, iz, it, :, 2)
-                  U_xd(it, ix, iy, iz, :, 2, 1) = -conjg(UHold(ix, iy, iz, it, :, 2))
-                  !U_xd(it, ix, iy, iz, :, 2, 1) = UHold(ix, iy, iz, it, :, 2)
-                  !U_xd(it, ix, iy, iz, :, 1, 2) = -conjg(UHold(ix, iy, iz, it, :, 2))
+                  U_xd(1, 1, :, it, ix, iy, iz) = UHold(ix, iy, iz, it, :, 1)
+                  U_xd(2, 2, :, it, ix, iy, iz) = conjg(UHold(ix, iy, iz, it, :, 1))
+                  U_xd(1, 2, :, it, ix, iy, iz) = UHold(ix, iy, iz, it, :, 2)
+                  U_xd(2, 1, :, it, ix, iy, iz) = -conjg(UHold(ix, iy, iz, it, :, 2))
+
                end do
             end do
          end do
       end do
       ! Shift the mu ordering
-      U_xd = CSHIFT(U_xd, -1, dim=5)
+      U_xd = CSHIFT(U_xd, -1, dim=3)
     end subroutine ReadGaugeField_HKLS
 
 
    subroutine WriteGaugeField_HKLS(filename, NX, NY, NZ, NT, U_xd, seed, old_nproc)
       character(len=*), intent(in) :: filename
       integer, intent(in) :: NX, NY, NZ, NT
-      complex(kind=C_DOUBLE_COMPLEX), dimension(NT, NX, NY, NZ, 4, 2, 2), intent(in) :: U_xd
+      complex(kind=C_DOUBLE_COMPLEX), dimension(2, 2, 4, NT, NX, NY, NZ), intent(in) :: U_xd
       integer(kind=C_INT), intent(in) :: old_nproc
       integer(kind=C_LONG), intent(in) :: seed
       ! for writing
@@ -84,15 +83,14 @@ contains
          do iz=1, NZ
             do iy=1,NY
                do ix=1, NX
-                  UHold(ix, iy, iz, it, :, 1) = U_xd(it, ix, iy, iz, :, 1, 1)
-                  UHold(ix, iy, iz, it, :, 2) = U_xd(it, ix, iy, iz, :, 1, 2)
-                  !UHold(ix, iy, iz, it, :, 2) = U_xd(it, ix, iy, iz, :, 2, 1)
+                  UHold(ix, iy, iz, it, :, 1) = U_xd(1, 1, :, it, ix, iy, iz)
+                  UHold(ix, iy, iz, it, :, 2) = U_xd(1, 2, :, it, ix, iy, iz)
                end do
             end do
          end do
       end do
       ! Shift the mu ordering
-      UHold = CSHIFT(UHold, 1, dim=5)
+      UHold = CSHIFT(UHold, 1, dim=3)
       open (infl, file=TRIM(filename), form="unformatted", access="stream", &
            status="replace", action="write", convert="little_endian")
 
