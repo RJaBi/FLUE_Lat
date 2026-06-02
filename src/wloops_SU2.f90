@@ -14,7 +14,7 @@ module FLUE_SU2_wloops
   public
 contains
 
-  function SU2_genericPath(data, coordBase, path) result(U_xd)
+  pure function SU2_genericPath(data, coordBase, path) result(U_xd)
       complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(in) :: data
       integer, dimension(4), intent(in) :: coordBase
       integer, dimension(:), intent(in) :: path
