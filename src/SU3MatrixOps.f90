@@ -238,11 +238,11 @@ contains
       end if
       ! Compute the h-coefficients which are intermediate coefficients
       h(1) = (u2 - w2) * EXP(CMPLX(0.0_WP, 2.0_WP, kind=WC) * u) + &
-           (8.0_WP * u2 * COS(w) + CMPLX(0.0_WP, 2.0_WP, kind=WC) * &
-           u * (3.0_WP * u2 + w2) * xi0) * EXP(-CMPLX(0.0_WP, 1.0_WP, kind=WC) * u)
+             (8.0_WP * u2 * COS(w) + CMPLX(0.0_WP, 2.0_WP, kind=WC) * &
+              u * (3.0_WP * u2 + w2) * xi0) * EXP(-CMPLX(0.0_WP, 1.0_WP, kind=WC) * u)
       h(2) = 2.0_WP * u * EXP(CMPLX(0.0_WP, 2.0_WP, kind=WC) * u) - &
-           (2.0_WP * u * COS(w) - CMPLX(0.0_WP, 1.0_WP, kind=WC) * (3.0_WP * u2 - w2) * xi0) &
-           * EXP(-CMPLX(0.0, 1.0_WP, kind=WC) * u)
+             (2.0_WP * u * COS(w) - CMPLX(0.0_WP, 1.0_WP, kind=WC) * (3.0_WP * u2 - w2) * xi0) &
+             * EXP(-CMPLX(0.0, 1.0_WP, kind=WC) * u)
       h(3) = EXP(CMPLX(0.0_WP, 2.0_WP, kind=WC) * u) - &
              (COS(w) + CMPLX(0.0_WP, 3.0_WP, kind=WC) * u * xi0) * EXP(-CMPLX(0.0_WP, 1.0_WP, kind=WC) * u)
       ! Normallise

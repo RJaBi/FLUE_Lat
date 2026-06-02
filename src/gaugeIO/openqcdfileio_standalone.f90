@@ -33,7 +33,7 @@ contains
       integer, intent(in) :: NX, NY, NZ, NT
       logical, optional, intent(in) :: fixSU3
       complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U_xd
-      complex(kind=WC), dimension(3,3,4,NT,NX,NY,NZ) :: U_out
+      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ) :: U_out
       !complex(kind=WP), dimension(:,:,:,:,:,:,:), allocatable :: U_xd
 
       complex(kind=WC), dimension(3, 3) :: UTmp
@@ -47,7 +47,7 @@ contains
       integer, dimension(4) :: dmu
       logical :: fixSU3Set
 
-      if (present(fixSU3)) then
+      if (PRESENT(fixSU3)) then
          fixSU3Set = fixSU3
       else
          fixSU3Set = .true.
@@ -105,21 +105,21 @@ contains
       close (infl)
 
       U_xd = CSHIFT(U_xd, -1, dim=5)
-      do it=1,3
-         do iz=1,3
-            do mu=1, 4
-               U_out(it, iz, mu, :, :, :, :) = U_xd(:,:,:,:,mu, it, iz)
+      do it = 1, 3
+         do iz = 1, 3
+            do mu = 1, 4
+               U_out(it, iz, mu, :, :, :, :) = U_xd(:, :, :, :, mu, it, iz)
             end do
          end do
       end do
 
-    end function ReadGaugeField_OpenQCD
+   end function ReadGaugeField_OpenQCD
 
-    subroutine writeGaugeField_OpenQCD(filename, U_in, NX, NY, NZ, NT)
+   subroutine writeGaugeField_OpenQCD(filename, U_in, NX, NY, NZ, NT)
       character(len=*), intent(in) :: filename
-     complex(kind=WC), dimension(3, 3, 4,NT, NX, NY, NZ), intent(in) :: U_in
-     integer, intent(in) :: NX, NY, NZ, NT
-     complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U
+      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ), intent(in) :: U_in
+      integer, intent(in) :: NX, NY, NZ, NT
+      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U
 
       complex(kind=WC), dimension(3, 3) :: UTmp
       integer, parameter :: infl = 107
@@ -132,11 +132,10 @@ contains
       integer, dimension(4) :: dmu
       logical :: fixSU3Set
 
-
-      do it=1,3
-         do iz=1,3
-            do mu=1, 4
-               U(:, :, :, :, mu, it, iz) = U_in(it, iz, mu, :,:,:,:)
+      do it = 1, 3
+         do iz = 1, 3
+            do mu = 1, 4
+               U(:, :, :, :, mu, it, iz) = U_in(it, iz, mu, :, :, :, :)
             end do
          end do
       end do
@@ -145,12 +144,9 @@ contains
       call genPlaquette(U_in, NT, NX, NY, NZ, 1, 4, 4, sumTrp, NP, time)
       plaq = sumTrp / real(NP, kind=WC)
 
-
-
-
       !write (*, *) 'here ', TRIM(filename)
       open (infl, file=TRIM(filename), form="unformatted", access="stream", &
-           status="replace", action="write", convert="little_endian")
+            status="replace", action="write", convert="little_endian")
       write (infl) nt, nx, ny, nz, plaq
 
       !allocate(U(nxdim,nydim,nzdim,ntdim,4,3,3))
@@ -187,7 +183,6 @@ contains
                      UTmp = U(jt, jx, jy, jz, mu, :, :)
                      write (infl) UTmp
 
-
                   end do
                end do
             end do
@@ -196,8 +191,6 @@ contains
 
       close (infl)
 
-
-    end subroutine WriteGaugeField_OpenQCD
-
+   end subroutine WriteGaugeField_OpenQCD
 
 end module FLUE_openQCDFileIO_SA

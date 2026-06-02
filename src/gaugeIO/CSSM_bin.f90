@@ -14,19 +14,19 @@
 !!
 
 module FLUE_CSSM_bin
-  use FLUE_constants, only: WP, WC, C_INT
-  use FLUE_SU3MatrixOps, only: FixSU3Matrix, orthogonalise_vectors, vector_product
-  implicit none(type, external)
-  private
-  public :: ReadGaugeField_CSSM
-  public :: ReadGaugeTransformation_cola
+   use FLUE_constants, only: WP, WC, C_INT
+   use FLUE_SU3MatrixOps, only: FixSU3Matrix, orthogonalise_vectors, vector_product
+   implicit none(type, external)
+   private
+   public :: ReadGaugeField_CSSM
+   public :: ReadGaugeTransformation_cola
 
 contains
 
-     function ReadGaugeTransformation_cola(filename, NX, NY, NZ, NT) result(G_x)
+   function ReadGaugeTransformation_cola(filename, NX, NY, NZ, NT) result(G_x)
       character(len=*), intent(in) :: filename
       integer, intent(in) :: NX, NY, NZ, NT
-      complex(kind=WC), dimension(3,3,NT, NX, NY, NZ) :: G_x
+      complex(kind=WC), dimension(3, 3, NT, NX, NY, NZ) :: G_x
 
       real(WP), dimension(:, :, :, :, :, :), allocatable :: ReG, ImG
       integer :: ix, iy, iz, it, ic, irank
@@ -70,58 +70,58 @@ contains
 
    end function ReadGaugeTransformation_cola
 
-  function ReadGaugeField_CSSM(filename, NX, NY, NZ, NT, fixSU3) result(U_xd)
-    character(len=*), intent(in) :: filename
-    integer, intent(in) :: NX, NY, NZ, NT
-    logical, optional, intent(in) :: fixSU3
-    complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ) :: U_xd
-    !
-    integer, parameter :: infl = 101
-    ! header
-    integer, parameter :: i32  = selected_int_kind(9)  ! 32 bit integer.
-    integer(i32) :: nconfig, nxdim, nydim, nzdim, ntdim
-    integer, parameter :: dp = kind(1.0D0) !! Double precision real scalars.
-    real(kind=dP) :: beta
-    ! for loading
-    real(kind=wP), dimension(:,:,:,:,:,:,:), allocatable :: ReU, ImU
-    ! counters
-    integer :: ic, mu, it, iz, ix, iy
-    ! For reconstructing from two rows
-    complex(kind=WC), dimension(3) :: v1, v2, v3
-    open(infl, file=filename, form='unformatted', status='old', action='read', convert='BIG_ENDIAN')
-    read(infl) nconfig, beta, nxdim, nydim, nzdim, ntdim
-    !write(*,*) nconfig, beta, nxdim, nydim, nzdim, ntdim
+   function ReadGaugeField_CSSM(filename, NX, NY, NZ, NT, fixSU3) result(U_xd)
+      character(len=*), intent(in) :: filename
+      integer, intent(in) :: NX, NY, NZ, NT
+      logical, optional, intent(in) :: fixSU3
+      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ) :: U_xd
+      !
+      integer, parameter :: infl = 101
+      ! header
+      integer, parameter :: i32 = SELECTED_INT_KIND(9)  ! 32 bit integer.
+      integer(i32) :: nconfig, nxdim, nydim, nzdim, ntdim
+      integer, parameter :: dp = KIND(1.0D0) !! Double precision real scalars.
+      real(kind=dP) :: beta
+      ! for loading
+      real(kind=wP), dimension(:, :, :, :, :, :, :), allocatable :: ReU, ImU
+      ! counters
+      integer :: ic, mu, it, iz, ix, iy
+      ! For reconstructing from two rows
+      complex(kind=WC), dimension(3) :: v1, v2, v3
+      open (infl, file=filename, form='unformatted', status='old', action='read', convert='BIG_ENDIAN')
+      read (infl) nconfig, beta, nxdim, nydim, nzdim, ntdim
+      !write(*,*) nconfig, beta, nxdim, nydim, nzdim, ntdim
 
-    allocate(ReU(NX, NY, NZ, NT, 4, 2, 3))
-    allocate(ImU(NX, NY, NZ, NT, 4, 2, 3))
+      allocate (ReU(NX, NY, NZ, NT, 4, 2, 3))
+      allocate (ImU(NX, NY, NZ, NT, 4, 2, 3))
 
-    do ic =1, 3 - 1
-       read(infl) ReU(:,:,:,:,:,ic,:)
-       read(infl) ImU(:,:,:,:,:,ic,:)
-    end do
+      do ic = 1, 3 - 1
+         read (infl) ReU(:, :, :, :, :, ic, :)
+         read (infl) ImU(:, :, :, :, :, ic, :)
+      end do
 
-    !read(infl) lastPlaq, plaqbarAvg, uzero
-    close(infl)
-    ! Get the two rows of the SU(3) matrix
-    ! Reconstruct the third then put it in the gaugefield variable
-    do mu=1, 4
-       do it=1, NT
-          do iz=1, NZ
-             do iy=1, NY
-                do ix=1, NX
-                   v1 = cmplx(ReU(ix,iy,iz,it,mu,1,:),ImU(ix,iy,iz,it,mu,1,:),kind=WC)
-                   v2 = cmplx(ReU(ix,iy,iz,it,mu,2,:),ImU(ix,iy,iz,it,mu,2,:),kind=WC)
-                   call orthogonalise_vectors(v2, v1)
-                   call vector_product(v3,v1,v2)
-                   U_xd(1, :, mu, it,ix,iy,iz) = v1
-                   U_xd(2, :, mu, it,ix,iy,iz) = v2
-                   U_xd(3, :, mu, it,ix,iy,iz) = v3
-                end do
-             end do
-          end do
-       end do
-    end do
-    U_xd = CSHIFT(U_xd, -1, dim=5)
-  end function ReadGaugeField_CSSM
+      !read(infl) lastPlaq, plaqbarAvg, uzero
+      close (infl)
+      ! Get the two rows of the SU(3) matrix
+      ! Reconstruct the third then put it in the gaugefield variable
+      do mu = 1, 4
+         do it = 1, NT
+            do iz = 1, NZ
+               do iy = 1, NY
+                  do ix = 1, NX
+                     v1 = CMPLX(ReU(ix, iy, iz, it, mu, 1, :), ImU(ix, iy, iz, it, mu, 1, :), kind=WC)
+                     v2 = CMPLX(ReU(ix, iy, iz, it, mu, 2, :), ImU(ix, iy, iz, it, mu, 2, :), kind=WC)
+                     call orthogonalise_vectors(v2, v1)
+                     call vector_product(v3, v1, v2)
+                     U_xd(1, :, mu, it, ix, iy, iz) = v1
+                     U_xd(2, :, mu, it, ix, iy, iz) = v2
+                     U_xd(3, :, mu, it, ix, iy, iz) = v3
+                  end do
+               end do
+            end do
+         end do
+      end do
+      U_xd = CSHIFT(U_xd, -1, dim=5)
+   end function ReadGaugeField_CSSM
 
 end module FLUE_CSSM_bin

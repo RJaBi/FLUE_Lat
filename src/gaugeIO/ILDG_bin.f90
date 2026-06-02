@@ -2,8 +2,8 @@
 module FLUE_ILDG_bin
    !use stdlib_linalg, only: det
    use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT
-  use FLUE_constants, only: WP, WC
-  use FLUE_SU3MatrixOps, only: FixSU3Matrix
+   use FLUE_constants, only: WP, WC
+   use FLUE_SU3MatrixOps, only: FixSU3Matrix
    implicit none(type, external)
    private
    public :: ReadGaugeField_ILDG
@@ -11,11 +11,11 @@ module FLUE_ILDG_bin
 
 contains
 
-  function ReadGaugeField_ILDG(filename, NX, NY, NZ, NT, fixSU3) result(U_xd)
-    character(len=*), intent(in) :: filename
+   function ReadGaugeField_ILDG(filename, NX, NY, NZ, NT, fixSU3) result(U_xd)
+      character(len=*), intent(in) :: filename
       integer, intent(in) :: NX, NY, NZ, NT
       logical, optional, intent(in) :: fixSU3
-      complex(kind=WC), dimension(3,3, 4, NT, NX, NY, NZ) :: U_xd
+      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ) :: U_xd
       complex(kind=WC), dimension(3, 3, 4, NX, NY, NZ, NT) :: URead
       integer, parameter :: infl = 101
       integer :: matrix_len, irecl
@@ -23,7 +23,7 @@ contains
       integer :: it, ix, iy, iz, mu, nu
       logical :: fixSU3Set
 
-      if (present(fixSU3)) then
+      if (PRESENT(fixSU3)) then
          fixSU3Set = fixSU3
       else
          fixSU3Set = .true.
@@ -69,10 +69,10 @@ contains
          end do
       end do
 
-    end function ReadGaugeField_ILDG
+   end function ReadGaugeField_ILDG
 
-    subroutine writeGaugeField_ILDG(filename, U_xd, NX, NY, NZ, NT, fixSU3)
-    character(len=*), intent(in) :: filename
+   subroutine writeGaugeField_ILDG(filename, U_xd, NX, NY, NZ, NT, fixSU3)
+      character(len=*), intent(in) :: filename
       integer, intent(in) :: NX, NY, NZ, NT
       logical, optional, intent(in) :: fixSU3
       complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ), intent(in) :: U_xd
@@ -83,7 +83,7 @@ contains
       integer :: it, ix, iy, iz, mu, nu
       logical :: fixSU3Set
 
-      if (present(fixSU3)) then
+      if (PRESENT(fixSU3)) then
          fixSU3Set = fixSU3
       else
          fixSU3Set = .true.
@@ -109,9 +109,9 @@ contains
                      case (4)
                         nu = 1
                      end select
-                     URead(:,:,mu,ix,iy,iz,it) = transpose(U_xd(:, :, nu, it,ix,iy,iz))
+                     URead(:, :, mu, ix, iy, iz, it) = TRANSPOSE(U_xd(:, :, nu, it, ix, iy, iz))
                      if (fixSU3Set) then
-                        call FixSU3Matrix(URead(:,:,mu,ix,iy,iz,it))
+                        call FixSU3Matrix(URead(:, :, mu, ix, iy, iz, it))
                      end if
 
                   end do
@@ -131,7 +131,6 @@ contains
       end do
       close (infl)
 
-
-    end subroutine WriteGaugeField_ILDG
+   end subroutine WriteGaugeField_ILDG
 
 end module FLUE_ILDG_bin

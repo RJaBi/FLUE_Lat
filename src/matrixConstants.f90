@@ -12,46 +12,46 @@
 !! @version 1.0
 
 module FLUE_matrixConstants
-  use FLUE_constants, only: WC, WP
-  implicit none(external)
+   use FLUE_constants, only: WC, WP
+   implicit none(type, external)
 
   !! 3x3 Identity matrix for SU(3) operations
   !! Used in group theory calculations and matrix operations
-  complex(kind=WC), dimension(3, 3), parameter :: Ident3x3 = RESHAPE(source=[ &
-       (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
-       (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
-       (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP)], &
-       shape=[3, 3], order=[2,1])
+   complex(kind=WC), dimension(3, 3), parameter :: Ident3x3 = RESHAPE(source=[ &
+                                                                      (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
+                                                                      (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
+                                                                      (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP)], &
+                                                                      shape=[3, 3], order=[2, 1])
 
   !! 2x2 Identity matrix for SU(2) operations
   !! Used in group theory calculations and matrix operations
-  complex(kind=WC), dimension(2, 2), parameter :: Ident2x2 = RESHAPE(source=[ &
-       (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
-       (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP)], &
-       shape=[2, 2], order=[2,1])
+   complex(kind=WC), dimension(2, 2), parameter :: Ident2x2 = RESHAPE(source=[ &
+                                                                      (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
+                                                                      (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP)], &
+                                                                      shape=[2, 2], order=[2, 1])
 
   !! Pauli/Sigma matrices for SU(2) operations
   !! First Pauli matrix (sigma_x)
-  complex(kind=WC), dimension(2, 2), parameter :: sigma1 = RESHAPE(source=[ &
-       (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP), &
-       (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP)], &
-       shape=[2, 2], order=[2,1])
+   complex(kind=WC), dimension(2, 2), parameter :: sigma1 = RESHAPE(source=[ &
+                                                                    (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP), &
+                                                                    (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP)], &
+                                                                    shape=[2, 2], order=[2, 1])
 
   !! Second Pauli matrix (sigma_y)
-  complex(kind=WC), dimension(2, 2), parameter :: sigma2 = RESHAPE(source=[ &
-       (0.0_WP, 0.0_WP), (0.0_WP, -1.0_WP), &
-       (0.0_WP, 1.0_WP), (0.0_WP, 0.0_WP)], &
-       shape=[2, 2], order=[2,1])
+   complex(kind=WC), dimension(2, 2), parameter :: sigma2 = RESHAPE(source=[ &
+                                                                    (0.0_WP, 0.0_WP), (0.0_WP, -1.0_WP), &
+                                                                    (0.0_WP, 1.0_WP), (0.0_WP, 0.0_WP)], &
+                                                                    shape=[2, 2], order=[2, 1])
 
   !! Third Pauli matrix (sigma_z)
-  complex(kind=WC), dimension(2, 2), parameter :: sigma3 = RESHAPE(source=[ &
-       (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
-       (0.0_WP, 0.0_WP), (-1.0_WP, 0.0_WP)], &
-       shape=[2, 2], order=[2,1])
+   complex(kind=WC), dimension(2, 2), parameter :: sigma3 = RESHAPE(source=[ &
+                                                                    (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
+                                                                    (0.0_WP, 0.0_WP), (-1.0_WP, 0.0_WP)], &
+                                                                    shape=[2, 2], order=[2, 1])
 
-  private
+   private
 
-  public :: Ident3x3, Ident2x2
-  public :: sigma1, sigma2, sigma3
+   public :: Ident3x3, Ident2x2
+   public :: sigma1, sigma2, sigma3
 
 end module FLUE_matrixConstants
