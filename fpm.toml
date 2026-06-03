@@ -68,3 +68,5 @@ preview = true
     "C001", # 'implicit none' missing 'type'
     "C131", # module missing default accessibility statement
 ]
+[extra.fortitude.check.incorrect-keyword-case]
+keyword-case = "uppercase"
