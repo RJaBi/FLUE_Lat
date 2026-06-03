@@ -1,136 +1,136 @@
 !! Functions to read and write ILDG binary data formats as from cola
-module FLUE_ILDG_bin
+MODULE FLUE_ILDG_bin
+   USE FLUE_constants, ONLY: WP, WC
+   USE FLUE_SU3MatrixOps, ONLY: FixSU3Matrix
    !use stdlib_linalg, only: det
-   use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT
-   use FLUE_constants, only: WP, WC
-   use FLUE_SU3MatrixOps, only: FixSU3Matrix
-   implicit none(type, external)
-   private
-   public :: ReadGaugeField_ILDG
-   public :: writeGaugeField_ILDG
+   USE, INTRINSIC :: ISO_FORTRAN_ENV, ONLY: OUTPUT_UNIT
+   IMPLICIT NONE(TYPE, EXTERNAL)
+   PRIVATE
+   PUBLIC :: ReadGaugeField_ILDG
+   PUBLIC :: writeGaugeField_ILDG
 
-contains
+CONTAINS
 
-   function ReadGaugeField_ILDG(filename, NX, NY, NZ, NT, fixSU3) result(U_xd)
-      character(len=*), intent(in) :: filename
-      integer, intent(in) :: NX, NY, NZ, NT
-      logical, optional, intent(in) :: fixSU3
-      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ) :: U_xd
-      complex(kind=WC), dimension(3, 3, 4, NX, NY, NZ, NT) :: URead
-      integer, parameter :: infl = 101
-      integer :: matrix_len, irecl
+   FUNCTION ReadGaugeField_ILDG(filename, NX, NY, NZ, NT, fixSU3) RESULT(U_xd)
+      CHARACTER(len=*), INTENT(IN) :: filename
+      INTEGER, INTENT(IN) :: NX, NY, NZ, NT
+      LOGICAL, OPTIONAL, INTENT(IN) :: fixSU3
+      COMPLEX(kind=WC), DIMENSION(3, 3, 4, NT, NX, NY, NZ) :: U_xd
+      COMPLEX(kind=WC), DIMENSION(3, 3, 4, NX, NY, NZ, NT) :: URead
+      INTEGER, PARAMETER :: infl = 101
+      INTEGER :: matrix_len, irecl
       ! counters
-      integer :: it, ix, iy, iz, mu, nu
-      logical :: fixSU3Set
+      INTEGER :: it, ix, iy, iz, mu, nu
+      LOGICAL :: fixSU3Set
 
-      if (PRESENT(fixSU3)) then
+      IF (PRESENT(fixSU3)) THEN
          fixSU3Set = fixSU3
-      else
-         fixSU3Set = .true.
-      end if
+      ELSE
+         fixSU3Set = .TRUE.
+      END IF
       ! First read the gaugefield
-      write (OUTPUT_UNIT, *) TRIM(filename)
+      WRITE (OUTPUT_UNIT, *) TRIM(filename)
       matrix_len = 16 * 3 * 3
       irecl = matrix_len * 4 * NX * NY * NZ
       ! write(*,*) matrix_len, irecl, 3, 3, 4, nx, ny, nz, nt
-      open (infl, file=TRIM(filename), form='unformatted', access='direct', &
+      OPEN (infl, file=TRIM(filename), form='unformatted', access='direct', &
             status='old', action='read', recl=irecl, convert='BIG_ENDIAN')
-      do it = 1, NT
-         read (infl, rec=it) URead(:, :, :, :, :, :, it)
-      end do
-      close (infl)
+      DO it = 1, NT
+         READ (infl, rec=it) URead(:, :, :, :, :, :, it)
+      END DO
+      CLOSE (infl)
       ! THen really dumbly re-order the indices
-      do it = 1, NT
-         do ix = 1, NX
-            do iy = 1, NY
-               do iz = 1, NZ
-                  do mu = 1, 4
+      DO it = 1, NT
+         DO ix = 1, NX
+            DO iy = 1, NY
+               DO iz = 1, NZ
+                  DO mu = 1, 4
                      ! Mu is the openqcd index
                      ! i.e. starts t,x,y,z
                      ! nu is the ILDG index
                      ! i.e. starts x,y,z,t
-                     select case (mu)
-                     case (1)
+                     SELECT CASE (mu)
+                     CASE (1)
                         nu = 2
-                     case (2)
+                     CASE (2)
                         nu = 3
-                     case (3)
+                     CASE (3)
                         nu = 4
-                     case (4)
+                     CASE (4)
                         nu = 1
-                     end select
+                     END SELECT
                      U_xd(:, :, nu, it, ix, iy, iz) = TRANSPOSE(URead(:, :, mu, ix, iy, iz, it))
-                     if (fixSU3Set) then
-                        call FixSU3Matrix(U_xd(:, :, nu, it, ix, iy, iz))
-                     end if
-                  end do
-               end do
-            end do
-         end do
-      end do
+                     IF (fixSU3Set) THEN
+                        CALL FixSU3Matrix(U_xd(:, :, nu, it, ix, iy, iz))
+                     END IF
+                  END DO
+               END DO
+            END DO
+         END DO
+      END DO
 
-   end function ReadGaugeField_ILDG
+   END FUNCTION ReadGaugeField_ILDG
 
-   subroutine writeGaugeField_ILDG(filename, U_xd, NX, NY, NZ, NT, fixSU3)
-      character(len=*), intent(in) :: filename
-      integer, intent(in) :: NX, NY, NZ, NT
-      logical, optional, intent(in) :: fixSU3
-      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ), intent(in) :: U_xd
-      complex(kind=WC), dimension(3, 3, 4, NX, NY, NZ, NT) :: URead
-      integer, parameter :: infl = 101
-      integer :: matrix_len, irecl
+   SUBROUTINE writeGaugeField_ILDG(filename, U_xd, NX, NY, NZ, NT, fixSU3)
+      CHARACTER(len=*), INTENT(IN) :: filename
+      INTEGER, INTENT(IN) :: NX, NY, NZ, NT
+      LOGICAL, OPTIONAL, INTENT(IN) :: fixSU3
+      COMPLEX(kind=WC), DIMENSION(3, 3, 4, NT, NX, NY, NZ), INTENT(IN) :: U_xd
+      COMPLEX(kind=WC), DIMENSION(3, 3, 4, NX, NY, NZ, NT) :: URead
+      INTEGER, PARAMETER :: infl = 101
+      INTEGER :: matrix_len, irecl
       ! counters
-      integer :: it, ix, iy, iz, mu, nu
-      logical :: fixSU3Set
+      INTEGER :: it, ix, iy, iz, mu, nu
+      LOGICAL :: fixSU3Set
 
-      if (PRESENT(fixSU3)) then
+      IF (PRESENT(fixSU3)) THEN
          fixSU3Set = fixSU3
-      else
-         fixSU3Set = .true.
-      end if
+      ELSE
+         fixSU3Set = .TRUE.
+      END IF
 
       ! First really dumbly re-order the indices
-      do it = 1, NT
-         do ix = 1, NX
-            do iy = 1, NY
-               do iz = 1, NZ
-                  do mu = 1, 4
+      DO it = 1, NT
+         DO ix = 1, NX
+            DO iy = 1, NY
+               DO iz = 1, NZ
+                  DO mu = 1, 4
                      ! Mu is the openqcd index
                      ! i.e. starts t,x,y,z
                      ! nu is the ILDG index
                      ! i.e. starts x,y,z,t
-                     select case (mu)
-                     case (1)
+                     SELECT CASE (mu)
+                     CASE (1)
                         nu = 2
-                     case (2)
+                     CASE (2)
                         nu = 3
-                     case (3)
+                     CASE (3)
                         nu = 4
-                     case (4)
+                     CASE (4)
                         nu = 1
-                     end select
+                     END SELECT
                      URead(:, :, mu, ix, iy, iz, it) = TRANSPOSE(U_xd(:, :, nu, it, ix, iy, iz))
-                     if (fixSU3Set) then
-                        call FixSU3Matrix(URead(:, :, mu, ix, iy, iz, it))
-                     end if
+                     IF (fixSU3Set) THEN
+                        CALL FixSU3Matrix(URead(:, :, mu, ix, iy, iz, it))
+                     END IF
 
-                  end do
-               end do
-            end do
-         end do
-      end do
+                  END DO
+               END DO
+            END DO
+         END DO
+      END DO
 
       ! Then write the gaugefield
       matrix_len = 16 * 3 * 3
       irecl = matrix_len * 4 * NX * NY * NZ
       ! write(*,*) matrix_len, irecl, 3, 3, 4, nx, ny, nz, nt
-      open (infl, file=TRIM(filename), form='unformatted', access='direct', &
+      OPEN (infl, file=TRIM(filename), form='unformatted', access='direct', &
             status='replace', action='write', recl=irecl, convert='BIG_ENDIAN')
-      do it = 1, NT
-         write (infl, rec=it) URead(:, :, :, :, :, :, it)
-      end do
-      close (infl)
+      DO it = 1, NT
+         WRITE (infl, rec=it) URead(:, :, :, :, :, :, it)
+      END DO
+      CLOSE (infl)
 
-   end subroutine WriteGaugeField_ILDG
+   END SUBROUTINE WriteGaugeField_ILDG
 
-end module FLUE_ILDG_bin
+END MODULE FLUE_ILDG_bin

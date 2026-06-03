@@ -1,23 +1,23 @@
 !! Functions to read & write openQCD format gaugefields
-module FLUE_openQCDFileIO_SA
-   use FLUE_constants, only: WP, WC
-   use FLUE_SU3MatrixOps, only: FixSU3Matrix
-   use FLUE_wloops, only: genPlaquette
-   implicit none(type, external)
-   private
-   public :: ReadGaugeField_OpenQCD
-   public :: writeGaugeField_OpenQCD
+MODULE FLUE_openQCDFileIO_SA
+   USE FLUE_constants, ONLY: WP, WC
+   USE FLUE_SU3MatrixOps, ONLY: FixSU3Matrix
+   USE FLUE_wloops, ONLY: genPlaquette
+   IMPLICIT NONE(TYPE, EXTERNAL)
+   PRIVATE
+   PUBLIC :: ReadGaugeField_OpenQCD
+   PUBLIC :: writeGaugeField_OpenQCD
 
-contains
+CONTAINS
 
   !! Maps an integer a to the set of integers [1,b] i.e. positive integers with cycle length b.
-   elemental function modc(a, b) result(c)
+   ELEMENTAL FUNCTION modc(a, b) RESULT(c)
     !! Taken directly from COLA
-      integer, intent(in) :: a, b
-      integer :: c
+      INTEGER, INTENT(IN) :: a, b
+      INTEGER :: c
       !c = a - ((a-1)/b)*b
       c = MODULO(a - 1, b) + 1
-   end function modc
+   END FUNCTION modc
 
 !  function determinant(matrix) result(det)
 !    complex(c_double_complex), dimension(3,3), intent(in) :: matrix
@@ -28,45 +28,45 @@ contains
 !         matrix(1,3)*(matrix(2,1)*matrix(3,2) - matrix(2,2)*matrix(3,1))
 !  end function determinant
 
-   function ReadGaugeField_OpenQCD(filename, NX, NY, NZ, NT, fixSU3) result(U_out)
-      character(len=*), intent(in) :: filename
-      integer, intent(in) :: NX, NY, NZ, NT
-      logical, optional, intent(in) :: fixSU3
-      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U_xd
-      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ) :: U_out
+   FUNCTION ReadGaugeField_OpenQCD(filename, NX, NY, NZ, NT, fixSU3) RESULT(U_out)
+      CHARACTER(len=*), INTENT(IN) :: filename
+      INTEGER, INTENT(IN) :: NX, NY, NZ, NT
+      LOGICAL, OPTIONAL, INTENT(IN) :: fixSU3
+      COMPLEX(kind=WC), DIMENSION(NT, NX, NY, NZ, 4, 3, 3) :: U_xd
+      COMPLEX(kind=WC), DIMENSION(3, 3, 4, NT, NX, NY, NZ) :: U_out
       !complex(kind=WP), dimension(:,:,:,:,:,:,:), allocatable :: U_xd
 
-      complex(kind=WC), dimension(3, 3) :: UTmp
-      integer, parameter :: infl = 107
+      COMPLEX(kind=WC), DIMENSION(3, 3) :: UTmp
+      INTEGER, PARAMETER :: infl = 107
       ! Header info
-      real(kind=WP) :: plaq
-      integer :: ntdim, nxdim, nydim, nzdim
+      REAL(kind=WP) :: plaq
+      INTEGER :: ntdim, nxdim, nydim, nzdim
       ! counters
-      integer :: it, ix, iy, iz, mu, id
-      integer :: jx, jy, jz, jt
-      integer, dimension(4) :: dmu
-      logical :: fixSU3Set
+      INTEGER :: it, ix, iy, iz, mu, id
+      INTEGER :: jx, jy, jz, jt
+      INTEGER, DIMENSION(4) :: dmu
+      LOGICAL :: fixSU3Set
 
-      if (PRESENT(fixSU3)) then
+      IF (PRESENT(fixSU3)) THEN
          fixSU3Set = fixSU3
-      else
-         fixSU3Set = .true.
-      end if
+      ELSE
+         fixSU3Set = .TRUE.
+      END IF
 
-      write (*, *) "here ", TRIM(filename)
-      open (infl, file=TRIM(filename), form="unformatted", access="stream", status="old", action="read", convert="little_endian")
-      read (infl) ntdim, nxdim, nydim, nzdim, plaq
+      WRITE (*, *) "here ", TRIM(filename)
+      OPEN (infl, file=TRIM(filename), form="unformatted", access="stream", status="old", action="read", convert="little_endian")
+      READ (infl) ntdim, nxdim, nydim, nzdim, plaq
 
       !allocate(U_xd(nxdim,nydim,nzdim,ntdim,4,3,3))
 
       ! z varies quickest, then y, then x, then t
-      do it = 1, ntdim
-         do ix = 1, nxdim
-            do iy = 1, nydim
-               do iz = 1, nzdim
-                  if (MODULO(ix + iy + iz + it - 4, 2) == 0) cycle  ! Format only considers odd points
+      DO it = 1, ntdim
+         DO ix = 1, nxdim
+            DO iy = 1, nydim
+               DO iz = 1, nzdim
+                  IF (MODULO(ix + iy + iz + it - 4, 2) == 0) CYCLE  ! Format only considers odd points
 
-                  do id = 1, 4
+                  DO id = 1, 4
                      mu = modc(id - 1, 4)  ! Time dimension first: mu = 4, 1, 2, 3
 
                      dmu(:) = 0
@@ -80,87 +80,87 @@ contains
                      ! Read the forward and backward links in mu direction
                      !read(infl) U_g(mu,ix,iy,iz,it)%cl(:,:)
                      !read(infl) U_g(mu,jx,jy,jz,jt)%cl(:,:)
-                     read (infl) UTmp
+                     READ (infl) UTmp
                      U_xd(it, ix, iy, iz, mu, :, :) = UTmp
-                     read (infl) UTmp
+                     READ (infl) UTmp
                      U_xd(jt, jx, jy, jz, mu, :, :) = UTmp
 
                      U_xd(it, ix, iy, iz, mu, :, :) = TRANSPOSE(U_xd(it, ix, iy, iz, mu, :, :))
                      U_xd(jt, jx, jy, jz, mu, :, :) = TRANSPOSE(U_xd(jt, jx, jy, jz, mu, :, :))
-                     if (fixSU3Set) then
+                     IF (fixSU3Set) THEN
                         ! Welll FixSU3Matrix did nothing to the average plaquette value
                         UTmp = U_xd(it, ix, iy, iz, mu, :, :)
-                        call FixSU3Matrix(UTmp)
+                        CALL FixSU3Matrix(UTmp)
                         U_xd(it, ix, iy, iz, mu, :, :) = UTmp
                         UTmp = U_xd(jt, jx, jy, jz, mu, :, :)
-                        call FixSU3Matrix(UTmp)
+                        CALL FixSU3Matrix(UTmp)
                         U_xd(jt, jx, jy, jz, mu, :, :) = UTmp
-                     end if
-                  end do
-               end do
-            end do
-         end do
-      end do
+                     END IF
+                  END DO
+               END DO
+            END DO
+         END DO
+      END DO
 
-      close (infl)
+      CLOSE (infl)
 
       U_xd = CSHIFT(U_xd, -1, dim=5)
-      do it = 1, 3
-         do iz = 1, 3
-            do mu = 1, 4
+      DO it = 1, 3
+         DO iz = 1, 3
+            DO mu = 1, 4
                U_out(it, iz, mu, :, :, :, :) = U_xd(:, :, :, :, mu, it, iz)
-            end do
-         end do
-      end do
+            END DO
+         END DO
+      END DO
 
-   end function ReadGaugeField_OpenQCD
+   END FUNCTION ReadGaugeField_OpenQCD
 
-   subroutine writeGaugeField_OpenQCD(filename, U_in, NX, NY, NZ, NT)
-      character(len=*), intent(in) :: filename
-      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ), intent(in) :: U_in
-      integer, intent(in) :: NX, NY, NZ, NT
-      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U
+   SUBROUTINE writeGaugeField_OpenQCD(filename, U_in, NX, NY, NZ, NT)
+      CHARACTER(len=*), INTENT(IN) :: filename
+      COMPLEX(kind=WC), DIMENSION(3, 3, 4, NT, NX, NY, NZ), INTENT(IN) :: U_in
+      INTEGER, INTENT(IN) :: NX, NY, NZ, NT
+      COMPLEX(kind=WC), DIMENSION(NT, NX, NY, NZ, 4, 3, 3) :: U
 
-      complex(kind=WC), dimension(3, 3) :: UTmp
-      integer, parameter :: infl = 107
+      COMPLEX(kind=WC), DIMENSION(3, 3) :: UTmp
+      INTEGER, PARAMETER :: infl = 107
       ! Header info
-      real(kind=WP) :: plaq, sumTrP, time
-      integer :: NP
+      REAL(kind=WP) :: plaq, sumTrP, time
+      INTEGER :: NP
       ! counters
-      integer :: it, ix, iy, iz, mu, id
-      integer :: jx, jy, jz, jt
-      integer, dimension(4) :: dmu
-      logical :: fixSU3Set
+      INTEGER :: it, ix, iy, iz, mu, id
+      INTEGER :: jx, jy, jz, jt
+      INTEGER, DIMENSION(4) :: dmu
+      LOGICAL :: fixSU3Set
 
-      do it = 1, 3
-         do iz = 1, 3
-            do mu = 1, 4
+      DO it = 1, 3
+         DO iz = 1, 3
+            DO mu = 1, 4
                U(:, :, :, :, mu, it, iz) = U_in(it, iz, mu, :, :, :, :)
-            end do
-         end do
-      end do
+            END DO
+         END DO
+      END DO
 
       ! Calculate the plaquette as needed by oqcd header
-      call genPlaquette(U_in, NT, NX, NY, NZ, 1, 4, 4, sumTrp, NP, time)
+      CALL genPlaquette(U_in, NT, NX, NY, NZ, 1, 4, 4, sumTrp, NP, time)
       plaq = sumTrp / real(NP, kind=WC)
 
       !write (*, *) 'here ', TRIM(filename)
-      open (infl, file=TRIM(filename), form="unformatted", access="stream", &
+      OPEN (infl, file=TRIM(filename), form="unformatted", access="stream", &
             status="replace", action="write", convert="little_endian")
-      write (infl) nt, nx, ny, nz, plaq
+      WRITE (infl) nt, nx, ny, nz, plaq
 
       !allocate(U(nxdim,nydim,nzdim,ntdim,4,3,3))
 
       U = CSHIFT(U, 1, dim=5)
 
       ! z varies quickest, then y, then x, then t
-      do it = 1, nt
-         do ix = 1, nx
-            do iy = 1, ny
-               do iz = 1, nz
-                  if (MODULO(ix + iy + iz + it - 4, 2) == 0) cycle  ! Format only considers odd points
+      DO it = 1, nt
+         DO ix = 1, nx
+            DO iy = 1, ny
+               DO iz = 1, nz
+                  IF (MODULO(ix + iy + iz + it - 4, 2) == 0) CYCLE  ! Format only considers odd points
 
-                  do id = 1, 4
+                  DO id = 1, 4
                      mu = modc(id - 1, 4)  ! Time dimension first: mu = 4, 1, 2, 3
 
                      dmu(:) = 0
@@ -179,18 +179,18 @@ contains
                      U(jt, jx, jy, jz, mu, :, :) = TRANSPOSE(U(jt, jx, jy, jz, mu, :, :))
 
                      UTmp = U(it, ix, iy, iz, mu, :, :)
-                     write (infl) UTmp
+                     WRITE (infl) UTmp
                      UTmp = U(jt, jx, jy, jz, mu, :, :)
-                     write (infl) UTmp
+                     WRITE (infl) UTmp
 
-                  end do
-               end do
-            end do
-         end do
-      end do
+                  END DO
+               END DO
+            END DO
+         END DO
+      END DO
 
-      close (infl)
+      CLOSE (infl)
 
-   end subroutine WriteGaugeField_OpenQCD
+   END SUBROUTINE WriteGaugeField_OpenQCD
 
-end module FLUE_openQCDFileIO_SA
+END MODULE FLUE_openQCDFileIO_SA
