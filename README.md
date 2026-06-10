@@ -22,6 +22,7 @@ Code to calculate various gluonic quantities in lattice QCD. These include quant
 | Gluon Propagtor                      | &cross;               | Work in progress - POSTPONED.                                              |
 | uzerobar			                   | &check;	           | Calculates u_0 using Landau gauge and plaquette definitions		        |
 | stout-link smearing | &check; | Stout smear (Morningstar & Peardon, [10.1103/PhysRevD.69.054501](https://doi.org/10.1103/PhysRevD.69.054501)) gauge links. Spatial link smearing only |
+| $SU(3)$ & $SU(2)$ heatbath             | &check;                | Heatbath algorithm to generate quenched $SU(3)$ or $SU(2)$. Naive implementation (no parallel, no overrelaxation) but can use Wilson or tree-level Symanzik (Luescher-Weisz action). No improved action for $SU(2)$. |
 
 Note that $SU(2)$ supporst only the `Generic path based wilson line` and the `generic path plaquette`. $SU(2)$ modules and routines have SU2 in the name.
 
@@ -48,12 +49,15 @@ The `cssm` format stores some metadata, the real part of the whole $SU(2)$ matri
 
 The HKLS (Hands-Kim-Lawlor-Skullerud) supports the compact format used by [su2hmc](https://doi.org/10.5281/zenodo.12910604).
 
+The NRQC2CD format is `(ip5d2,2,2,4,0:1)` where `ip5d2` is $NX \times NY \times NZ \times NT / 2` where 0 means odd sites and 1 is even sites with NX iterating fastest.
+
 | Format   | Read    | Write   |
 |----------|---------|---------|
 | HKLS     | &check; | &check; |
 | cssm     | &cross; | &check; |
+| NRQ2CD   | &cross; | &check; |
 
-The internal representation of a $SU(3)$ gaugefield is `(NT, NS, NS, NS, 4, 2, 2)`.
+The internal representation of a $SU(3)$ gaugefield is `(2, 2, 4, NT, NS, NS, NS)`.
 
 ----
 # Run
@@ -70,14 +74,18 @@ suffixes = ["F90"]
 macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
 ```
 
-| Program          | purpose					                                    	                                               | args		                     |
-|------------------|-------------------------------------------------------------------------------------------------------|-----------------------------|
-| magnetic         | Calculate's the magnetic portion of Fmunu                                                             | mag.toml		                 |
-| ILDG_to_OQCD     | Convert a gauge field ILDG-bin in big endian to openqcd                                               | inputFile outputFile NT NS  |
-| CSSM_to_OQCD     | Convert a gauge field cssm to openqcd                                                                 | inputFile outputFile NT NS  |
-| OQCD_to_ILDG     | Convert a gauge field openqcd to ILDG-bin in big endian                                               | inputFile outputFile NT NS  |
-| SU2_HKLS_to_CSSM | Convert a $SU(2)$ gaugefield in HKLS to cssm                                                          | inputFile outputFile NT NS  |
-| OQCD_stoutSmear  | Stout smear (spatial) an openqcd gauge field and print average unsmeared and smeared plaquette values | inputFile rho nSweeps NT NS |
+| Program            | purpose					                                    	                                               | args		                     |
+|--------------------|-------------------------------------------------------------------------------------------------------|-----------------------------|
+| magnetic           | Calculate's the magnetic portion of Fmunu                                                             | mag.toml		                 |
+| ILDG_to_OQCD       | Convert a gauge field ILDG-bin in big endian to openqcd                                               | inputFile outputFile NT NS  |
+| CSSM_to_OQCD       | Convert a gauge field cssm to openqcd                                                                 | inputFile outputFile NT NS  |
+| OQCD_to_ILDG       | Convert a gauge field openqcd to ILDG-bin in big endian                                               | inputFile outputFile NT NS  |
+| SU2_HKLS_to_CSSM   | Convert a $SU(2)$ gaugefield in HKLS to cssm                                                          | inputFile outputFile NT NS  |
+| SU2_HKLS_to_NRQ2CD | Convert a $SU(2)$ gaugefield in HKLS to NRQ2CD                                                        | inputFile outputFile NT NS  |
+| OQCD_stoutSmear    | Stout smear (spatial) an openqcd gauge field and print average unsmeared and smeared plaquette values | inputFile rho nSweeps NT NS |
+| SU3_heatbath       | Generate $SU(3)$ gaugefields and measure plaquette. Hard-coded parameters in this file                |                             |
+| SU2_heatbath       | Generate $SU(2)$ gaugefields and measure plaquette. Hard-coded parameters in this file                |                             |
+
 ----
 # Python Support
 
