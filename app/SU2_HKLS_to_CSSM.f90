@@ -3,72 +3,66 @@
 !! Ryan Bignell 2025
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-program SU2_HKLS_to_CSSM
-   use, intrinsic :: ISO_C_BINDING, only: C_INT, C_DOUBLE_COMPLEX, C_LONG
-   use FLUE, only: WP, WC, writeCompiler, writeGit, &
-                   ReadGaugeField_HKLS, WriteGaugeField_SU2_CSSM
-   implicit none(type, external)
+PROGRAM SU2_HKLS_to_CSSM
+   USE FLUE, ONLY: WP, WC, writeCompiler, writeGit, &
+                   ReadGaugeField_HKLS, WriteGaugeField_SU2_CSSM, writeGaugeField_HKLS, SU2_genPlaquette
+   USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_INT, C_DOUBLE_COMPLEX, C_LONG
+   IMPLICIT NONE(TYPE, EXTERNAL)
    ! IO vars
-   character(len=256) :: inputFile, outputFile, NTS, NSS
-   complex(C_DOUBLE_COMPLEX), dimension(:, :, :, :, :, :, :), allocatable :: U1, U2
-   integer :: NT, NS
+   CHARACTER(len=256) :: inputFile, outputFile, NTS, NSS
+   COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:, :, :, :, :, :, :), ALLOCATABLE :: U1
+   INTEGER :: NT, NS
 
-   integer(kind=C_LONG) :: seed
-   integer(kind=C_INT) :: old_nproc
+   INTEGER(kind=C_LONG), DIMENSION(:), ALLOCATABLE :: seed
+   INTEGER(kind=C_INT) :: old_nproc
 
-   integer(kind=C_LONG) :: seed2
-   integer(kind=C_INT) :: old_nproc2
+   INTEGER :: ix, iy, iz, it, mu
 
-   real(kind=WP) :: sumTrP, time
-   integer :: nP
+   CALL writeCompiler()
+   CALL writeGit()
+   WRITE (*, *) ""
 
-   integer :: ix, iy, iz, it, mu
+   IF (COMMAND_ARGUMENT_COUNT() > 0) THEN
+      CALL GET_COMMAND_ARGUMENT(1, inputFile)
+      WRITE (*, *) "Reading gauge file from ", TRIM(inputFile)
+      CALL GET_COMMAND_ARGUMENT(2, outputFile)
+      WRITE (*, *) "Saving gauge file to ", TRIM(outputFile)
+      CALL GET_COMMAND_ARGUMENT(3, NTS)
+      CALL str2int(NTS, NT)
+      WRITE (*, *) "NT IS", NT
+      CALL GET_COMMAND_ARGUMENT(4, NSS)
+      CALL str2int(NSS, NS)
+      WRITE (*, *) "NS IS", NS
+   ELSE
+      WRITE (*, *) "Pass the full path to the input toml on the command line"
+      WRITE (*, *) "i.e. fpm run SU2_HKLS_to_CSSM -- inputFile outputFile NT NS"
+      STOP
+   END IF
 
-   call writeCompiler()
-   call writeGit()
-   write (*, *) ""
+   ALLOCATE (U1(2, 2, 4, NT, NS, NS, NS))
+   CALL ReadGaugeField_HKLS(TRIM(inputFile), NS, NS, NS, NT, U1, seed, old_nproc)
 
-   if (COMMAND_ARGUMENT_COUNT() > 0) then
-      call GET_COMMAND_ARGUMENT(1, inputFile)
-      write (*, *) "Reading gauge file from ", TRIM(inputFile)
-      call GET_COMMAND_ARGUMENT(2, outputFile)
-      write (*, *) "Saving gauge file to ", TRIM(outputFile)
-      call GET_COMMAND_ARGUMENT(3, NTS)
-      call str2int(NTS, NT)
-      write (*, *) "NT IS", NT
-      call GET_COMMAND_ARGUMENT(4, NSS)
-      call str2int(NSS, NS)
-      write (*, *) "NS IS", NS
-   else
-      write (*, *) "Pass the full path to the input toml on the command line"
-      write (*, *) "i.e. fpm run ILDG_to_OQCD -- inputFile outputFile NT NS"
-      stop
-   end if
+   CALL writeGaugeField_SU2_CSSM(TRIM(outputFile), NS, NS, NS, NT, U1, 5, 1.9_WP)
 
-   allocate (U1(2, 2, 4, NT, NS, NS, NS))
-   call ReadGaugeField_HKLS(TRIM(inputFile), NS, NS, NS, NT, U1, seed, old_nproc)
+CONTAINS
 
-   call writeGaugeField_SU2_CSSM(TRIM(outputFile), NS, NS, NS, NT, U1, 5, 1.9_WP)
-
-contains
-
-   elemental subroutine str2int(str, int, stat)
+   ELEMENTAL SUBROUTINE str2int(str, int, stat)
       ! Modified from https://stackoverflow.com/a/24077338
-      implicit none(external)
+      IMPLICIT NONE(EXTERNAL)
       ! Arguments
-      character(len=*), intent(in) :: str
-      integer, intent(out) :: int
-      integer, optional, intent(out) :: stat
-      character(len=25) :: mystr
-      if (PRESENT(stat)) then
-         read (str, *, iostat=stat) int
-         if (stat /= 0) then
+      CHARACTER(len=*), INTENT(IN) :: str
+      INTEGER, INTENT(OUT) :: int
+      INTEGER, OPTIONAL, INTENT(OUT) :: stat
+      CHARACTER(len=25) :: mystr
+      IF (PRESENT(stat)) THEN
+         READ (str, *, iostat=stat) int
+         IF (stat /= 0) THEN
             mystr = 'iostat was not equal to 0'
 !          write(*,*) "iostat is ", stat
-         end if
-      else
-         read (str, *) int
-      end if
-   end subroutine str2int
+         END IF
+      ELSE
+         READ (str, *) int
+      END IF
+   END SUBROUTINE str2int
 
-end program SU2_HKLS_To_CSSM
+END PROGRAM SU2_HKLS_To_CSSM
