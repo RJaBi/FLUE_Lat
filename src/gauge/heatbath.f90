@@ -12,12 +12,12 @@ MODULE FLUE_heatbath
 
    ABSTRACT INTERFACE
       PURE SUBROUTINE stapleInterface(U, V, coord, mu)
+        IMPORT :: WC
         IMPLICIT NONE(TYPE, EXTERNAL)
-         IMPORT :: WC
-         COMPLEX(kind=WC), DIMENSION(:, :, :, :, :, :, :), INTENT(IN) :: U
-         INTEGER, DIMENSION(4), INTENT(IN) :: coord
-         INTEGER, INTENT(IN) :: mu
-         COMPLEX(kind=WC), DIMENSION(3, 3), INTENT(OUT) :: V
+        COMPLEX(kind=WC), DIMENSION(:, :, :, :, :, :, :), INTENT(IN) :: U
+        INTEGER, DIMENSION(4), INTENT(IN) :: coord
+        INTEGER, INTENT(IN) :: mu
+        COMPLEX(kind=WC), DIMENSION(3, 3), INTENT(OUT) :: V
       END SUBROUTINE stapleInterface
    END INTERFACE
 
