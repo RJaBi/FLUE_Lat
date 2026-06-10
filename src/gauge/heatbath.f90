@@ -5,15 +5,29 @@ MODULE FLUE_heatbath
    USE FLUE_SU2_random, ONLY: constructSU2Matrix
    USE FLUE_SU3MatrixOps, ONLY: MultiplyMatMat, FixSU3Matrix
    USE FLUE_wloops, ONLY: genericPath, periodCoord
+   USE stdlib_ascii, ONLY: to_lower
    IMPLICIT NONE(TYPE, EXTERNAL)
    PRIVATE
    PUBLIC :: updateLinks
-CONTAINS
 
-   SUBROUTINE updateLinks(U, beta, UUpdated)
+   ABSTRACT INTERFACE
+      PURE SUBROUTINE stapleInterface(U, V, coord, mu)
+        IMPLICIT NONE(TYPE, EXTERNAL)
+         IMPORT :: WC
+         COMPLEX(kind=WC), DIMENSION(:, :, :, :, :, :, :), INTENT(IN) :: U
+         INTEGER, DIMENSION(4), INTENT(IN) :: coord
+         INTEGER, INTENT(IN) :: mu
+         COMPLEX(kind=WC), DIMENSION(3, 3), INTENT(OUT) :: V
+      END SUBROUTINE stapleInterface
+   END INTERFACE
+
+ CONTAINS
+
+   SUBROUTINE updateLinks(U, beta, UUpdated, actionTag)
       COMPLEX(kind=WC), DIMENSION(:, :, :, :, :, :, :), INTENT(IN) :: U
       REAL(kind=WP), INTENT(IN) :: beta
       COMPLEX(kind=WC), DIMENSION(:, :, :, :, :, :, :), INTENT(INOUT) :: UUpdated
+      CHARACTER(len=*), INTENT(IN), OPTIONAL :: actionTag
     !! lattice geometry
       INTEGER, DIMENSION(7) :: dataShape
       INTEGER :: nt, nx, ny, nz
@@ -22,11 +36,20 @@ CONTAINS
       INTEGER, DIMENSION(4) :: coord
     !! matrices
       COMPLEX(kind=WC), DIMENSION(3, 3) :: staple, W, embed, ULink, UTemp
+      PROCEDURE(stapleInterface), POINTER :: stapleKernel
       COMPLEX(kind=WC), DIMENSION(2, 2) :: SU2_M, MfromW, SU2_X, SU2_U
     !! For SU2 quarternion
       REAL(kind=WP), DIMENSION(0:3) :: aQuart
       REAL(kind=WP) :: alpha
-
+      stapleKernel => stapleWilson
+      IF (PRESENT(actionTag)) THEN
+         SELECT CASE (to_lower(TRIM(actionTag)))
+         CASE ("symanzik")
+            stapleKernel => stapleSymanzik
+         CASE ('wilson')
+            stapleKernel => stapleWilson
+         END SELECT
+      END IF
       dataShape = SHAPE(U)
       nt = dataShape(4)
       nx = dataShape(5)
@@ -41,7 +64,7 @@ CONTAINS
                   coord = (/it, ix, iy, iz/)
                   DO mu = 1, 4
                      ULink = UUpdated(:, :, mu, it, ix, iy, iz)
-                     CALL stapleAt(UUpdated, staple, coord, mu)
+                     CALL stapleKernel(UUpdated, staple, coord, mu)
                      ! W = U*V
                      CALL MultiplyMatMat(W, ULink, staple)
                      ! Do the first SU2 update in 1,2
@@ -150,7 +173,7 @@ CONTAINS
       END DO
    END SUBROUTINE updateLinks
 
-   PURE SUBROUTINE stapleAt(U, V, coord, mu)
+   PURE SUBROUTINE stapleWilson(U, V, coord, mu)
       COMPLEX(kind=WC), DIMENSION(:, :, :, :, :, :, :), INTENT(IN) :: U
       INTEGER, DIMENSION(4), INTENT(IN) :: coord
       INTEGER, INTENT(IN) :: mu
@@ -167,6 +190,41 @@ CONTAINS
          V = V + genericPath(U, thisCoord, (/nu, -mu, -nu/)) &
              + genericPath(U, thisCoord, (/-nu, -mu, nu/))
       END DO
-   END SUBROUTINE stapleAt
+   END SUBROUTINE stapleWilson
+
+   PURE SUBROUTINE stapleSymanzik(U, V, coord, mu)
+     COMPLEX(kind=WC), DIMENSION(:, :, :, :, :, :, :), INTENT(IN) :: U
+     INTEGER, DIMENSION(4), INTENT(IN) :: coord
+     INTEGER, INTENT(IN) :: mu
+     COMPLEX(kind=WC), DIMENSION(3, 3), INTENT(OUT) :: V
+     INTEGER, DIMENSION(4) :: thisCoord, step
+     INTEGER, DIMENSION(5) :: r5
+     COMPLEX(kind=WC), DIMENSION(3, 3) :: Vplaq, Vrect
+     INTEGER :: nu
+     CALL stapleWilson(U, Vplaq, coord, mu)
+     Vrect = CMPLX(0.0_WP, 0.0_WP, kind=WC)
+     step = 0
+     step(mu) = 1
+     thisCoord = periodCoord(coord + step, SHAPE(U))  ! x+mu
+     DO nu = 1, 4
+        IF (nu == mu) CYCLE
+        ! --- long in nu (2 staples) ---
+        r5 = (/ nu,  nu,  -mu, -nu, -nu /)
+        Vrect = Vrect + genericPath(U, thisCoord, r5)
+        r5 = (/ -nu, -nu, -mu,  nu,  nu /)
+        Vrect = Vrect + genericPath(U, thisCoord, r5)
+        ! --- long in mu, link is first mu (2 staples) ---
+        r5 = (/ mu,  nu, -mu, -mu, -nu /)
+        Vrect = Vrect + genericPath(U, thisCoord, r5)
+        r5 = (/ mu, -nu, -mu, -mu,  nu /)
+        Vrect = Vrect + genericPath(U, thisCoord, r5)
+        ! --- long in mu, link is second mu (rectangle shifted back) (2 staples) ---
+        r5 = (/  nu, -mu, -mu, -nu,  mu /)
+        Vrect = Vrect + genericPath(U, thisCoord, r5)
+        r5 = (/ -nu, -mu, -mu,  nu,  mu /)
+        Vrect = Vrect + genericPath(U, thisCoord, r5)
+     END DO
+     V = (5.0_WP/3.0_WP)*Vplaq - (1.0_WP/12.0_WP)*Vrect
+   END SUBROUTINE stapleSymanzik
 
 END MODULE FLUE_heatbath

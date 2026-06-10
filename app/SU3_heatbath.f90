@@ -11,15 +11,16 @@ PROGRAM SU3_heatbath
    IMPLICIT NONE(TYPE, EXTERNAL)
 
    ! Lattice geometry
-   INTEGER, PARAMETER :: NS = 12
-   INTEGER, PARAMETER :: NT = 12
+   INTEGER, PARAMETER :: NS = 4
+   INTEGER, PARAMETER :: NT = 4
    COMPLEX(kind=WC), DIMENSION(3, 3, 4, NT, NS, NS, NS) :: U, UNew
    ! steps
-   INTEGER, PARAMETER :: nTherm = 50
+   INTEGER, PARAMETER :: nTherm = 0
    INTEGER, PARAMETER :: nTraj = 200
    INTEGER, PARAMETER :: nSkip = 1
    ! simulation params
-   REAL(kind=WP), PARAMETER :: beta = 7.0_WP
+   REAL(kind=WP), PARAMETER :: beta = 5.6_WP
+   CHARACTER(len=20), PARAMETER :: actionTag='Symanzik'
   !! counters
    INTEGER :: it, ix, iy, iz, mu
    INTEGER :: iTraj
@@ -38,7 +39,7 @@ PROGRAM SU3_heatbath
 
    ! Thermallise
    DO iTraj = 1, nTherm
-      CALL updateLinks(U, beta, UNew)
+      CALL updateLinks(U, beta, UNew, trim(actionTag))
       U = UNew
    END DO
 
@@ -46,7 +47,7 @@ PROGRAM SU3_heatbath
    WRITE (*, *) 'after therm', sumTrP / (3.0_WP * real(nPlaq, kind=WP))
    DO iTraj = 1, nTraj
       !write(*,*) iTraj
-      CALL updateLinks(U, beta, UNew)
+      CALL updateLinks(U, beta, UNew, trim(actionTag))
       !write(*,*) 'updated'
       U = UNew
       IF (MOD(iTraj, nSkip) == 0) THEN
