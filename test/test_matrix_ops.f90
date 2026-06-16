@@ -30,6 +30,7 @@ CONTAINS
    END SUBROUTINE collect_matrix_ops
 
    SUBROUTINE test_multiply_matmat_full(error)
+     !! Test multiplyMatMat by comparing to intrinsic matmul
       TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
       COMPLEX(WC) :: a(3,3), b(3,3), got(3,3), ref(3,3)
       REAL(WP), PARAMETER :: tol = 1.0e-14_WP
@@ -56,6 +57,8 @@ CONTAINS
    END SUBROUTINE test_multiply_matmat_full
 
    SUBROUTINE test_trace_mult_matmat(error)
+     !! Test the trace multiply subroutines
+     !! By comparing to doing it explicitly
       TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
       COMPLEX(WC) :: a(3,3), b(3,3), prod(3,3), tr_ref, tr_got
       REAL(WP) :: rtr_ref, rtr_got
@@ -83,6 +86,7 @@ CONTAINS
    END SUBROUTINE test_trace_mult_matmat
 
    SUBROUTINE test_real_trace_mat(error)
+     !! Test taking the trace by knowing expected
       TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
       COMPLEX(WC) :: a(3,3)
       REAL(WP), PARAMETER :: tol = 1.0e-14_WP
@@ -98,6 +102,8 @@ CONTAINS
    END SUBROUTINE test_real_trace_mat
 
    SUBROUTINE test_traceless_conjg_subtract(error)
+     !! Tests taking the trace and making traceless matrix
+     !! By asserting that it returns a traceless matrix
       TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
       COMPLEX(WC) :: a(3,3), b(3,3), c(3,3)
       REAL(WP), PARAMETER :: tol = 1.0e-12_WP
@@ -114,6 +120,8 @@ CONTAINS
    END SUBROUTINE test_traceless_conjg_subtract
 
    SUBROUTINE test_fix_su3_matrix_full(error)
+     !! Tests that fixSU3 does project to SU3 properly
+     !! By checking unitarity and determinant
       TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
       COMPLEX(WC) :: u(3,3)
       REAL(WP), PARAMETER :: tol = 1.0e-8_WP
@@ -131,6 +139,7 @@ CONTAINS
    END SUBROUTINE test_fix_su3_matrix_full
 
    SUBROUTINE test_fix_su3_matrix_idempotent(error)
+     !! Check that fixSU3 doesn't change result if already in SU3
       TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
       COMPLEX(WC) :: u(3,3), u1(3,3), u2(3,3)
       REAL(WP), PARAMETER :: tol = 1.0e-10_WP
@@ -149,6 +158,7 @@ CONTAINS
    END SUBROUTINE test_fix_su3_matrix_idempotent
 
    SUBROUTINE test_exp_iq_zero(error)
+     !! Testing that exp(i*Q) where Q = 0 gives identity
       TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
       COMPLEX(WC) :: q(3,3), v(3,3)
       REAL(WP), PARAMETER :: tol = 1.0e-14_WP
@@ -160,6 +170,7 @@ CONTAINS
    END SUBROUTINE test_exp_iq_zero
 
    SUBROUTINE test_exp_iq_unitary_and_inverse(error)
+     !! Testing that expIQ works properly
       TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
       COMPLEX(WC) :: q(3,3), v(3,3), vinv(3,3), ref(3,3)
       REAL(WP), PARAMETER :: tol = 1.0e-10_WP

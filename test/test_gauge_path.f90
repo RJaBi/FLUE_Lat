@@ -35,6 +35,7 @@ CONTAINS
   ! Direct periodCoord tests
   !=========================================================
   SUBROUTINE test_periodcoord_no_wrap_interior(error)
+    !! Check that periodcoord does not effect the interior points
     TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
     COMPLEX(WC) :: data(3,3,4,2,2,2,2)
     INTEGER :: coord(4), got(4), expected(4), ds(7)
@@ -48,6 +49,7 @@ CONTAINS
   END SUBROUTINE test_periodcoord_no_wrap_interior
 
   SUBROUTINE test_periodcoord_wrap_forward_t(error)
+    !! Check forward wrapping
     TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
     COMPLEX(WC) :: data(3,3,4,2,2,2,2)
     INTEGER :: coord(4), got(4), expected(4), ds(7)
@@ -62,6 +64,7 @@ CONTAINS
   END SUBROUTINE test_periodcoord_wrap_forward_t
 
   SUBROUTINE test_periodcoord_wrap_backward_t(error)
+    !! Check backwards wrapping
     TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
     COMPLEX(WC) :: data(3,3,4,2,2,2,2)
     INTEGER :: coord(4), got(4), expected(4), ds(7)
@@ -76,6 +79,7 @@ CONTAINS
   END SUBROUTINE test_periodcoord_wrap_backward_t
 
   SUBROUTINE test_periodcoord_wrap_all_axes(error)
+    ! Do a wrap on all axes
     TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
     COMPLEX(WC) :: data(3,3,4,2,2,2,2)
     INTEGER :: coord(4), got(4), expected(4), ds(7)
@@ -93,6 +97,8 @@ CONTAINS
   ! Existing / strengthened genericPath tests
   !=========================================================
   SUBROUTINE test_genericpath_identity(error)
+    !! Generic path on an identity field multiplies identity together
+    !! I.e. should return identity
     TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
     COMPLEX(WC) :: data(3,3,4,2,2,2,2)
     INTEGER :: coord(4), path(4)
@@ -107,6 +113,9 @@ CONTAINS
   END SUBROUTINE test_genericpath_identity
 
   SUBROUTINE test_genericpath_backtracking_su3(error)
+    !! Make non-identity field
+    !! Make sure that going forward then back cancels to give identity
+    !! As gauge links are unitary
     TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
     COMPLEX(WC) :: data(3,3,4,2,2,2,2)
     COMPLEX(WC) :: A(3,3), P(3,3)
@@ -135,6 +144,7 @@ CONTAINS
   END SUBROUTINE test_genericpath_backtracking_su3
 
   SUBROUTINE test_genericpath_two_step_product(error)
+    !! Check that going forward is working as intended
     TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
     COMPLEX(WC) :: data(3,3,4,2,2,2,2)
     COMPLEX(WC) :: A(3,3), P(3,3), ref(3,3)
@@ -164,6 +174,7 @@ CONTAINS
   END SUBROUTINE test_genericpath_two_step_product
 
   SUBROUTINE test_genericpath_periodic_single_wrap(error)
+    !! Test generic path across boundary forward
     TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
     COMPLEX(WC) :: data(3,3,4,2,2,2,2)
     COMPLEX(WC) :: A(3,3), P(3,3)
@@ -193,6 +204,7 @@ CONTAINS
   END SUBROUTINE test_genericpath_periodic_single_wrap
 
   SUBROUTINE test_genericpath_periodic_wrap_backtrack(error)
+    !! Test generic path across boundary backwards
     TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
     COMPLEX(WC) :: data(3,3,4,2,2,2,2)
     COMPLEX(WC) :: A(3,3), P(3,3)

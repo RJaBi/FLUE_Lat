@@ -18,15 +18,15 @@ CONTAINS
    END SUBROUTINE collect_random_su
 
    SUBROUTINE test_construct_su3_identity(error)
+     !! This just tests that an SU3 matrix of 3 SU2 should be identity
+     !! Which by definition is unitary and has determinant 1
       TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
       COMPLEX(WC) :: R(2,2), S(2,2), T(2,2), U(3,3)
       REAL(WP), PARAMETER :: tol = 1.0e-14_WP
-
       R = Ident2x2
       S = Ident2x2
       T = Ident2x2
       U = constructSU3Matrix(R, S, T)
-
       CALL assert_close_mat3(error, U, Ident3x3, tol, "constructSU3Matrix(I,I,I) should equal identity")
       IF (allocated(error)) RETURN
       CALL assert_is_unitary3(error, U, tol, "constructSU3Matrix(I,I,I) should be unitary")

@@ -20,14 +20,14 @@ CONTAINS
    END SUBROUTINE collect_group_generators
 
    SUBROUTINE test_su2_generator_properties(error)
+     !! Generate a bunch of SU2 matrices
+     !! Check that they are indeed SU2 matrices
       TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
       REAL(WP) :: r(4)
       COMPLEX(WC) :: U(2,2)
       INTEGER :: i
       REAL(WP), PARAMETER :: tol = 1.0e-12_WP
-
       CALL seed_rng_fixed(12345)
-
       DO i = 1, 100
          r = randomNumbers()
          U = constructSU2Matrix(r)
@@ -39,6 +39,8 @@ CONTAINS
    END SUBROUTINE test_su2_generator_properties
 
    SUBROUTINE test_su3_generator_properties(error)
+     !! Construct SU3 matrices
+     !! Check that they are indeed unitary with det 1
       TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
       REAL(WP) :: r1(4), r2(4), r3(4)
       COMPLEX(WC) :: R(2,2), S(2,2), T(2,2), U(3,3)
