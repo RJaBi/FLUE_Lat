@@ -1,0 +1,50 @@
+# Reference baselines for regression tests
+[openqcd.Gen2_8x24n9]
+average_plaquette = 1.6244340856720183
+spatial_plaquette = 1.0056430712090352
+temporal_plaquette = 2.2432251001350005
+
+[performance.Gen2_8x24n9]
+# times in second
+read_gauge_time = 1.5
+gen_plaquette_time = 2
+
+# SU3 heatbath
+[performance.heatbath.wilson_xi1]
+update_time_per_traj = 0.0650
+[performance.heatbath.wilson_xi10]
+update_time_per_traj = 0.0610
+[performance.heatbath.symanzik_xi1]
+update_time_per_traj = 0.25
+[performance.heatbath.symanzik_xi10]
+update_time_per_traj = 0.25
+
+# ------------------------------------------------------------------
+# Observable regression references for short SU(3) heatbath runs
+# 4^4 lattice, 10 trajectories, fixed stdlib_random seed
+# Fill in the plaquette references manually after measuring them once.
+# ------------------------------------------------------------------
+
+[observables.heatbath.wilson_xi1]
+aplaq = 0.6
+aplaq_tol = 0.1
+
+[observables.heatbath.wilson_xi10]
+aplaq = 0.686
+aplaq_tol = 0.1
+splaq = 0.4236
+splaq_tol = 0.1
+tplaq = 0.9497
+tplaq_tol = 0.1
+
+[observables.heatbath.symanzik_xi1]
+aplaq = 0.73847
+aplaq_tol = 0.1
+
+[observables.heatbath.symanzik_xi10]
+aplaq = 0.7664
+aplaq_tol = 0.1
+splaq = 0.5689
+splaq_tol = 0.1
+tplaq = 0.9639
+tplaq_tol = 0.1
