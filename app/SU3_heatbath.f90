@@ -11,21 +11,23 @@ PROGRAM SU3_heatbath
    IMPLICIT NONE(TYPE, EXTERNAL)
 
    ! Lattice geometry
-   INTEGER, PARAMETER :: NS = 4
-   INTEGER, PARAMETER :: NT = 4
+   INTEGER, PARAMETER :: NS = 16
+   INTEGER, PARAMETER :: NT = 256
    COMPLEX(kind=WC), DIMENSION(3, 3, 4, NT, NS, NS, NS) :: U, UNew
    ! steps
    INTEGER, PARAMETER :: nTherm = 0
-   INTEGER, PARAMETER :: nTraj = 200
+   INTEGER, PARAMETER :: nTraj = 1000
    INTEGER, PARAMETER :: nSkip = 1
    ! simulation params
-   REAL(kind=WP), PARAMETER :: beta = 5.6_WP
-   CHARACTER(len=20), PARAMETER :: actionTag='Symanzik'
+   REAL(kind=WP), PARAMETER :: beta = 6.8_WP
+   REAL(kind=WP), PARAMETER :: xi = 10_WP
+   CHARACTER(len=20), PARAMETER :: actionTag='wilson'
   !! counters
    INTEGER :: it, ix, iy, iz, mu
    INTEGER :: iTraj
   !! plaq
    REAL(kind=WP) :: sumTrP, time
+   REAL(kind=WP) :: aplaq, splaq, tplaq
    INTEGER :: nPlaq
 
    CALL writeCompiler()
@@ -39,20 +41,38 @@ PROGRAM SU3_heatbath
 
    ! Thermallise
    DO iTraj = 1, nTherm
-      CALL updateLinks(U, beta, UNew, trim(actionTag))
+      CALL updateLinks(U, beta, xi, UNew, trim(actionTag))
       U = UNew
    END DO
 
    CALL genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrp, nPlaq, time)
-   WRITE (*, *) 'after therm', sumTrP / (3.0_WP * real(nPlaq, kind=WP))
+   aPlaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
+   IF (xi /= 1.0_WP) THEN
+      CALL genPlaquette(U, NT, NS, NS, NS, 2, 4, 4, sumTrp, nPlaq, time)
+      sPlaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
+      CALL genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrp, nPlaq, time)
+      tPlaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
+      WRITE (*, *) 'after therm', aplaq, splaq, tplaq
+   ELSE
+      WRITE (*, *) 'after therm', aplaq
+   END IF
    DO iTraj = 1, nTraj
       !write(*,*) iTraj
-      CALL updateLinks(U, beta, UNew, trim(actionTag))
+      CALL updateLinks(U, beta, xi, UNew, trim(actionTag))
       !write(*,*) 'updated'
       U = UNew
       IF (MOD(iTraj, nSkip) == 0) THEN
          CALL genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrp, nPlaq, time)
-         WRITE (*, *) 'traj', iTraj, 'plaq', sumTrP / (3.0_WP * real(nPlaq, kind=WP))
+         aPlaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
+         IF (xi /= 1.0_WP) THEN
+            CALL genPlaquette(U, NT, NS, NS, NS, 2, 4, 4, sumTrp, nPlaq, time)
+            sPlaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
+            CALL genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrp, nPlaq, time)
+            tPlaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
+            WRITE (*, *) 'traj', iTraj, 'plaq', aplaq, splaq, tplaq
+         ELSE
+            WRITE (*, *) 'traj', iTraj, 'plaq' , aplaq
+         END IF
       END IF
    END DO
 END PROGRAM SU3_heatbath
