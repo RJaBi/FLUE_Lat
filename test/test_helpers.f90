@@ -7,22 +7,33 @@ MODULE test_helpers
    IMPLICIT NONE(TYPE, EXTERNAL)
    PRIVATE
 
+   ! Get's the max(abs(Matrix1-Matrix2))
    PUBLIC :: maxabs_mat2, maxabs_mat3
    PUBLIC :: det2x2, det3x3
+   ! Various testdrive check's that two values
+   ! are within some tolerance
    PUBLIC :: assert_close_real
    PUBLIC :: assert_close_complex
+   ! These work using maxabs_mat
    PUBLIC :: assert_close_mat2
    PUBLIC :: assert_close_mat3
+   ! These compare to identity matrices
    PUBLIC :: assert_is_identity2
    PUBLIC :: assert_is_identity3
+   ! These construct U^dag * U
+   ! and check it is identity
    PUBLIC :: assert_is_unitary2
    PUBLIC :: assert_is_unitary3
+   ! These check the determinant is close to 1
    PUBLIC :: assert_det_one2
    PUBLIC :: assert_det_one3
+   ! These check that the trace is 0 within tolerance
    PUBLIC :: assert_traceless3
-
+   ! Sets the rng seed for stdlib random_seed
    PUBLIC :: seed_rng_fixed
-
+   ! fills rank 7 complex arrays with the identity
+   ! in the two leftmost indices
+   ! zero elsewhere
    PUBLIC :: fill_identity_su2, fill_identity_su3
 
 CONTAINS

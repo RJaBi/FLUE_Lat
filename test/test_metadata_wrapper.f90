@@ -14,9 +14,8 @@ CONTAINS
   END SUBROUTINE collect_metadata_wrapper
 
   SUBROUTINE test_version_write(error)
+    !! Run the version-writing helpers to ensure they execute without error
     TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-
-    ! Run the version-writing helpers to ensure they execute without error
     CALL writeCompiler()
     CALL writeGit()
     CALL check(error, .TRUE., "version write ran without error")
