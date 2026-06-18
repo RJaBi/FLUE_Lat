@@ -11,14 +11,16 @@ MODULE FLUE_SU2_HKLS
 
 CONTAINS
 
-   SUBROUTINE ReadGaugeField_HKLS(filename, NX, NY, NZ, NT, U_xd, seed, old_nproc)
+   SUBROUTINE ReadGaugeField_HKLS(filename, NX, NY, NZ, NT, U_xd, seed, old_nproc, bigEndian)
       CHARACTER(len=*), INTENT(IN) :: filename
       INTEGER, INTENT(IN) :: NX, NY, NZ, NT
       COMPLEX(kind=C_DOUBLE_COMPLEX), DIMENSION(2, 2, 4, NT, NX, NY, NZ), INTENT(OUT) :: U_xd
       INTEGER(kind=C_INT), INTENT(OUT) :: old_nproc
       INTEGER(kind=C_LONG), DIMENSION(:), ALLOCATABLE, INTENT(OUT) :: seed
+      LOGICAL, INTENT(IN), OPTIONAL :: bigEndian
       ! for reading
       COMPLEX(kind=C_DOUBLE_COMPLEX), DIMENSION(NX, NY, NZ, NT, 4, 2) :: UHold
+      LOGICAL :: littleEndian
       !complex(kind=C_DOUBLE_COMPLEX), dimension(4) :: UTmp
       COMPLEX(kind=C_DOUBLE_COMPLEX) :: UTmp
       INTEGER, PARAMETER :: infl = 107
@@ -26,8 +28,16 @@ CONTAINS
       INTEGER :: it, ix, iy, iz, mu, ab, aa, bb
       INTEGER :: ioStatus
 
-      OPEN (infl, file=TRIM(filename), form="unformatted", access="stream", status="old", action="read", convert="little_endian")
-
+      IF (present(bigEndian)) THEN
+         littleEndian = .not. bigEndian
+      ELSE
+         littleEndian = .TRUE.
+      END IF
+      IF (littleEndian) THEN
+         OPEN (infl, file=TRIM(filename), form="unformatted", access="stream", status="old", action="read", convert="little_endian")
+      ELSE
+         OPEN (infl, file=TRIM(filename), form="unformatted", access="stream", status="old", action="read", convert="big_endian")
+      END IF
       READ (infl) old_nproc
       DO ab = 1, 2
          DO mu = 1, 4
