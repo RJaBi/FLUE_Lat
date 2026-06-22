@@ -1,19 +1,19 @@
-module FLUE_SU3_random
-   use FLUE_constants, only: WP, WC
-   use FLUE_SU2_random, only: randomNumbers, constructSU2Matrix
-   use stdlib_intrinsics, only: stdlib_matmul
-   implicit none(type, external)
-   private
+MODULE FLUE_SU3_random
+   USE FLUE_constants, ONLY: WP, WC
+   USE FLUE_SU2_random, ONLY: constructSU2Matrix
+   USE stdlib_intrinsics, ONLY: stdlib_matmul
+   IMPLICIT NONE(TYPE, EXTERNAL)
+   PRIVATE
 
-   public :: constructSU3Matrix
+   PUBLIC :: constructSU3Matrix
 
-contains
+CONTAINS
 
-   pure function constructSU3Matrix(R, S, T) result(U)
-      complex(kind=WC), dimension(2, 2), intent(in) :: R, S, T
-      complex(kind=WC), dimension(3, 3) :: U
+   PURE FUNCTION constructSU3Matrix(R, S, T) RESULT(U)
+      COMPLEX(kind=WC), DIMENSION(2, 2), INTENT(IN) :: R, S, T
+      COMPLEX(kind=WC), DIMENSION(3, 3) :: U
     !! embed r,s,t into 3x3 matrices
-      complex(kind=WC), dimension(3, 3) :: RE, SE, TE
+      COMPLEX(kind=WC), DIMENSION(3, 3) :: RE, SE, TE
     !! in eqn 4.31 of Gattringer Lang
     !! embed r
       RE = (0.0_WP, 0.0_WP)
@@ -37,6 +37,6 @@ contains
       TE(3, 2) = t(2, 1)
       TE(3, 3) = t(2, 2)
       U = stdlib_matmul(RE, SE, TE)
-   end function constructSU3Matrix
+   END FUNCTION constructSU3Matrix
 
-end module FLUE_SU3_random
+END MODULE FLUE_SU3_random
