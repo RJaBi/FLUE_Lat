@@ -45,14 +45,14 @@ contains
 
    ! The force inline seems to help speed sometimes?
   !!!d ir$ forceinline
-   pure function su3_updated_link(U, beta, coord, mu, key, dims4, use_symanzik, xi) result(Uout)
+   pure function su3_updated_link(U, beta, coord, mu, key, dims4, stapleKernel, xi) result(Uout)
       complex(kind=WC), intent(IN) :: U(:, :, :, :, :, :, :)
       real(kind=WP), intent(IN) :: beta
       integer, intent(IN) :: mu
       integer, intent(IN) :: dims4(4)
-      logical, intent(IN) :: use_symanzik
       integer, dimension(4), intent(in) :: coord
       real(kind=WP), intent(in) :: xi
+      procedure(stapleInterface), pointer, intent(in) :: stapleKernel
       integer(kind=C64), intent(IN) :: key(2)
       complex(kind=WC) :: Uout(3, 3)
 
@@ -71,11 +71,7 @@ contains
       integer(kind=C64) :: counter0(4)
       Uout = U(:, :, mu, coord(1), coord(2), coord(3), coord(4))
 
-      if (use_symanzik) then
-         call stapleSymanzik(U, staple, coord, mu, xi)
-      else
-         call stapleWilson(U, staple, coord, mu, xi)
-      end if
+      call stapleKernel(U, staple, coord, mu, xi)
       call MultiplyMatMat(W, Uout, staple)
       counter0 = [site_linear_index(coord, dims4), 0_C64, 0_C64, 0_C64]
       call apply_su2_subgroup_update(Uout, W, 1, 2, 1, beta, key, counter0)
@@ -216,6 +212,7 @@ contains
       integer :: shapeU(7)
       real(kind=WP) :: xig
       integer, dimension(4) :: coord
+      procedure(stapleInterface), pointer :: stapleKernel
       !------------------------------------
       ! Setup
       !------------------------------------
@@ -226,8 +223,13 @@ contains
          select case (to_lower(TRIM(actionTag)))
          case ('symanzik')
             use_symanzik = .TRUE.
+            stapleKernel => stapleSymanzik
          case ('wilson')
             use_symanzik = .FALSE.
+            stapleKernel => stapleWilson
+         case ('iwasaki')
+            use_symanzik = .true.
+            stapleKernel => stapleIwasaki
          end select
       end if
       ncolours = ncolours_for_action(use_symanzik)
@@ -256,7 +258,7 @@ contains
                !------------------------------------
                ! Compute update (fully scalar args)
                !------------------------------------
-               Uloc = su3_updated_link(UUpdated, beta, coord, mu, key, dims4, use_symanzik, xig)
+               Uloc = su3_updated_link(UUpdated, beta, coord, mu, key, dims4, stapleKernel, xig)
                !------------------------------------
                ! Store result
                !------------------------------------
@@ -300,6 +302,54 @@ contains
       end do
    end subroutine stapleWilson
 
+
+
+   pure subroutine stapleRectangle(U, V, coord, mu, xi)
+     !! Computes the rectangle staple as in the Symanzik
+     !! improved action for one SU(3) link
+     complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
+     integer, dimension(4), intent(IN) :: coord
+     integer, intent(IN) :: mu
+     real(kind=WP), intent(in) :: xi
+     complex(kind=WC), dimension(3, 3), intent(OUT) :: V
+     integer, dimension(7) :: dataShape
+     integer, dimension(4) :: thisCoord, step
+     integer, dimension(5) :: r5
+     complex(kind=WC), dimension(3, 3) :: Vplaq, Vrect
+     integer :: nu
+     real(kind=WP) :: aniFac
+     dataShape = SHAPE(U)
+     V = CMPLX(0.0_WP, 0.0_WP, kind=WC)
+     step = 0
+     step(mu) = 1
+     ! Reusing step to avoid array temporary's
+     step = step + coord
+      thisCoord = periodCoord(step, dataShape)  ! x + mu
+      do nu = 1, 4
+         if (nu == mu) cycle
+         if (mu == 1 .OR. nu == 1) then
+            aniFac = xi
+         else
+            aniFac = 1.0_WP / xi
+         end if
+         ! Long in nu
+         r5 = [nu, nu, -mu, -nu, -nu]
+         V = V + genericPath(U, thisCoord, r5)
+         r5 = [-nu, -nu, -mu, nu, nu]
+         V = V + aniFac * genericPath(U, thisCoord, r5)
+         ! Long in mu, link is the first mu
+         r5 = [mu, nu, -mu, -mu, -nu]
+         V = V + aniFac * genericPath(U, thisCoord, r5)
+         r5 = [mu, -nu, -mu, -mu, nu]
+         V = V + aniFac * genericPath(U, thisCoord, r5)
+         ! Long in mu, link is the second mu
+         r5 = [nu, -mu, -mu, -nu, mu]
+         V = V + aniFac * genericPath(U, thisCoord, r5)
+         r5 = [-nu, -mu, -mu, nu, mu]
+         V = V + aniFac * genericPath(U, thisCoord, r5)
+      end do
+    end subroutine stapleRectangle
+
    pure subroutine stapleSymanzik(U, V, coord, mu, xi)
      !!
      !! Compute the tree-level Symanzik staple for one SU(3) link.
@@ -307,6 +357,8 @@ contains
      !! This consists of:
      !!   * the plaquette staple contribution (Wilson staple),
      !!   * minus the weighted rectangle contribution.
+     !!
+     !! With c0= 5/3, c1= -1/12
      !!
       complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
       integer, dimension(4), intent(IN) :: coord
@@ -321,36 +373,38 @@ contains
       integer, dimension(7) :: dataShape
       dataShape = SHAPE(U)
       call stapleWilson(U, Vplaq, coord, mu, xi)
-      Vrect = CMPLX(0.0_WP, 0.0_WP, kind=WC)
-      step = 0
-      step(mu) = 1
-      ! Reusing step to avoid array temporary's
-      step = step + coord
-      thisCoord = periodCoord(step, dataShape)  ! x + mu
-      do nu = 1, 4
-         if (nu == mu) cycle
-         if (mu == 1 .OR. nu == 1) then
-            aniFac = xi
-         else
-            aniFac = 1.0_WP / xi
-         end if
-         ! Long in nu
-         r5 = [nu, nu, -mu, -nu, -nu]
-         Vrect = Vrect + genericPath(U, thisCoord, r5)
-         r5 = [-nu, -nu, -mu, nu, nu]
-         Vrect = Vrect + aniFac * genericPath(U, thisCoord, r5)
-         ! Long in mu, link is the first mu
-         r5 = [mu, nu, -mu, -mu, -nu]
-         Vrect = Vrect + aniFac * genericPath(U, thisCoord, r5)
-         r5 = [mu, -nu, -mu, -mu, nu]
-         Vrect = Vrect + aniFac * genericPath(U, thisCoord, r5)
-         ! Long in mu, link is the second mu
-         r5 = [nu, -mu, -mu, -nu, mu]
-         Vrect = Vrect + aniFac * genericPath(U, thisCoord, r5)
-         r5 = [-nu, -mu, -mu, nu, mu]
-         Vrect = Vrect + aniFac * genericPath(U, thisCoord, r5)
-      end do
+      call stapleRectangle(U, Vrect, coord, mu, xi)
       V = (5.0_WP / 3.0_WP) * Vplaq - (1.0_WP / 12.0_WP) * Vrect
    end subroutine stapleSymanzik
+
+   pure subroutine stapleIwasaki(U, V, coord, mu, xi)
+     !!
+     !! Compute the Iwasaki staple for one SU(3) link.
+     !!
+     !! This consists of:
+     !!   * the plaquette staple contribution (Wilson staple),
+     !!   * minus the weighted rectangle contribution.
+     !!
+     !!
+     !! With c0= 3.648, c1 = -0.331
+     !!
+      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
+      integer, dimension(4), intent(IN) :: coord
+      integer, intent(IN) :: mu
+      real(kind=WP), intent(in) :: xi
+      complex(kind=WC), dimension(3, 3), intent(OUT) :: V
+      integer, dimension(4) :: thisCoord, step
+      integer, dimension(5) :: r5
+      complex(kind=WC), dimension(3, 3) :: Vplaq, Vrect
+      integer :: nu
+      real(kind=WP) :: aniFac
+      integer, dimension(7) :: dataShape
+      dataShape = SHAPE(U)
+      call stapleWilson(U, Vplaq, coord, mu, xi)
+      call stapleRectangle(U, Vrect, coord, mu, xi)
+      V = 3.648_WP * Vplaq - 0.331_WP * Vrect
+   end subroutine stapleIwasaki
+
+
 
 end module FLUE_heatbath

@@ -8,23 +8,25 @@ PROGRAM SU3_heatbath
    USE FLUE, ONLY: WP, WC, writeCompiler, writeGit, &
                    Ident3x3, updateLinks, genPlaquette, build_colour_sites
    USE philox, ONLY: c64
+   use stdlib_ascii, only: to_lower
    IMPLICIT NONE(TYPE, EXTERNAL)
 
    ! Lattice geometry
-   INTEGER, PARAMETER :: NS = 16
-   INTEGER, PARAMETER :: NT = 256
+   INTEGER, PARAMETER :: NS = 4
+   INTEGER, PARAMETER :: NT = 4
    COMPLEX(kind=WC), DIMENSION(3, 3, 4, NT, NS, NS, NS) :: U, UNew
    ! Sites linearisation
    INTEGER, ALLOCATABLE, DIMENSION(:, :, :) :: sites_t, sites_x, sites_y, sites_z
    INTEGER, ALLOCATABLE, DIMENSION(:, :) :: counts
    ! steps
    INTEGER, PARAMETER :: nTherm = 0
-   INTEGER, PARAMETER :: nTraj = 20
+   INTEGER, PARAMETER :: nTraj = 200
    INTEGER, PARAMETER :: nSkip = 1
    ! simulation params
-   REAL(kind=WP), PARAMETER :: beta = 6.0_WP
-   real(kind=WP), parameter :: xi = 10.0_WP
-   CHARACTER(len=20), PARAMETER :: actionTag = 'Wilson'
+   REAL(kind=WP), PARAMETER :: beta = 2.8_WP
+   real(kind=WP), parameter :: xi = 1.0_WP
+   CHARACTER(len=20), PARAMETER :: actionTag = 'Iwasaki'
+   logical :: useSymanzik
   !! counters
    INTEGER :: it, ix, iy, iz, mu
    INTEGER :: iTraj
@@ -47,8 +49,16 @@ PROGRAM SU3_heatbath
    DO CONCURRENT(it=1:nt, ix=1:ns, iy=1:ns, iz=1:ns, mu=1:4)
       U(:, :, mu, it, ix, iy, iz) = Ident3x3
    END DO
+   select case (to_lower(TRIM(actionTag)))
+   case ('symanzik')
+      useSymanzik = .TRUE.
+   case ('wilson')
+      useSymanzik = .FALSE.
+   case ('iwasaki')
+      useSymanzik = .true.
+   end select
 
-   CALL build_colour_sites(NT, NS, NS, NS, .false., sites_t, sites_x, sites_y, sites_z, counts)
+   CALL build_colour_sites(NT, NS, NS, NS, useSymanzik, sites_t, sites_x, sites_y, sites_z, counts)
 
    ! Thermallise
    DO iTraj = 1, nTherm
