@@ -96,7 +96,7 @@ contains
 
       call build_colour_sites(2, 2, 2, 2, .TRUE., sites_t, sites_x, sites_y, sites_z, counts)
 
-      call updateLinks(U, beta, UUpdated, key, 1, sites_t, sites_x, sites_y, sites_z, counts, 'Wilon')
+      call updateLinks(U, beta, UUpdated, key, 1, sites_t, sites_x, sites_y, sites_z, counts, 'Wilson')
 
       call assert_all_links_su3(error, UUpdated, tol, "updateLinks should keep all links in SU(3)")
    end subroutine test_updateLinks_preserves_su3
