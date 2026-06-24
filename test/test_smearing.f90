@@ -1,158 +1,152 @@
-MODULE test_smearing
-  USE FLUE_constants,       ONLY : WP, WC
-  USE FLUE_matrixConstants, ONLY : Ident3x3
-  USE FLUE_stoutSmearing,   ONLY : StoutSmearLinks
-  USE test_helpers,         ONLY : assert_close_mat3, &
-                                    assert_is_unitary3, assert_det_one3, fill_identity_su3
-  USE testdrive,            ONLY : new_unittest, unittest_type, error_type, check
+module test_smearing
+   use FLUE_constants, only: WP, WC
+   use FLUE_matrixConstants, only: Ident3x3
+   use FLUE_stoutSmearing, only: StoutSmearLinks
+   use test_helpers, only: assert_close_mat3, &
+                           assert_is_unitary3, assert_det_one3, fill_identity_su3
+   use testdrive, only: new_unittest, unittest_type, error_type, check
 
-  IMPLICIT NONE(TYPE, EXTERNAL)
-  PRIVATE
-  PUBLIC :: collect_smearing
+   implicit none(type, external)
+   private
+   public :: collect_smearing
 
-CONTAINS
+contains
 
-  !=========================================================
-  ! Collect tests
-  !=========================================================
-  SUBROUTINE collect_smearing(testsuite)
-    TYPE(unittest_type), ALLOCATABLE, INTENT(OUT) :: testsuite(:)
-    testsuite = [ &
-         new_unittest("stout_identity_preserved",      test_stout_identity_preserved), &
-         new_unittest("stout_preserves_su3",           test_stout_preserves_su3), &
-         new_unittest("stout_zero_sweeps_is_identity", test_stout_zero_sweeps_is_identity) &
-         ]
-   END SUBROUTINE collect_smearing
+   !=========================================================
+   ! Collect tests
+   !=========================================================
+   subroutine collect_smearing(testsuite)
+      type(unittest_type), allocatable, intent(OUT) :: testsuite(:)
+      testsuite = [ &
+                  new_unittest("stout_identity_preserved", test_stout_identity_preserved), &
+                  new_unittest("stout_preserves_su3", test_stout_preserves_su3), &
+                  new_unittest("stout_zero_sweeps_is_identity", test_stout_zero_sweeps_is_identity) &
+                  ]
+   end subroutine collect_smearing
    !=========================================================
    ! Fillers
    !=========================================================
-   SUBROUTINE fill_commuting_su3(U, theta)
-     ! A simple exact SU(3) background:
-     ! A = diag(exp(i theta), exp(-i theta), 1)
-     COMPLEX(WC), INTENT(OUT) :: U(:,:,:,:,:,:,:)
-     REAL(WP),    INTENT(IN)  :: theta
-     COMPLEX(WC) :: A(3,3)
-     INTEGER :: mu, nt, nx, ny, nz
+   subroutine fill_commuting_su3(U, theta)
+      ! A simple exact SU(3) background:
+      ! A = diag(exp(i theta), exp(-i theta), 1)
+      complex(kind=WC), intent(OUT) :: U(:, :, :, :, :, :, :)
+      real(kind=WP), intent(IN) :: theta
+      complex(kind=WC) :: A(3, 3)
+      integer :: mu, nt, nx, ny, nz
 
-     A = cmplx(0.0_WP, 0.0_WP, kind=WC)
-     A(1,1) = exp(cmplx(0.0_WP,  theta, kind=WC))
-     A(2,2) = exp(cmplx(0.0_WP, -theta, kind=WC))
-     A(3,3) = cmplx(1.0_WP, 0.0_WP, kind=WC)
+      A = CMPLX(0.0_WP, 0.0_WP, kind=WC)
+      A(1, 1) = EXP(CMPLX(0.0_WP, theta, kind=WC))
+      A(2, 2) = EXP(CMPLX(0.0_WP, -theta, kind=WC))
+      A(3, 3) = CMPLX(1.0_WP, 0.0_WP, kind=WC)
 
-     DO CONCURRENT (mu = 1:size(U,3), nt = 1:size(U,4), nx = 1:size(U,5), &
-          ny = 1:size(U,6), nz = 1:size(U,7))
-        U(:,:,mu,nt,nx,ny,nz) = A
-     END DO
-   END SUBROUTINE fill_commuting_su3
+      do concurrent(mu=1:SIZE(U, 3), nt=1:SIZE(U, 4), nx=1:SIZE(U, 5), &
+                    ny=1:SIZE(U, 6), nz=1:SIZE(U, 7))
+         U(:, :, mu, nt, nx, ny, nz) = A
+      end do
+   end subroutine fill_commuting_su3
 
+   subroutine assert_all_links_su3(error, U, tol, message)
+      type(error_type), allocatable, intent(OUT) :: error
+      complex(kind=WC), intent(IN) :: U(:, :, :, :, :, :, :)
+      real(kind=WP), intent(IN) :: tol
+      character(len=*), intent(IN) :: message
+      integer :: mu, nt, nx, ny, nz
 
-   SUBROUTINE assert_all_links_su3(error, U, tol, message)
-     TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-     COMPLEX(WC), INTENT(IN) :: U(:,:,:,:,:,:,:)
-     REAL(WP),    INTENT(IN) :: tol
-     CHARACTER(len=*), INTENT(IN) :: message
-     INTEGER :: mu, nt, nx, ny, nz
+      do mu = 1, SIZE(U, 3)
+         do nt = 1, SIZE(U, 4)
+            do nx = 1, SIZE(U, 5)
+               do ny = 1, SIZE(U, 6)
+                  do nz = 1, SIZE(U, 7)
+                     call assert_is_unitary3(error, U(:, :, mu, nt, nx, ny, nz), tol, TRIM(message)//": unitarity")
+                     if (ALLOCATED(error)) return
+                     call assert_det_one3(error, U(:, :, mu, nt, nx, ny, nz), tol, TRIM(message)//": determinant")
+                     if (ALLOCATED(error)) return
+                  end do
+               end do
+            end do
+         end do
+      end do
+   end subroutine assert_all_links_su3
 
-     DO mu = 1, size(U,3)
-         DO nt = 1, size(U,4)
-            DO nx = 1, size(U,5)
-               DO ny = 1, size(U,6)
-                  DO nz = 1, size(U,7)
-                     CALL assert_is_unitary3(error, U(:,:,mu,nt,nx,ny,nz), tol, trim(message)//": unitarity")
-                     IF (allocated(error)) RETURN
-                     CALL assert_det_one3(error, U(:,:,mu,nt,nx,ny,nz), tol, trim(message)//": determinant")
-                     IF (allocated(error)) RETURN
-                  END DO
-               END DO
-            END DO
-         END DO
-      END DO
-    END SUBROUTINE assert_all_links_su3
+   !=========================================================
+   ! 1) Identity field should stay identity under stout smearing
+   !=========================================================
+   subroutine test_stout_identity_preserved(error)
+      type(error_type), allocatable, intent(OUT) :: error
+      complex(kind=WC) :: U(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: USmear(3, 3, 4, 2, 2, 2, 2)
+      integer :: mu, nt, nx, ny, nz
+      real(kind=WP), parameter :: rho = 0.10_WP
+      integer, parameter :: nSweeps = 1
+      real(kind=WP), parameter :: tol = 1.0E-13_WP
 
+      call fill_identity_su3(U)
+      call StoutSmearLinks(U, rho, nSweeps, USmear)
 
-    !=========================================================
-    ! 1) Identity field should stay identity under stout smearing
-    !=========================================================
-    SUBROUTINE test_stout_identity_preserved(error)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      COMPLEX(WC) :: U(3,3,4,2,2,2,2)
-      COMPLEX(WC) :: USmear(3,3,4,2,2,2,2)
-      INTEGER :: mu, nt, nx, ny, nz
-      REAL(WP), PARAMETER :: rho = 0.10_WP
-      INTEGER,  PARAMETER :: nSweeps = 1
-      REAL(WP), PARAMETER :: tol = 1.0e-13_WP
+      do mu = 1, SIZE(USmear, 3)
+         do nt = 1, SIZE(USmear, 4)
+            do nx = 1, SIZE(USmear, 5)
+               do ny = 1, SIZE(USmear, 6)
+                  do nz = 1, SIZE(USmear, 7)
+                     call assert_close_mat3(error, USmear(:, :, mu, nt, nx, ny, nz), Ident3x3, tol, &
+                                            "StoutSmearLinks should preserve the identity field")
+                     if (ALLOCATED(error)) return
+                  end do
+               end do
+            end do
+         end do
+      end do
+   end subroutine test_stout_identity_preserved
 
-      CALL fill_identity_su3(U)
-      CALL StoutSmearLinks(U, rho, nSweeps, USmear)
+   !=========================================================
+   ! 2) Smearing output should remain in SU(3)
+   !=========================================================
+   subroutine test_stout_preserves_su3(error)
+      type(error_type), allocatable, intent(OUT) :: error
+      complex(kind=WC) :: U(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: USmear(3, 3, 4, 2, 2, 2, 2)
+      real(kind=WP), parameter :: rho = 0.10_WP
+      integer, parameter :: nSweeps = 2
+      real(kind=WP), parameter :: tol = 1.0E-10_WP
 
-      DO mu = 1, size(USmear,3)
-         DO nt = 1, size(USmear,4)
-            DO nx = 1, size(USmear,5)
-               DO ny = 1, size(USmear,6)
-                  DO nz = 1, size(USmear,7)
-                     CALL assert_close_mat3(error, USmear(:,:,mu,nt,nx,ny,nz), Ident3x3, tol, &
-                          "StoutSmearLinks should preserve the identity field")
-                     IF (allocated(error)) RETURN
-                  END DO
-               END DO
-            END DO
-         END DO
-      END DO
-    END SUBROUTINE test_stout_identity_preserved
+      call fill_commuting_su3(U, 0.23_WP)
+      call StoutSmearLinks(U, rho, nSweeps, USmear)
 
+      call assert_all_links_su3(error, USmear, tol, "StoutSmearLinks should preserve SU(3)")
+   end subroutine test_stout_preserves_su3
 
-    !=========================================================
-    ! 2) Smearing output should remain in SU(3)
-    !=========================================================
-    SUBROUTINE test_stout_preserves_su3(error)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      COMPLEX(WC) :: U(3,3,4,2,2,2,2)
-      COMPLEX(WC) :: USmear(3,3,4,2,2,2,2)
-      REAL(WP), PARAMETER :: rho = 0.10_WP
-      INTEGER,  PARAMETER :: nSweeps = 2
-      REAL(WP), PARAMETER :: tol = 1.0e-10_WP
-
-      CALL fill_commuting_su3(U, 0.23_WP)
-      CALL StoutSmearLinks(U, rho, nSweeps, USmear)
-
-      CALL assert_all_links_su3(error, USmear, tol, "StoutSmearLinks should preserve SU(3)")
-    END SUBROUTINE test_stout_preserves_su3
-
-
-    !=========================================================
+   !=========================================================
    ! 3) Zero sweeps should return the input unchanged
-    !=========================================================
-    SUBROUTINE test_stout_zero_sweeps_is_identity(error)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      COMPLEX(WC) :: U(3,3,4,2,2,2,2)
-      COMPLEX(WC) :: USmear(3,3,4,2,2,2,2)
-      REAL(WP), PARAMETER :: rho = 0.10_WP
-      INTEGER,  PARAMETER :: nSweeps = 0
-      REAL(WP), PARAMETER :: tol = 1.0e-14_WP
+   !=========================================================
+   subroutine test_stout_zero_sweeps_is_identity(error)
+      type(error_type), allocatable, intent(OUT) :: error
+      complex(kind=WC) :: U(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: USmear(3, 3, 4, 2, 2, 2, 2)
+      real(kind=WP), parameter :: rho = 0.10_WP
+      integer, parameter :: nSweeps = 0
+      real(kind=WP), parameter :: tol = 1.0E-14_WP
 
-      CALL fill_commuting_su3(U, 0.31_WP)
-      CALL StoutSmearLinks(U, rho, nSweeps, USmear)
+      call fill_commuting_su3(U, 0.31_WP)
+      call StoutSmearLinks(U, rho, nSweeps, USmear)
 
-      CALL assert_close_field_su3(error, USmear, U, tol, &
-           "StoutSmearLinks with nSweeps=0 should return the input unchanged")
-    END SUBROUTINE test_stout_zero_sweeps_is_identity
+      call assert_close_field_su3(error, USmear, U, tol, &
+                                  "StoutSmearLinks with nSweeps=0 should return the input unchanged")
+   end subroutine test_stout_zero_sweeps_is_identity
 
+   subroutine assert_close_field_su3(error, A, B, tol, message)
+      type(error_type), allocatable, intent(OUT) :: error
+      complex(kind=WC), intent(IN) :: A(:, :, :, :, :, :, :), B(:, :, :, :, :, :, :)
+      real(kind=WP), intent(IN) :: tol
+      character(len=*), intent(IN) :: message
 
-    SUBROUTINE assert_close_field_su3(error, A, B, tol, message)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      COMPLEX(WC), INTENT(IN) :: A(:,:,:,:,:,:,:), B(:,:,:,:,:,:,:)
-      REAL(WP),    INTENT(IN) :: tol
-      CHARACTER(len=*), INTENT(IN) :: message
+      call testdrive_check_close_field(error, MAXVAL(ABS(A - B)) < tol, message)
+   end subroutine assert_close_field_su3
 
-      CALL testdrive_check_close_field(error, maxval(abs(A - B)) < tol, message)
-    END SUBROUTINE assert_close_field_su3
+   subroutine testdrive_check_close_field(error, ok, message)
+      type(error_type), allocatable, intent(OUT) :: error
+      logical, intent(IN) :: ok
+      character(len=*), intent(IN) :: message
+      call check(error, ok, message)
+   end subroutine testdrive_check_close_field
 
-
-   SUBROUTINE testdrive_check_close_field(error, ok, message)
-     TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-     LOGICAL, INTENT(IN) :: ok
-     CHARACTER(len=*), INTENT(IN) :: message
-     CALL check(error, ok, message)
-   END SUBROUTINE testdrive_check_close_field
-
- END MODULE test_smearing
+end module test_smearing

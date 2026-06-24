@@ -448,7 +448,7 @@ contains
 #ifdef LOCALITYSUPPORT
                         do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt) &
                            default(none) local_init(plaqpath) &
-                           local(coordbase, clovleaf, c12, c13, c23) shared(u_xd)
+                           local(coordbase, clovleaf, c12, c13, c23) shared(data, u_xd)
 #else
                            do concurrent(nnx=1:nx, nny=1:ny, nnz=1:nz, nnt=1:nt)
 #endif
@@ -468,9 +468,9 @@ contains
                               clovleaf(2, 1) = -CONJG(c12)
                               clovleaf(3, 1) = -CONJG(c13)
                               clovleaf(3, 2) = -CONJG(c23)
-                              clovleaf(1, 1) = CMPLX(0.0_WP, AIMAG(clovleaf(1, 1)))
-                              clovleaf(2, 2) = CMPLX(0.0_WP, AIMAG(clovleaf(2, 2)))
-                              clovleaf(3, 3) = CMPLX(0.0_WP, AIMAG(clovleaf(3, 3)))
+                              clovleaf(1, 1) = CMPLX(0.0_WP, AIMAG(clovleaf(1, 1)), kind=WC)
+                              clovleaf(2, 2) = CMPLX(0.0_WP, AIMAG(clovleaf(2, 2)), kind=WC)
+                              clovleaf(3, 3) = CMPLX(0.0_WP, AIMAG(clovleaf(3, 3)), kind=WC)
                               u_xd(:, :, nnt, nnx, nny, nnz) = clovleaf * 0.25_WP
                            end do
                            end function plaquettemunucoord
@@ -492,7 +492,7 @@ contains
                               ! counter
                               integer :: nnx, nny, nnz, nnt, ii
 
-                              complex(kind=wc) :: ztemp12, ztemp23, ztemp31, temp11, temp22
+                              complex(kind=wc) :: ztemp12, ztemp23, ztemp31
                               real(kind=wp) :: trace
                               ! The indices are so that they match the wilson_flow.c values exactly
                               ! there t,x,y,z = 0,3,2,1
@@ -507,7 +507,7 @@ contains
 #ifdef LOCALITYSUPPORT
                               do concurrent(nny=1:ny, nnz=1:nz, nnt=1:nt, nnx=1:nx, ii=1:3) &
                                  default(none) shared(bfield) &
-                                 local(tempeval, com, temppl, ztemp12, ztemp23, ztemp31, temp11, temp22, temp33, trace) &
+                                 local(tempeval, com, temppl, ztemp12, ztemp23, ztemp31, trace) &
                                  reduce(+:cloverplaq)
 #elif OMP
                                  !$omp parallel do collapse(5) default(none) &

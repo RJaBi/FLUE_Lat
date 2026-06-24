@@ -12,8 +12,8 @@ options --flag "-g -Og -xHost -mcmodel=large -traceback -coarray=single -coarray
 
 @build_gf
 option build --version
-options --compiler gfortran-12
-options --flag "-g -O3 -march=native -fcheck=all -finit-real=snan -finit-integer=999 -finit-derived -ffpe-trap=invalid,zero,overflow -fbacktrace -mcmodel=large -ffree-line-length-none -std=f2018"
+options --compiler gfortran
+options --flag "-g -O3 -march=native -fcheck=all -finit-real=snan -finit-integer=999 -finit-derived -ffpe-trap=invalid,zero,overflow -fbacktrace -mcmodel=large -ffree-line-length-none -std=f2018 -fopenmp"
 
 @run_gf
 option run --version

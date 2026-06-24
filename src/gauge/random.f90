@@ -1,6 +1,6 @@
 module FLUE_SU3_random
    use FLUE_constants, only: WP, WC
-   use FLUE_SU2_random, only: randomNumbers, constructSU2Matrix
+   use FLUE_SU2_random, only: constructSU2Matrix
    use stdlib_intrinsics, only: stdlib_matmul
    implicit none(type, external)
    private
@@ -10,7 +10,7 @@ module FLUE_SU3_random
 contains
 
    pure function constructSU3Matrix(R, S, T) result(U)
-      complex(kind=WC), dimension(2, 2), intent(in) :: R, S, T
+      complex(kind=WC), dimension(2, 2), intent(IN) :: R, S, T
       complex(kind=WC), dimension(3, 3) :: U
     !! embed r,s,t into 3x3 matrices
       complex(kind=WC), dimension(3, 3) :: RE, SE, TE

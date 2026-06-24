@@ -1,165 +1,166 @@
-MODULE test_heatbath_observables
-  USE FLUE_constants, ONLY : WP, WC
-   USE FLUE_heatbath, ONLY : updateLinks
-   USE FLUE_wloops, ONLY : genPlaquette
-   USE, INTRINSIC :: ieee_arithmetic, ONLY : ieee_is_finite
-   USE test_helpers, ONLY : seed_rng_fixed, fill_identity_su3
-   USE testdrive, ONLY : new_unittest, unittest_type, error_type, check
-   USE tomlf, ONLY : toml_table, toml_error, toml_load, get_value
-   IMPLICIT NONE(TYPE, EXTERNAL)
-   PRIVATE
-   PUBLIC :: collect_heatbath_observables
-CONTAINS
-   SUBROUTINE collect_heatbath_observables(testsuite)
-      TYPE(unittest_type), ALLOCATABLE, INTENT(OUT) :: testsuite(:)
+module test_heatbath_observables
+   use, intrinsic :: IEEE_ARITHMETIC, only: ieee_is_finite
+   use FLUE_constants, only: WP, WC
+   use FLUE_heatbath, only: updateLinks, build_colour_sites
+   use FLUE_wloops, only: genPlaquette
+   use philox, only: C64
+   use stdlib_ascii, only: to_lower
+   use test_helpers, only: seed_rng_fixed, fill_identity_su3
+   use testdrive, only: new_unittest, unittest_type, error_type, check
+   use tomlf, only: toml_table, toml_error, toml_load, get_value
+   implicit none(type, external)
+   private
+   public :: collect_heatbath_observables
+contains
+   subroutine collect_heatbath_observables(testsuite)
+      type(unittest_type), allocatable, intent(OUT) :: testsuite(:)
       testsuite = [ &
-         new_unittest("heatbath_observables_wilson_xi1",    test_heatbath_observables_wilson_xi1), &
-         new_unittest("heatbath_observables_wilson_xi10",   test_heatbath_observables_wilson_xi10), &
-         new_unittest("heatbath_observables_symanzik_xi1",  test_heatbath_observables_symanzik_xi1), &
-         new_unittest("heatbath_observables_symanzik_xi10", test_heatbath_observables_symanzik_xi10) &
-      ]
-   END SUBROUTINE collect_heatbath_observables
-   SUBROUTINE test_heatbath_observables_wilson_xi1(error)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      CALL run_heatbath_observable_case(error, "wilson_xi1", "wilson", 1.0_WP, 6.0_WP)
-   END SUBROUTINE test_heatbath_observables_wilson_xi1
-   SUBROUTINE test_heatbath_observables_wilson_xi10(error)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      CALL run_heatbath_observable_case(error, "wilson_xi10", "wilson", 10.0_WP, 6.8_WP)
-   END SUBROUTINE test_heatbath_observables_wilson_xi10
-   SUBROUTINE test_heatbath_observables_symanzik_xi1(error)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      CALL run_heatbath_observable_case(error, "symanzik_xi1", "symanzik", 1.0_WP, 6.0_WP)
-   END SUBROUTINE test_heatbath_observables_symanzik_xi1
-   SUBROUTINE test_heatbath_observables_symanzik_xi10(error)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      CALL run_heatbath_observable_case(error, "symanzik_xi10", "symanzik", 10.0_WP, 6.8_WP)
-   END SUBROUTINE test_heatbath_observables_symanzik_xi10
-   SUBROUTINE run_heatbath_observable_case(error, case_name, action_tag, xi, beta)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      CHARACTER(len=*), INTENT(IN) :: case_name, action_tag
-      REAL(WP), INTENT(IN) :: xi, beta
-      INTEGER, PARAMETER :: NS = 4
-      INTEGER, PARAMETER :: NT = 4
-      INTEGER, PARAMETER :: nTraj = 10
-      INTEGER, PARAMETER :: seed_value = 24681357
-      COMPLEX(WC) :: U(3,3,4,NT,NS,NS,NS)
-      COMPLEX(WC) :: UNew(3,3,4,NT,NS,NS,NS)
-      REAL(WP) :: aplaq, splaq, tplaq
-      REAL(WP) :: ref_aplaq, ref_splaq, ref_tplaq
-      REAL(WP) :: tol_aplaq, tol_splaq, tol_tplaq
-      REAL(WP) :: sumTrP, time
-      INTEGER  :: nPlaq, iTraj
-      LOGICAL  :: found_ref
-      CALL fill_identity_su3(U)
+                  new_unittest("heatbath_observables_wilson_xi1", test_heatbath_observables_wilson_xi1), &
+                  new_unittest("heatbath_observables_wilson_xi1_beta1", test_heatbath_observables_wilson_xi1_beta1), &
+                  new_unittest("heatbath_observables_wilson_xi10", test_heatbath_observables_wilson_xi10), &
+                  new_unittest("heatbath_observables_symanzik_xi1", test_heatbath_observables_symanzik_xi1), &
+                  new_unittest("heatbath_observables_symanzik_xi10", test_heatbath_observables_symanzik_xi10) &
+                  ]
+   end subroutine collect_heatbath_observables
+   subroutine test_heatbath_observables_wilson_xi1(error)
+      type(error_type), allocatable, intent(OUT) :: error
+      call run_heatbath_observable_case(error, "wilson_xi1", "wilson", 1.0_WP, 6.0_WP)
+   end subroutine test_heatbath_observables_wilson_xi1
+   subroutine test_heatbath_observables_wilson_xi1_beta1(error)
+      type(error_type), allocatable, intent(OUT) :: error
+      call run_heatbath_observable_case(error, "wilson_xi1_beta1", "wilson", 1.0_WP, 1.0_WP)
+   end subroutine test_heatbath_observables_wilson_xi1_beta1
+   subroutine test_heatbath_observables_wilson_xi10(error)
+      type(error_type), allocatable, intent(OUT) :: error
+      call run_heatbath_observable_case(error, "wilson_xi10", "wilson", 10.0_WP, 6.0_WP)
+   end subroutine test_heatbath_observables_wilson_xi10
+   subroutine test_heatbath_observables_symanzik_xi1(error)
+      type(error_type), allocatable, intent(OUT) :: error
+      call run_heatbath_observable_case(error, "symanzik_xi1", "symanzik", 1.0_WP, 6.0_WP)
+   end subroutine test_heatbath_observables_symanzik_xi1
+   subroutine test_heatbath_observables_symanzik_xi10(error)
+      type(error_type), allocatable, intent(OUT) :: error
+      call run_heatbath_observable_case(error, "symanzik_xi10", "symanzik", 10.0_WP, 6.0_WP)
+   end subroutine test_heatbath_observables_symanzik_xi10
+   subroutine run_heatbath_observable_case(error, case_name, action_tag, xi, beta)
+      type(error_type), allocatable, intent(OUT) :: error
+      character(len=*), intent(IN) :: case_name, action_tag
+      real(kind=WP), intent(IN) :: xi, beta
+      integer, parameter :: NS = 4
+      integer, parameter :: NT = 4
+      integer, parameter :: nTraj = 20
+      complex(kind=WC) :: U(3, 3, 4, NT, NS, NS, NS)
+      complex(kind=WC) :: UNew(3, 3, 4, NT, NS, NS, NS)
+      ! Sites linearisation
+      integer, allocatable, dimension(:, :, :) :: sites_t, sites_x, sites_y, sites_z
+      integer, allocatable, dimension(:, :) :: counts
+      real(kind=WP) :: aplaq, splaq, tplaq
+      real(kind=WP) :: ref_aplaq, ref_splaq, ref_tplaq
+      real(kind=WP) :: tol_aplaq, tol_splaq, tol_tplaq
+      real(kind=WP) :: sumTrP, time
+      integer :: nPlaq, iTraj
+      logical :: found_ref
+      logical :: use_symanzik_sites
+      integer(kind=C64), dimension(2), parameter :: key = (/1_C64, 2_C64/)
+      use_symanzik_sites = .FALSE.
+      use_symanzik_sites = (TRIM(to_lower(action_tag)) == 'symanzik')
+      call fill_identity_su3(U)
       UNew = U
-      CALL seed_rng_fixed(seed_value)
-      DO iTraj = 1, nTraj
-         CALL updateLinks(U, beta, xi, UNew, trim(action_tag))
+      call build_colour_sites(NT, NS, NS, NS, use_symanzik_sites, sites_t, sites_x, sites_y, sites_z, counts)
+      do iTraj = 1, nTraj
+         call updateLinks(U, beta, UNew, key, iTraj, sites_t, sites_x, sites_y, sites_z, counts, TRIM(action_tag), xi=xi)
          U = UNew
-      END DO
-      CALL genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrP, nPlaq, time)
+      end do
+      call genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrP, nPlaq, time)
       aplaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
-      IF (xi /= 1.0_WP) THEN
-         CALL genPlaquette(U, NT, NS, NS, NS, 2, 4, 4, sumTrP, nPlaq, time)
+      if (xi /= 1.0_WP) then
+         call genPlaquette(U, NT, NS, NS, NS, 2, 4, 4, sumTrP, nPlaq, time)
          splaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
-         CALL genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrP, nPlaq, time)
+         call genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrP, nPlaq, time)
          tplaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
-      ELSE
+      else
          splaq = 0.0_WP
          tplaq = 0.0_WP
-      END IF
-      CALL read_heatbath_observable_reference( &
+      end if
+      call read_heatbath_observable_reference( &
          "testdata/reference_values.toml", case_name, xi /= 1.0_WP, &
          ref_aplaq, tol_aplaq, ref_splaq, tol_splaq, ref_tplaq, tol_tplaq, found_ref)
-      ! write(*,*) aplaq, splaq, tplaq
-      CALL check(error, found_ref, &
-         "heatbath observable reference [observables.heatbath."//trim(case_name)//"] must exist")
-      IF (allocated(error)) RETURN
+      call check(error, found_ref, &
+                 "heatbath observable reference [observables.heatbath."//TRIM(case_name)//"] must exist")
+      if (ALLOCATED(error)) return
       ! Basic sanity first
-      CALL check(error, ieee_is_finite(aplaq) .and. abs(aplaq) <= 1.0_WP + 1.0e-12_WP, &
-         "average plaquette should be finite and bounded")
-      IF (allocated(error)) RETURN
-      IF (xi /= 1.0_WP) THEN
-         CALL check(error, ieee_is_finite(splaq) .and. abs(splaq) <= 1.0_WP + 1.0e-12_WP, &
-            "spatial plaquette should be finite and bounded")
-         IF (allocated(error)) RETURN
-         CALL check(error, ieee_is_finite(tplaq) .and. abs(tplaq) <= 1.0_WP + 1.0e-12_WP, &
-            "temporal plaquette should be finite and bounded")
-         IF (allocated(error)) RETURN
-      END IF
+      call check(error, ieee_is_finite(aplaq) .AND. ABS(aplaq) <= 1.0_WP + 1.0E-12_WP, &
+                 "average plaquette should be finite and bounded")
+      if (ALLOCATED(error)) return
+      if (xi /= 1.0_WP) then
+         call check(error, ieee_is_finite(splaq) .AND. ABS(splaq) <= 1.0_WP + 1.0E-12_WP, &
+                    "spatial plaquette should be finite and bounded")
+         if (ALLOCATED(error)) return
+         call check(error, ieee_is_finite(tplaq) .AND. ABS(tplaq) <= 1.0_WP + 1.0E-12_WP, &
+                    "temporal plaquette should be finite and bounded")
+         if (ALLOCATED(error)) return
+      end if
       ! Reference-value regression
-      CALL check(error, abs(aplaq - ref_aplaq) < tol_aplaq, &
-         "average plaquette should match the stored heatbath reference")
-      IF (allocated(error)) RETURN
-      IF (xi /= 1.0_WP) THEN
-         CALL check(error, abs(splaq - ref_splaq) < tol_splaq, &
-            "spatial plaquette should match the stored heatbath reference")
-         IF (allocated(error)) RETURN
+      call check(error, ABS(aplaq - ref_aplaq) < tol_aplaq, &
+                 "average plaquette should match the stored heatbath reference")
+      if (ALLOCATED(error)) return
+      if (xi /= 1.0_WP) then
+         call check(error, ABS(splaq - ref_splaq) < tol_splaq, &
+                    "spatial plaquette should match the stored heatbath reference")
+         if (ALLOCATED(error)) return
+         call check(error, ABS(tplaq - ref_tplaq) < tol_tplaq, &
+                    "temporal plaquette should match the stored heatbath reference")
+      end if
+   end subroutine run_heatbath_observable_case
 
-         CALL check(error, abs(tplaq - ref_tplaq) < tol_tplaq, &
-            "temporal plaquette should match the stored heatbath reference")
-      END IF
-      WRITE(*,'(A,1X,A)')  'Observable case:', trim(case_name)
-      WRITE(*,'(A,1X,A)')  'Action tag:    ', trim(action_tag)
-      WRITE(*,'(A,F10.6)') 'xi:            ', xi
-      WRITE(*,'(A,F10.6)') 'beta:          ', beta
-      WRITE(*,'(A,I0)')    'nTraj:         ', nTraj
-      WRITE(*,'(A,F10.6)') 'aplaq:         ', aplaq
-      IF (xi /= 1.0_WP) THEN
-         WRITE(*,'(A,F10.6)') 'splaq:         ', splaq
-         WRITE(*,'(A,F10.6)') 'tplaq:         ', tplaq
-      END IF
-    END SUBROUTINE run_heatbath_observable_case
-
-   SUBROUTINE read_heatbath_observable_reference(filename, case_name, anisotropic, &
+   subroutine read_heatbath_observable_reference(filename, case_name, anisotropic, &
                                                  ref_aplaq, tol_aplaq, &
                                                  ref_splaq, tol_splaq, &
                                                  ref_tplaq, tol_tplaq, found)
-      CHARACTER(len=*), INTENT(IN)  :: filename
-      CHARACTER(len=*), INTENT(IN)  :: case_name
-      LOGICAL,          INTENT(IN)  :: anisotropic
-      REAL(WP),         INTENT(OUT) :: ref_aplaq, tol_aplaq
-      REAL(WP),         INTENT(OUT) :: ref_splaq, tol_splaq
-      REAL(WP),         INTENT(OUT) :: ref_tplaq, tol_tplaq
-      LOGICAL,          INTENT(OUT) :: found
+      character(len=*), intent(IN) :: filename
+      character(len=*), intent(IN) :: case_name
+      logical, intent(IN) :: anisotropic
+      real(kind=WP), intent(OUT) :: ref_aplaq, tol_aplaq
+      real(kind=WP), intent(OUT) :: ref_splaq, tol_splaq
+      real(kind=WP), intent(OUT) :: ref_tplaq, tol_tplaq
+      logical, intent(OUT) :: found
 
-      TYPE(toml_table), ALLOCATABLE :: root
-      TYPE(toml_table), POINTER     :: obs
-      TYPE(toml_table), POINTER     :: hb
-      TYPE(toml_table), POINTER     :: case_tbl
-      TYPE(toml_error), ALLOCATABLE :: err
-      INTEGER :: stat
-      ref_aplaq = -huge(1.0_WP)
+      type(toml_table), allocatable :: root
+      type(toml_table), pointer :: obs
+      type(toml_table), pointer :: hb
+      type(toml_table), pointer :: case_tbl
+      type(toml_error), allocatable :: err
+      integer :: stat
+      ref_aplaq = -HUGE(1.0_WP)
       tol_aplaq = -1.0_WP
-      ref_splaq = -huge(1.0_WP)
+      ref_splaq = -HUGE(1.0_WP)
       tol_splaq = -1.0_WP
-      ref_tplaq = -huge(1.0_WP)
+      ref_tplaq = -HUGE(1.0_WP)
       tol_tplaq = -1.0_WP
       found = .FALSE.
-      CALL toml_load(root, trim(filename), error=err)
-      IF (allocated(err)) RETURN
-      CALL get_value(root, "observables", obs, stat=stat)
-      IF (stat /= 0 .or. .not. associated(obs)) RETURN
-      CALL get_value(obs, "heatbath", hb, stat=stat)
-      IF (stat /= 0 .or. .not. associated(hb)) RETURN
-      CALL get_value(hb, trim(case_name), case_tbl, stat=stat)
-      IF (stat /= 0 .or. .not. associated(case_tbl)) RETURN
-      CALL get_value(case_tbl, "aplaq", ref_aplaq, stat=stat)
-      IF (stat /= 0) RETURN
-      CALL get_value(case_tbl, "aplaq_tol", tol_aplaq, stat=stat)
-      IF (stat /= 0) RETURN
-      IF (anisotropic) THEN
-         CALL get_value(case_tbl, "splaq", ref_splaq, stat=stat)
-         IF (stat /= 0) RETURN
-         CALL get_value(case_tbl, "splaq_tol", tol_splaq, stat=stat)
-         IF (stat /= 0) RETURN
-         CALL get_value(case_tbl, "tplaq", ref_tplaq, stat=stat)
-         IF (stat /= 0) RETURN
-         CALL get_value(case_tbl, "tplaq_tol", tol_tplaq, stat=stat)
-         IF (stat /= 0) RETURN
-      END IF
+      call toml_load(root, TRIM(filename), error=err)
+      if (ALLOCATED(err)) return
+      call get_value(root, "observables", obs, stat=stat)
+      if (stat /= 0 .OR. .NOT. ASSOCIATED(obs)) return
+      call get_value(obs, "heatbath", hb, stat=stat)
+      if (stat /= 0 .OR. .NOT. ASSOCIATED(hb)) return
+      call get_value(hb, TRIM(case_name), case_tbl, stat=stat)
+      if (stat /= 0 .OR. .NOT. ASSOCIATED(case_tbl)) return
+      call get_value(case_tbl, "aplaq", ref_aplaq, stat=stat)
+      if (stat /= 0) return
+      call get_value(case_tbl, "aplaq_tol", tol_aplaq, stat=stat)
+      if (stat /= 0) return
+      if (anisotropic) then
+         call get_value(case_tbl, "splaq", ref_splaq, stat=stat)
+         if (stat /= 0) return
+         call get_value(case_tbl, "splaq_tol", tol_splaq, stat=stat)
+         if (stat /= 0) return
+         call get_value(case_tbl, "tplaq", ref_tplaq, stat=stat)
+         if (stat /= 0) return
+         call get_value(case_tbl, "tplaq_tol", tol_tplaq, stat=stat)
+         if (stat /= 0) return
+      end if
       found = .TRUE.
-   END SUBROUTINE read_heatbath_observable_reference
+   end subroutine read_heatbath_observable_reference
 
-END MODULE test_heatbath_observables
+end module test_heatbath_observables

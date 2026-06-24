@@ -1,143 +1,165 @@
-MODULE test_updates
-  USE FLUE_constants,       ONLY : WP, WC
-  USE FLUE_heatbath,        ONLY : updateLinks
-  USE FLUE_SU2_heatbath,    ONLY : SU2_updateLinks, constructXMatrix
-  USE test_helpers,         ONLY : assert_close_mat2, &
-       assert_is_unitary2, assert_is_unitary3, &
-       assert_det_one2, assert_det_one3, seed_rng_fixed, &
-       fill_identity_su2, fill_identity_su3
-  USE testdrive,            ONLY : new_unittest, unittest_type, error_type, check
-  IMPLICIT NONE(TYPE, EXTERNAL)
-  PRIVATE
+module test_updates
+   use FLUE_constants, only: WP, WC
+   use FLUE_heatbath, only: updateLinks, build_colour_sites
+   use FLUE_SU2_heatbath, only: SU2_updateLinks, constructXMatrix
+   use Philox, only: C64
+   use stdlib_random, only: dist_rand
+   use test_helpers, only: assert_close_mat2, &
+                           assert_is_unitary2, assert_is_unitary3, &
+                           assert_det_one2, assert_det_one3, seed_rng_fixed, &
+                           fill_identity_su2, fill_identity_su3
+   use testdrive, only: new_unittest, unittest_type, error_type, check
+   implicit none(type, external)
+   private
 
-   PUBLIC :: collect_updates
+   public :: collect_updates
 
-CONTAINS
+contains
 
    !=========================================================
    ! Collect tests
    !=========================================================
-   SUBROUTINE collect_updates(testsuite)
-      TYPE(unittest_type), ALLOCATABLE, INTENT(OUT) :: testsuite(:)
+   subroutine collect_updates(testsuite)
+      type(unittest_type), allocatable, intent(OUT) :: testsuite(:)
 
       testsuite = (/ &
-         new_unittest("updateLinks_preserves_su3",      test_updateLinks_preserves_su3), &
-         new_unittest("su2_updateLinks_preserves_su2",  test_su2_updateLinks_preserves_su2), &
-         new_unittest("constructXMatrix_returns_su2",   test_constructXMatrix_returns_su2) /)
-   END SUBROUTINE collect_updates
-
+                  new_unittest("updateLinks_preserves_su3", test_updateLinks_preserves_su3), &
+                  new_unittest("su2_updateLinks_preserves_su2", test_su2_updateLinks_preserves_su2), &
+                  new_unittest("constructXMatrix_returns_su2", test_constructXMatrix_returns_su2)/)
+   end subroutine collect_updates
 
    !=========================================================
    ! Batch invariant checks
    !=========================================================
-   SUBROUTINE assert_all_links_su3(error, U, tol, message)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      COMPLEX(WC), INTENT(IN) :: U(:,:,:,:,:,:,:)
-      REAL(WP),    INTENT(IN) :: tol
-      CHARACTER(len=*), INTENT(IN) :: message
-      INTEGER :: mu, nt, nx, ny, nz
+   subroutine assert_all_links_su3(error, U, tol, message)
+      type(error_type), allocatable, intent(OUT) :: error
+      complex(kind=WC), intent(IN) :: U(:, :, :, :, :, :, :)
+      real(kind=WP), intent(IN) :: tol
+      character(len=*), intent(IN) :: message
+      integer :: mu, nt, nx, ny, nz
 
-      DO mu = 1, size(U,3)
-         DO nt = 1, size(U,4)
-            DO nx = 1, size(U,5)
-               DO ny = 1, size(U,6)
-                  DO nz = 1, size(U,7)
-                     CALL assert_is_unitary3(error, U(:,:,mu,nt,nx,ny,nz), tol, trim(message)//": unitarity")
-                     IF (allocated(error)) RETURN
-                     CALL assert_det_one3(error, U(:,:,mu,nt,nx,ny,nz), tol, trim(message)//": determinant")
-                     IF (allocated(error)) RETURN
-                  END DO
-               END DO
-            END DO
-         END DO
-      END DO
-   END SUBROUTINE assert_all_links_su3
+      do mu = 1, SIZE(U, 3)
+         do nt = 1, SIZE(U, 4)
+            do nx = 1, SIZE(U, 5)
+               do ny = 1, SIZE(U, 6)
+                  do nz = 1, SIZE(U, 7)
+                     call assert_is_unitary3(error, U(:, :, mu, nt, nx, ny, nz), tol, TRIM(message)//": unitarity")
+                     if (ALLOCATED(error)) return
+                     call assert_det_one3(error, U(:, :, mu, nt, nx, ny, nz), tol, TRIM(message)//": determinant")
+                     if (ALLOCATED(error)) return
+                  end do
+               end do
+            end do
+         end do
+      end do
+   end subroutine assert_all_links_su3
 
-   SUBROUTINE assert_all_links_su2(error, U, tol, message)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      COMPLEX(WC), INTENT(IN) :: U(:,:,:,:,:,:,:)
-      REAL(WP),    INTENT(IN) :: tol
-      CHARACTER(len=*), INTENT(IN) :: message
-      INTEGER :: mu, nt, nx, ny, nz
+   subroutine assert_all_links_su2(error, U, tol, message)
+      type(error_type), allocatable, intent(OUT) :: error
+      complex(kind=WC), intent(IN) :: U(:, :, :, :, :, :, :)
+      real(kind=WP), intent(IN) :: tol
+      character(len=*), intent(IN) :: message
+      integer :: mu, nt, nx, ny, nz
 
-      DO mu = 1, size(U,3)
-         DO nt = 1, size(U,4)
-            DO nx = 1, size(U,5)
-               DO ny = 1, size(U,6)
-                  DO nz = 1, size(U,7)
-                     CALL assert_is_unitary2(error, U(:,:,mu,nt,nx,ny,nz), tol, trim(message)//": unitarity")
-                     IF (allocated(error)) RETURN
-                     CALL assert_det_one2(error, U(:,:,mu,nt,nx,ny,nz), tol, trim(message)//": determinant")
-                     IF (allocated(error)) RETURN
-                  END DO
-               END DO
-            END DO
-         END DO
-      END DO
-   END SUBROUTINE assert_all_links_su2
-
+      do mu = 1, SIZE(U, 3)
+         do nt = 1, SIZE(U, 4)
+            do nx = 1, SIZE(U, 5)
+               do ny = 1, SIZE(U, 6)
+                  do nz = 1, SIZE(U, 7)
+                     call assert_is_unitary2(error, U(:, :, mu, nt, nx, ny, nz), tol, TRIM(message)//": unitarity")
+                     if (ALLOCATED(error)) return
+                     call assert_det_one2(error, U(:, :, mu, nt, nx, ny, nz), tol, TRIM(message)//": determinant")
+                     if (ALLOCATED(error)) return
+                  end do
+               end do
+            end do
+         end do
+      end do
+   end subroutine assert_all_links_su2
 
    !=========================================================
    ! 1) SU(3) update keeps all links in SU(3)
    !=========================================================
-   SUBROUTINE test_updateLinks_preserves_su3(error)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      COMPLEX(WC) :: U(3,3,4,2,2,2,2)
-      COMPLEX(WC) :: UUpdated(3,3,4,2,2,2,2)
-      REAL(WP), PARAMETER :: beta = 6.0_WP
-      REAL(WP), PARAMETER :: xi   = 1.0_WP
-      REAL(WP), PARAMETER :: tol  = 1.0e-10_WP
-
-      CALL fill_identity_su3(U)
+   subroutine test_updateLinks_preserves_su3(error)
+      type(error_type), allocatable, intent(OUT) :: error
+      complex(kind=WC) :: U(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: UUpdated(3, 3, 4, 2, 2, 2, 2)
+      real(kind=WP), parameter :: beta = 6.0_WP
+      real(kind=WP), parameter :: xi = 1.0_WP
+      real(kind=WP), parameter :: tol = 1.0E-10_WP
+      integer(kind=C64), dimension(2), parameter :: key = (/1_C64, 2_C64/)
+      ! Sites linearisation
+      integer, allocatable, dimension(:, :, :) :: sites_t, sites_x, sites_y, sites_z
+      integer, allocatable, dimension(:, :) :: counts
+      call fill_identity_su3(U)
       UUpdated = U
 
-      CALL seed_rng_fixed(777)
-      CALL updateLinks(U, beta, xi, UUpdated)
+      call build_colour_sites(2, 2, 2, 2, .TRUE., sites_t, sites_x, sites_y, sites_z, counts)
 
-      CALL assert_all_links_su3(error, UUpdated, tol, "updateLinks should keep all links in SU(3)")
-   END SUBROUTINE test_updateLinks_preserves_su3
+      call updateLinks(U, beta, UUpdated, key, 1, sites_t, sites_x, sites_y, sites_z, counts, 'Wilon')
 
+      call assert_all_links_su3(error, UUpdated, tol, "updateLinks should keep all links in SU(3)")
+   end subroutine test_updateLinks_preserves_su3
 
    !=========================================================
    ! 3) SU(2) update keeps all links in SU(2)
    !=========================================================
-   SUBROUTINE test_su2_updateLinks_preserves_su2(error)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      COMPLEX(WC) :: U(2,2,4,2,2,2,2)
-      COMPLEX(WC) :: UUpdated(2,2,4,2,2,2,2)
-      REAL(WP), PARAMETER :: beta = 2.3_WP
-      REAL(WP), PARAMETER :: tol  = 1.0e-10_WP
+   subroutine test_su2_updateLinks_preserves_su2(error)
+      type(error_type), allocatable, intent(OUT) :: error
+      complex(kind=WC) :: U(2, 2, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: UUpdated(2, 2, 4, 2, 2, 2, 2)
+      real(kind=WP), parameter :: beta = 2.3_WP
+      real(kind=WP), parameter :: tol = 1.0E-10_WP
+      integer(kind=C64), dimension(2), parameter :: key = (/1_C64, 2_C64/)
 
-      CALL fill_identity_su2(U)
+      call fill_identity_su2(U)
       UUpdated = U
 
-      CALL seed_rng_fixed(888)
-      CALL SU2_updateLinks(U, beta, UUpdated)
+      call SU2_updateLinks(U, beta, UUpdated, key, 1)
 
-      CALL assert_all_links_su2(error, UUpdated, tol, "SU2_updateLinks should keep all links in SU(2)")
-   END SUBROUTINE test_su2_updateLinks_preserves_su2
-
+      call assert_all_links_su2(error, UUpdated, tol, "SU2_updateLinks should keep all links in SU(2)")
+   end subroutine test_su2_updateLinks_preserves_su2
 
    !=========================================================
    ! 4) constructXMatrix(alpha,beta) should return SU(2)
    !=========================================================
-   SUBROUTINE test_constructXMatrix_returns_su2(error)
-      TYPE(error_type), ALLOCATABLE, INTENT(OUT) :: error
-      COMPLEX(WC) :: X(2,2)
-      REAL(WP), PARAMETER :: tol = 1.0e-12_WP
-      REAL(WP), DIMENSION(4) :: alpha_vals, beta_vals
-      INTEGER :: i
+   subroutine test_constructXMatrix_returns_su2(error)
+      type(error_type), allocatable, intent(OUT) :: error
+      complex(kind=WC) :: X(2, 2)
+      real(kind=WP), parameter :: tol = 1.0E-12_WP
+      real(kind=WP), dimension(4) :: alpha_vals, beta_vals
+      integer :: i
+
+      integer(kind=C64), dimension(4) :: counter
+      integer(kind=C64), dimension(2) :: key
+      integer(kind=C64) :: randInt
 
       alpha_vals = [0.10_WP, 0.50_WP, 1.00_WP, 2.00_WP]
-      beta_vals  = [1.50_WP, 2.30_WP, 4.00_WP, 6.00_WP]
+      beta_vals = [1.50_WP, 2.30_WP, 4.00_WP, 6.00_WP]
 
-      DO i = 1, size(alpha_vals)
-         X = constructXMatrix(alpha_vals(i), beta_vals(i))
-         CALL assert_is_unitary2(error, X, tol, "constructXMatrix should return a unitary SU(2) matrix")
-         IF (allocated(error)) RETURN
-         CALL assert_det_one2(error, X, tol, "constructXMatrix should return determinant one")
-         IF (allocated(error)) RETURN
-      END DO
-   END SUBROUTINE test_constructXMatrix_returns_su2
+      call seed_rng_fixed(124)
 
-END MODULE test_updates
+      do i = 1, SIZE(alpha_vals)
+
+         randInt = dist_rand(C64)
+         counter(1) = randInt
+         randInt = dist_rand(C64)
+         counter(2) = randInt
+         randInt = dist_rand(C64)
+         counter(3) = randInt
+         randInt = dist_rand(C64)
+         counter(4) = randInt
+         randInt = dist_rand(C64)
+         key(1) = randInt
+         randInt = dist_rand(C64)
+         key(2) = randInt
+
+         X = constructXMatrix(alpha_vals(i), beta_vals(i), key, counter, i)
+         call assert_is_unitary2(error, X, tol, "constructXMatrix should return a unitary SU(2) matrix")
+         if (ALLOCATED(error)) return
+         call assert_det_one2(error, X, tol, "constructXMatrix should return determinant one")
+         if (ALLOCATED(error)) return
+      end do
+   end subroutine test_constructXMatrix_returns_su2
+
+end module test_updates

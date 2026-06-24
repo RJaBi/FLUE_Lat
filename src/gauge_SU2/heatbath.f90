@@ -1,174 +1,287 @@
-MODULE FLUE_SU2_heatbath
-   USE FLUE_constants, ONLY: WP, WC, TWO_PI
-   USE FLUE_matrixConstants, ONLY: Ident2x2
-   USE FLUE_SU2_random, ONLY: constructSU2Matrix
-   USE FLUE_SU2_wloops, ONLY: SU2_genericPath
-   USE FLUE_wloops, ONLY: periodCoord
-   USE stdlib_stats_distribution_uniform, ONLY: rvs_uniform
-   IMPLICIT NONE(TYPE, EXTERNAL)
-   PRIVATE
-   PUBLIC :: SU2_updateLinks
-   PUBLIC :: constructXMatrix
-CONTAINS
-   FUNCTION getLambda2(alpha, beta) RESULT(lambda2)
-      REAL(kind=WP), INTENT(IN) :: alpha, beta
-      REAL(kind=WP) :: lambda2, rr
-      REAL(kind=WP) :: ri(3)
-      REAL(kind=WP), PARAMETER :: eps = TINY(1.0_WP)
-      ! Defensive: beta or alpha too small -> distribution becomes Haar-like.
-      ! Caller should handle beta~0 separately, but we also guard here.
-      IF (alpha <= eps .OR. beta <= eps) THEN
+module FLUE_SU2_heatbath
+   !!
+   !! SU(2) heatbath update using Philox only.
+   !!
+   !! Key points:
+   !!   * No stdlib random routines are used.
+   !!   * getLambda2() uses philox_uniform_oo on (0,1),
+   !!   * getXVec() uses philox_uniform_co on [-1,1)
+   !!   * The update is staged by direction and colour so the inner site loop can be
+   !!     expressed as do concurrent.
+   !!
+   use FLUE_constants, only: WP, WC, TWO_PI
+   use FLUE_philox_helpers, only: derive_stage_key, site_linear_index, site_colour
+   use FLUE_SU2_random, only: constructSU2Matrix
+   use FLUE_SU2_wloops, only: SU2_genericPath
+   use FLUE_wloops, only: periodCoord
+   use Philox, only: philox_uniform_co, philox_uniform_oo, c64
+   implicit none(type, external)
+   private
+
+   public :: SU2_updateLinks
+   public :: constructXMatrix
+
+contains
+
+   pure function getLambda2(alpha, beta, key, counter0) result(lambda2)
+     !!
+    !! Sample lambda^2 for the SU(2) heatbath accept/reject step.
+    !!
+    !! uses Philox draws directly.
+    !!
+    !! Random-number conventions:
+    !!   * ri(1:3) and rr are strictly in (0,1), so we use philox_uniform_oo.
+    !!
+    !! Counter usage:
+    !!   counter(1) = site id        (passed in through counter0)
+    !!   counter(2) = subgroup id    (set in constructXMatrix)
+    !!   counter(3) = attempt number (incremented here)
+    !!   counter(4) = phase id = 1   (lambda2 phase)
+    !!
+      real(kind=WP), intent(IN) :: alpha, beta
+      integer(kind=C64), intent(IN) :: key(2), counter0(4)
+      real(kind=WP) :: lambda2, rr
+      real(kind=WP) :: ri(3)
+      integer(kind=C64) :: c(4), attempt
+      real(kind=WP), parameter :: eps = TINY(1.0_WP)
+      if (alpha <= eps .OR. beta <= eps) then
          lambda2 = 0.0_WP
-         RETURN
-      END IF
-      DO
-         ri = rvs_uniform(loc=0.0_WP, scale=1.0_WP, array_size=3)
-         IF (ANY(ri <= eps)) CYCLE  ! avoid log(0)
-         ! Eq. (4.45): proposal for lambda^2
-         lambda2 = -(LOG(ri(1)) + LOG(ri(3)) * COS(TWO_PI * ri(2))**2) &
-                   / (2.0_WP * alpha * beta)
-         ! Make sure inside bounds
-         IF (lambda2 < 0.0_WP) CYCLE
-         IF (lambda2 > 1.0_WP) CYCLE
-         ! Eq. (4.46): accept with prob sqrt(1 - lambda^2)
-         rr = rvs_uniform(scale=1.0_WP)
-         IF (rr <= eps) CYCLE
-         ! done?
-         IF (rr * rr <= 1.0_WP - lambda2) EXIT
-      END DO
-   END FUNCTION getLambda2
+         return
+      end if
+      attempt = 0_C64
+      do
+         c = counter0
+         c(3) = attempt
+         c(4) = 1_C64
+         ! c = [linearised index, subgroup ID, attempt, 1]
+         ri(1) = philox_uniform_oo(c, key, 1_C64, 0.0_WP, 1.0_WP)
+         ! counter, key, idx, bounds
+         ri(2) = philox_uniform_oo(c, key, 2_C64, 0.0_WP, 1.0_WP)
+         ri(3) = philox_uniform_oo(c, key, 3_C64, 0.0_WP, 1.0_WP)
+         rr = philox_uniform_oo(c, key, 4_C64, 0.0_WP, 1.0_WP)
+         ! Got random numbers, construct lambda2
+         lambda2 = -(LOG(ri(1)) + LOG(ri(3)) * COS(TWO_PI * ri(2))**2) / &
+                   (2.0_WP * alpha * beta)
+         ! if lambda2 isn't suitable, try again
+         if (lambda2 < 0.0_WP) then
+            attempt = attempt + 1_C64
+            cycle
+         end if
+         if (lambda2 > 1.0_WP) then
+            attempt = attempt + 1_C64
+            cycle
+         end if
+         ! If it is suitable exit
+         if (rr * rr <= 1.0_WP - lambda2) exit
+         ! If it isn't, go again
+         attempt = attempt + 1_C64
+      end do
+   end function getLambda2
 
-   FUNCTION getXVec(x0) RESULT(xvec)
-      REAL(kind=WP), INTENT(IN) :: x0
-      REAL(kind=WP) :: xvec(3)
-      REAL(kind=WP) :: xlen, requiredLen
-      REAL(kind=WP), PARAMETER :: eps = TINY(1.0_WP)
-      requiredLen = MAX(0.0_WP, 1.0_WP - x0 * x0)          ! requiredLen = 1 - x0^2
-      IF (requiredLen <= eps) THEN
+   pure function getXVec(x0, key, counter0) result(xvec)
+    !!
+    !! Sample a 3-vector uniformly from the unit ball, then rescale it so that
+    !! ||xvec|| = sqrt(1 - x0^2).
+    !!
+    !! Random-number convention:
+    !!   * Each component is drawn from [-1,1), so we use philox_uniform_co.
+    !!
+    !! Counter usage:
+    !!   counter(1) = site id
+    !!   counter(2) = subgroup id
+    !!   counter(3) = attempt number
+    !!   counter(4) = phase id = 2   (x-vector phase)
+    !!
+      real(kind=WP), intent(IN) :: x0
+      integer(kind=C64), intent(IN) :: key(2), counter0(4)
+      real(kind=WP) :: xvec(3)
+      real(kind=WP) :: xlen, requiredLen
+      integer(kind=C64) :: c(4), attempt
+      real(kind=WP), parameter :: eps = TINY(1.0_WP)
+      requiredLen = MAX(0.0_WP, 1.0_WP - x0 * x0)
+      if (requiredLen <= eps) then
          xvec = 0.0_WP
-         RETURN
-      END IF
-      DO
-         xvec = rvs_uniform(loc=-1.0_WP, scale=2.0_WP, array_size=3)
-         ! Reject exactly +1 only if you insist on [-1,1) — but using eps is safer
-         IF (ANY(xvec >= 1.0_WP - eps)) CYCLE
-         ! check conditions
-         xlen = SUM(xvec**2.0_WP)
-         IF (xlen <= 1.0_WP .AND. xlen > eps) EXIT
-      END DO
-      ! Rescale to |xvec| = sqrt(1 - x0^2)
+         return
+      end if
+      attempt = 0_C64
+      do
+         c = counter0
+         c(3) = attempt
+         c(4) = 2_C64
+         ! c = [linearised site index, subgroup ID, attempt, 2]
+         xvec(1) = philox_uniform_co(c, key, 1_C64, -1.0_WP, 1.0_WP)
+         xvec(2) = philox_uniform_co(c, key, 2_C64, -1.0_WP, 1.0_WP)
+         xvec(3) = philox_uniform_co(c, key, 3_C64, -1.0_WP, 1.0_WP)
+         xlen = SUM(xvec**2)
+         ! If suitable, exit
+         if (xlen <= 1.0_WP .AND. xlen > eps) exit
+         ! else go again
+         attempt = attempt + 1_C64
+      end do
       xvec = xvec * (SQRT(requiredLen) / SQRT(xlen))
-   END FUNCTION getXVec
+   end function getXVec
 
-   FUNCTION constructXMatrix(alpha, beta) RESULT(X)
-    !! section 4.3.1
-      REAL(kind=WP), INTENT(IN) :: alpha, beta
-      COMPLEX(kind=WC), DIMENSION(2, 2) :: X
-      REAL(kind=WP) :: lambda2
-      REAL(kind=WP), DIMENSION(0:3) :: xAll
-    !! Get lambda
-      lambda2 = getLambda2(alpha, beta)
+   pure function constructXMatrix(alpha, beta, key, counter0, subgroup_id) result(X)
+     !!
+     !! Construct the SU(2) heatbath matrix X used in the update.
+     !!
+     !! This wraps together:
+     !!   1) sampling lambda^2,
+     !!   2) constructing x0 = 1 - 2 lambda^2,
+     !!   3) sampling the spatial part x(1:3),
+     !!   4) building the corresponding SU(2) matrix.
+     !!
+     !! subgroup_id is carried in counter(2) so the three SU(2) sub-updates inside
+     !! an SU(3) heatbath update use disjoint Philox substreams.
+     !!
+      real(kind=WP), intent(IN) :: alpha, beta
+      integer(kind=C64), intent(IN) :: key(2), counter0(4)
+      integer, intent(IN) :: subgroup_id
+      complex(kind=WC), dimension(2, 2) :: X
+      real(kind=WP) :: lambda2
+      real(kind=WP), dimension(0:3) :: xAll
+      integer(kind=C64) :: c(4)
+      c = counter0
+      c(2) = INT(subgroup_id, C64)
+      ! c = [linearised index, subgroupID, 0, 0]
+      lambda2 = getLambda2(alpha, beta, key, c)
       xAll(0) = 1.0_WP - 2.0_WP * lambda2
-      xAll(1:3) = getXVec(xAll(0))
-      ! debug: check unit quaternion
-      !if (abs( xAll(0)**2 + sum(xAll(1:3)**2) - 1.0_WP ) > 1e-10_WP) then
-      !   write(*,*) 'xvec', xAll
-      !   stop
-      !end if
+      xAll(1:3) = getXVec(xAll(0), key, c)
       X = constructSU2Matrix(xAll)
-   END FUNCTION constructXMatrix
+   end function constructXMatrix
 
-   SUBROUTINE SU2_updateLinks(U, beta, UUpdated)
-      COMPLEX(kind=WC), DIMENSION(:, :, :, :, :, :, :), INTENT(IN) :: U
-      REAL(kind=WP), INTENT(IN) :: beta
-      COMPLEX(kind=WC), DIMENSION(:, :, :, :, :, :, :), INTENT(INOUT) :: UUpdated
-      !complex(kind=WC), allocatable, dimension(:,:,:,:,:,:,:) :: staples
-      COMPLEX(kind=WC), DIMENSION(2, 2) :: XMatrix, V, Vdag
-      COMPLEX(kind=WC) :: detV
-      REAL(kind=WP) :: alpha
-    !! lattice geometry
-      INTEGER, DIMENSION(7) :: dataShape
-      INTEGER :: nt, nx, ny, nz
-    !! counters
-      INTEGER :: ix, iy, iz, it, mu
-      INTEGER, DIMENSION(4) :: coord
-      REAL(kind=WP), PARAMETER :: eps = TINY(1.0_WP)
+   pure function su2_updated_link(U, beta, coord, mu, key, dims) result(Unew)
+      !!
+      !! Compute the new SU(2) link at one site and one direction.
+      !!
+      !! Steps:
+      !!   1) Compute the staple V.
+      !!   2) Compute alpha from det(V).
+      !!   3) Build the heatbath matrix X using Philox.
+      !!   4) Return the updated link:
+      !!        U' = X * (V / alpha)^dagger
+      !!
+      !! If alpha is too small, the code falls back to a mild update with alpha=1.
+      !!
+      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
+      real(kind=WP), intent(IN) :: beta
+      integer, intent(IN) :: coord(4), mu, dims(4)
+      integer(kind=C64), intent(IN) :: key(2)
+      complex(kind=WC), dimension(2, 2) :: Unew
+
+      complex(kind=WC), dimension(2, 2) :: XMatrix, V, Vdag
+      complex(kind=WC) :: detV
+      real(kind=WP) :: alpha
+      integer(kind=C64) :: counter0(4)
+      real(kind=WP), parameter :: eps = TINY(1.0_WP)
+      ! Calculate the staple
+      call stapleAt(U, V, coord, mu)
+      ! get dterminant
+      detV = V(1, 1) * V(2, 2) - V(1, 2) * V(2, 1)
+      ! Calculate alpha
+      alpha = SQRT(MAX(real(detV, kind=WP), 0.0_WP))
+      ! Convert the site index into a linear index
+      ! So that each site has it's own independent random number space
+      counter0 = [site_linear_index(coord, dims), 0_C64, 0_C64, 0_C64]
+      if (alpha < eps) then
+         XMatrix = constructXMatrix(1.0_WP, beta, key, counter0, 1)
+         Unew = XMatrix
+      else
+         Vdag = CONJG(TRANSPOSE(V / alpha))
+         XMatrix = constructXMatrix(alpha, beta, key, counter0, 1)
+         ! i.e. alpha, beta, random stream, linearised index, SU2 subgroup ID (needed for the 3 SU2 updates in SU3)
+         Unew = MATMUL(XMatrix, Vdag)
+      end if
+   end function su2_updated_link
+
+   subroutine SU2_updateLinks(U, beta, UUpdated, master_key, sweep_id)
+      !!
+      !! Update all SU(2) links on the lattice.
+      !!
+      !! The update is staged by:
+      !!   * direction mu
+      !!   * checkerboard parity colour
+      !!
+      !! so that each do concurrent block updates an independent set of links.
+      !!
+      !! Inputs:
+      !!   U          : current lattice
+      !!   beta       : gauge coupling
+      !!   master_key : user-provided Philox master key
+      !!   sweep_id   : identifies the sweep so keys vary deterministically
+      !!
+      !! Output:
+      !!   UUpdated   : updated lattice
+      !!
+      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
+      real(kind=WP), intent(IN) :: beta
+      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(INOUT) :: UUpdated
+      integer(kind=C64), dimension(2), intent(IN) :: master_key
+      integer, intent(IN) :: sweep_id
+      integer, dimension(7) :: dataShape
+      integer :: nt, nx, ny, nz
+      integer :: it, ix, iy, iz, mu, colour
+      integer :: dims4(4)
+      integer(kind=C64) :: key(2)
+      integer, dimension(4) :: coord
+      real(kind=WP), parameter :: eps = TINY(1.0_WP)
       dataShape = SHAPE(U)
       nt = dataShape(4)
       nx = dataShape(5)
       ny = dataShape(6)
       nz = dataShape(7)
-      !allocate(staples(2, 2, 4, nt, nx, ny, nz))
-      !call computeStaples(U, staples)
+      dims4 = [nt, nx, ny, nz]
       UUpdated = U
-      IF (beta .LE. eps) THEN
-         WRITE (*, *) 'beta', beta, ' must not be zero. stopping'
-         STOP
-      END IF
-      DO it = 1, nt
-         DO ix = 1, nx
-            DO iy = 1, ny
-               DO iz = 1, nz
-                  coord = (/it, ix, iy, iz/)
-                  DO mu = 1, 4
-                     CALL stapleAt(UUpdated, V, coord, mu)
-                     ! ad - bc
-                     detV = V(1, 1) * V(2, 2) - V(1, 2) * V(2, 1)
-                     ! For SU(2) staples, det should be real and positive (up to roundoff)
-                     !if (abs(aimag(detV)) > 1.0e-8_WP) then
-                     !   write(*,*) 'detV', detV
-                     !   write(*,*) 'V', V
-                     !   !error stop "Staple det has significant imaginary part"
-                     !end if
-                     ! calculate alpha from the det
-                     alpha = SQRT(MAX(real(detV, kind=WP), 0.0_WP))
-                     IF (alpha < eps) THEN
-                        ! Degenerate staple: fall back to Haar-ish update (or identity)
-                        XMatrix = constructXMatrix(1.0_WP, beta)    ! mild fallback
-                        UUpdated(:, :, mu, it, ix, iy, iz) = XMatrix
-                     ELSE
-                        ! Vtilde = V / alpha, and we need Vtilde^dagger on the right
-                        Vdag = CONJG(TRANSPOSE(V / alpha))
-                        !Vdag = V / alpha
-                        XMatrix = constructXMatrix(alpha, beta)
-                        ! Update: U' = X * Vtilde^dagger  (Montvay–Münster / Gattringer–Lang)
-                        UUpdated(:, :, mu, it, ix, iy, iz) = MATMUL(XMatrix, Vdag)
-                     END IF
-                     !if (it==1 .and. ix==1 .and. iy==1 .and. iz==1 .and. mu==1) then
-                     !   write(*,*) "Example alpha=", alpha, "detV=", detV
-                     !   ! write(*,*) 'V / alpha', V / alpha
-                     !end if
-                     !VDag = matmul( conjg(transpose(UUpdated(:,:,mu,it,ix,iy,iz))), UUpdated(:,:,mu,it,ix,iy,iz))
-                     !if (maxval(abs(VDag - Ident2x2)) > 1.0e-8_WP) then
-                     !   write(*,*) 'Unitarity check'
-                     !   write(*,*) 'link', it, ix, iy, iz, mu, UUpdated(:,:,mu,it,ix,iy,iz), 'not unitary', VDag
-                     !   stop
-                     !end if
-                  END DO
-               END DO
-            END DO
-         END DO
-      END DO
+      if (beta <= eps) then
+         write (*, *) 'beta =', beta, ' must be positive. stopping'
+         stop
+      end if
+      ! Loop over directions, checkerboard
+      do mu = 1, 4
+         do colour = 0, 1
+            ! Get a key for the random number for this direction, checker, sweep and 'run' (master)
+            call derive_stage_key(master_key, sweep_id, stage_tag=2, mu=mu, colour=colour, key=key)
+            ! Can now parallelise over
+            do concurrent(it=1:nt, ix=1:nx, iy=1:ny, iz=1:nz) &
+               DEFAULT(none) SHARED(UUpdated, beta) LOCAL_INIT(mu, key, dims4, colour, coord)
+               coord = (/it, ix, iy, iz/)
+               if (site_colour(coord, mu, .FALSE.) /= colour) then
+                  ! Skip this execution cause it's on the other 'colour'
+                  cycle
+               end if
+               UUpdated(:, :, mu, it, ix, iy, iz) = su2_updated_link( &
+                                                    UUpdated, beta, coord, mu, key, dims4)
+            end do
+         end do
+      end do
+   end subroutine SU2_updateLinks
 
-   END SUBROUTINE SU2_updateLinks
+   pure subroutine stapleAt(U, V, coord, mu)
+      !!
+      !! Compute the standard Wilson-type staple for an SU(2) link.
+      !!
+      !! The staple is evaluated at the link U_mu(coord), and is the sum of the
+      !! forward and backward staples in all transverse directions nu != mu.
+      !!
+      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
+      integer, dimension(4), intent(IN) :: coord
+      integer, intent(IN) :: mu
+      complex(kind=WC), dimension(2, 2), intent(OUT) :: V
 
-   PURE SUBROUTINE stapleAt(U, V, coord, mu)
-      COMPLEX(kind=WC), DIMENSION(:, :, :, :, :, :, :), INTENT(IN) :: U
-      INTEGER, DIMENSION(4), INTENT(IN) :: coord
-      INTEGER, INTENT(IN) :: mu
-      COMPLEX(kind=WC), DIMENSION(2, 2), INTENT(OUT) :: V
-      INTEGER, DIMENSION(4) :: thisCoord, step
-      INTEGER :: nu
+      integer, dimension(4) :: thisCoord, step
+      integer :: nu
+      integer, dimension(7) :: dataShape
+      dataShape = SHAPE(U)
       step = 0
       step(mu) = 1
       thisCoord = coord + step
-      thisCoord = periodCoord(thisCoord, SHAPE(U))
+      thisCoord = periodCoord(thisCoord, dataShape)
       V = CMPLX(0.0_WP, 0.0_WP, kind=WC)
-      DO nu = 1, 4
-         IF (nu == mu) CYCLE
-         V = V + SU2_genericPath(U, thisCoord, (/nu, -mu, -nu/)) &
-             + SU2_genericPath(U, thisCoord, (/-nu, -mu, nu/))
-      END DO
-   END SUBROUTINE stapleAt
+      do nu = 1, 4
+         if (nu == mu) cycle
+         V = V + SU2_genericPath(U, thisCoord, [nu, -mu, -nu]) &
+             + SU2_genericPath(U, thisCoord, [-nu, -mu, nu])
+      end do
+   end subroutine stapleAt
 
-END MODULE FLUE_SU2_heatbath
+end module FLUE_SU2_heatbath

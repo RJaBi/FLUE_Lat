@@ -28,11 +28,11 @@ contains
       integer, intent(in) :: NX, NY, NZ, NT
       complex(kind=WC), dimension(3, 3, NT, NX, NY, NZ) :: G_x
 
-      real(WP), dimension(:, :, :, :, :, :), allocatable :: ReG, ImG
+      real(kind=WP), dimension(:, :, :, :, :, :), allocatable :: ReG, ImG
       integer :: ix, iy, iz, it, ic, irank
       integer :: jx, jy, jz, jt
 
-      complex(WC), dimension(:, :, :, :, :, :), allocatable :: G_tr
+      complex(kind=WC), dimension(:, :, :, :, :, :), allocatable :: G_tr
       !type(colour_vector) :: v1,v2,v3
       complex(kind=WC), dimension(3) :: v1, v2, v3
 

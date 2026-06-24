@@ -21,30 +21,37 @@ update_time_per_traj = 0.25
 
 # ------------------------------------------------------------------
 # Observable regression references for short SU(3) heatbath runs
-# 4^4 lattice, 10 trajectories, fixed stdlib_random seed
-# Fill in the plaquette references manually after measuring them once.
 # ------------------------------------------------------------------
 
 [observables.heatbath.wilson_xi1]
-aplaq = 0.6
+# beta=6, 4x4, 20 traj, xi=1
+aplaq = 0.484820465720041
+aplaq_tol = 0.1
+
+[observables.heatbath.wilson_xi1_beta1]
+# beta=1, 4x4, 20 traj, xi = 1
+aplaq = 4.632987931465711E-002
 aplaq_tol = 0.1
 
 [observables.heatbath.wilson_xi10]
-aplaq = 0.686
+# beta=6, 4x4, 20 traj, xi=10
+aplaq = 0.601331241546879
 aplaq_tol = 0.1
-splaq = 0.4236
+splaq = 0.258889075168677
 splaq_tol = 0.1
-tplaq = 0.9497
+tplaq = 0.943773407925080
 tplaq_tol = 0.1
 
 [observables.heatbath.symanzik_xi1]
+# beta=6, 4x4, 20 traj, xi =1
 aplaq = 0.73847
 aplaq_tol = 0.1
 
 [observables.heatbath.symanzik_xi10]
-aplaq = 0.7664
+# beta=6, 4x4, 20 traj, xi=10
+aplaq = 0.668453012544097
 aplaq_tol = 0.1
-splaq = 0.5689
+splaq = 0.376598622671038
 splaq_tol = 0.1
-tplaq = 0.9639
+tplaq = 0.960307402417155
 tplaq_tol = 0.1
