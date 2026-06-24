@@ -11,8 +11,8 @@ PROGRAM SU3_heatbath
    IMPLICIT NONE(TYPE, EXTERNAL)
 
    ! Lattice geometry
-   INTEGER, PARAMETER :: NS = 4
-   INTEGER, PARAMETER :: NT = 4
+   INTEGER, PARAMETER :: NS = 16
+   INTEGER, PARAMETER :: NT = 256
    COMPLEX(kind=WC), DIMENSION(3, 3, 4, NT, NS, NS, NS) :: U, UNew
    ! Sites linearisation
    INTEGER, ALLOCATABLE, DIMENSION(:, :, :) :: sites_t, sites_x, sites_y, sites_z
