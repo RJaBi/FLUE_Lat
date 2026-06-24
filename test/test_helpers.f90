@@ -38,23 +38,23 @@ module test_helpers
 
 contains
 
-   pure real(WP) function maxabs_mat2(a, b) result(v)
-      complex(WC), intent(IN) :: a(2, 2), b(2, 2)
+   pure real(kind=WP) function maxabs_mat2(a, b) result(v)
+      complex(kind=WC), intent(IN) :: a(2, 2), b(2, 2)
       v = MAXVAL(ABS(a - b))
    end function maxabs_mat2
 
-   pure real(WP) function maxabs_mat3(a, b) result(v)
-      complex(WC), intent(IN) :: a(3, 3), b(3, 3)
+   pure real(kind=WP) function maxabs_mat3(a, b) result(v)
+      complex(kind=WC), intent(IN) :: a(3, 3), b(3, 3)
       v = MAXVAL(ABS(a - b))
    end function maxabs_mat3
 
-   pure complex(WC) function det2x2(a) result(d)
-      complex(WC), intent(IN) :: a(2, 2)
+   pure complex(kind=WC) function det2x2(a) result(d)
+      complex(kind=WC), intent(IN) :: a(2, 2)
       d = a(1, 1) * a(2, 2) - a(1, 2) * a(2, 1)
    end function det2x2
 
-   pure complex(WC) function det3x3(a) result(d)
-      complex(WC), intent(IN) :: a(3, 3)
+   pure complex(kind=WC) function det3x3(a) result(d)
+      complex(kind=WC), intent(IN) :: a(3, 3)
       d = a(1, 1) * (a(2, 2) * a(3, 3) - a(2, 3) * a(3, 2)) &
           - a(1, 2) * (a(2, 1) * a(3, 3) - a(2, 3) * a(3, 1)) &
           + a(1, 3) * (a(2, 1) * a(3, 2) - a(2, 2) * a(3, 1))
@@ -62,93 +62,93 @@ contains
 
    subroutine assert_close_real(error, actual, expected, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      real(WP), intent(IN) :: actual, expected, tol
+      real(kind=WP), intent(IN) :: actual, expected, tol
       character(len=*), intent(IN) :: message
       call check(error, ABS(actual - expected) < tol, message)
    end subroutine assert_close_real
 
    subroutine assert_close_complex(error, actual, expected, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: actual, expected
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: actual, expected
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
       call check(error, ABS(actual - expected) < tol, message)
    end subroutine assert_close_complex
 
    subroutine assert_close_mat2(error, actual, expected, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: actual(2, 2), expected(2, 2)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: actual(2, 2), expected(2, 2)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
       call check(error, maxabs_mat2(actual, expected) < tol, message)
    end subroutine assert_close_mat2
 
    subroutine assert_close_mat3(error, actual, expected, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: actual(3, 3), expected(3, 3)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: actual(3, 3), expected(3, 3)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
       call check(error, maxabs_mat3(actual, expected) < tol, message)
    end subroutine assert_close_mat3
 
    subroutine assert_is_identity2(error, a, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: a(2, 2)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: a(2, 2)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
       call assert_close_mat2(error, a, Ident2x2, tol, message)
    end subroutine assert_is_identity2
 
    subroutine assert_is_identity3(error, a, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: a(3, 3)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: a(3, 3)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
       call assert_close_mat3(error, a, Ident3x3, tol, message)
    end subroutine assert_is_identity3
 
    subroutine assert_is_unitary2(error, a, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: a(2, 2)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: a(2, 2)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
-      complex(WC) :: udagu(2, 2)
+      complex(kind=WC) :: udagu(2, 2)
       udagu = MATMUL(CONJG(TRANSPOSE(a)), a)
       call assert_is_identity2(error, udagu, tol, message)
    end subroutine assert_is_unitary2
 
    subroutine assert_is_unitary3(error, a, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: a(3, 3)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: a(3, 3)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
-      complex(WC) :: udagu(3, 3)
+      complex(kind=WC) :: udagu(3, 3)
       udagu = MATMUL(CONJG(TRANSPOSE(a)), a)
       call assert_is_identity3(error, udagu, tol, message)
    end subroutine assert_is_unitary3
 
    subroutine assert_det_one2(error, a, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: a(2, 2)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: a(2, 2)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
       call assert_close_complex(error, det2x2(a), CMPLX(1.0_WP, 0.0_WP, kind=WC), tol, message)
    end subroutine assert_det_one2
 
    subroutine assert_det_one3(error, a, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: a(3, 3)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: a(3, 3)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
       call assert_close_complex(error, det3x3(a), CMPLX(1.0_WP, 0.0_WP, kind=WC), tol, message)
    end subroutine assert_det_one3
 
    subroutine assert_traceless3(error, a, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: a(3, 3)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: a(3, 3)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
-      complex(WC) :: tr
+      complex(kind=WC) :: tr
       tr = a(1, 1) + a(2, 2) + a(3, 3)
       call check(error, ABS(tr) < tol, message)
    end subroutine assert_traceless3
@@ -163,7 +163,7 @@ contains
    ! Fillers
    !=========================================================
    subroutine fill_identity_su3(U)
-      complex(WC), intent(OUT) :: U(:, :, :, :, :, :, :)
+      complex(kind=WC), intent(OUT) :: U(:, :, :, :, :, :, :)
       integer :: mu, nt, nx, ny, nz
       U = CMPLX(0.0_WP, 0.0_WP, kind=WC)
       do concurrent(mu=1:SIZE(U, 3), nt=1:SIZE(U, 4), nx=1:SIZE(U, 5), &
@@ -173,7 +173,7 @@ contains
    end subroutine fill_identity_su3
 
    subroutine fill_identity_su2(U)
-      complex(WC), intent(OUT) :: U(:, :, :, :, :, :, :)
+      complex(kind=WC), intent(OUT) :: U(:, :, :, :, :, :, :)
       integer :: mu, nt, nx, ny, nz
       U = CMPLX(0.0_WP, 0.0_WP, kind=WC)
       do concurrent(mu=1:SIZE(U, 3), nt=1:SIZE(U, 4), nx=1:SIZE(U, 5), &

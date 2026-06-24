@@ -31,10 +31,10 @@ contains
      !! Output:
      !!   key        : derived 128-bit Philox key
 
-      integer(C64), intent(IN) :: master_key(2)
+      integer(kind=C64), intent(IN) :: master_key(2)
       integer, intent(IN) :: sweep_id, stage_tag, mu, colour
-      integer(C64), intent(OUT) :: key(2)
-      integer(C64) :: t1, t2
+      integer(kind=C64), intent(OUT) :: key(2)
+      integer(kind=C64) :: t1, t2
       !-----------------------------------------------------------
       ! Construct t1 by packing (sweep_id, mu, colour) into a 64-bit integer
       !
@@ -135,7 +135,7 @@ contains
       end if
    end function site_colour
 
-   pure integer(C64) function site_linear_index(coord, dims) result(idx)
+   pure integer(kind=C64) function site_linear_index(coord, dims) result(idx)
      !!
      !! Convert a 4D lattice coordinate to a unique 1-based linear site index.
      !!

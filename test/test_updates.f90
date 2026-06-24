@@ -33,8 +33,8 @@ contains
    !=========================================================
    subroutine assert_all_links_su3(error, U, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: U(:, :, :, :, :, :, :)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: U(:, :, :, :, :, :, :)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
       integer :: mu, nt, nx, ny, nz
 
@@ -56,8 +56,8 @@ contains
 
    subroutine assert_all_links_su2(error, U, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: U(:, :, :, :, :, :, :)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: U(:, :, :, :, :, :, :)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
       integer :: mu, nt, nx, ny, nz
 
@@ -82,11 +82,11 @@ contains
    !=========================================================
    subroutine test_updateLinks_preserves_su3(error)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: U(3, 3, 4, 2, 2, 2, 2)
-      complex(WC) :: UUpdated(3, 3, 4, 2, 2, 2, 2)
-      real(WP), parameter :: beta = 6.0_WP
-      real(WP), parameter :: xi = 1.0_WP
-      real(WP), parameter :: tol = 1.0E-10_WP
+      complex(kind=WC) :: U(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: UUpdated(3, 3, 4, 2, 2, 2, 2)
+      real(kind=WP), parameter :: beta = 6.0_WP
+      real(kind=WP), parameter :: xi = 1.0_WP
+      real(kind=WP), parameter :: tol = 1.0E-10_WP
       integer(kind=C64), dimension(2), parameter :: key = (/1_C64, 2_C64/)
       ! Sites linearisation
       integer, allocatable, dimension(:, :, :) :: sites_t, sites_x, sites_y, sites_z
@@ -106,10 +106,10 @@ contains
    !=========================================================
    subroutine test_su2_updateLinks_preserves_su2(error)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: U(2, 2, 4, 2, 2, 2, 2)
-      complex(WC) :: UUpdated(2, 2, 4, 2, 2, 2, 2)
-      real(WP), parameter :: beta = 2.3_WP
-      real(WP), parameter :: tol = 1.0E-10_WP
+      complex(kind=WC) :: U(2, 2, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: UUpdated(2, 2, 4, 2, 2, 2, 2)
+      real(kind=WP), parameter :: beta = 2.3_WP
+      real(kind=WP), parameter :: tol = 1.0E-10_WP
       integer(kind=C64), dimension(2), parameter :: key = (/1_C64, 2_C64/)
 
       call fill_identity_su2(U)
@@ -125,9 +125,9 @@ contains
    !=========================================================
    subroutine test_constructXMatrix_returns_su2(error)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: X(2, 2)
-      real(WP), parameter :: tol = 1.0E-12_WP
-      real(WP), dimension(4) :: alpha_vals, beta_vals
+      complex(kind=WC) :: X(2, 2)
+      real(kind=WP), parameter :: tol = 1.0E-12_WP
+      real(kind=WP), dimension(4) :: alpha_vals, beta_vals
       integer :: i
 
       integer(kind=C64), dimension(4) :: counter

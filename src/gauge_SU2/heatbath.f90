@@ -39,10 +39,10 @@ contains
     !!   counter(4) = phase id = 1   (lambda2 phase)
     !!
       real(kind=WP), intent(IN) :: alpha, beta
-      integer(C64), intent(IN) :: key(2), counter0(4)
+      integer(kind=C64), intent(IN) :: key(2), counter0(4)
       real(kind=WP) :: lambda2, rr
       real(kind=WP) :: ri(3)
-      integer(C64) :: c(4), attempt
+      integer(kind=C64) :: c(4), attempt
       real(kind=WP), parameter :: eps = TINY(1.0_WP)
       if (alpha <= eps .OR. beta <= eps) then
          lambda2 = 0.0_WP
@@ -93,10 +93,10 @@ contains
     !!   counter(4) = phase id = 2   (x-vector phase)
     !!
       real(kind=WP), intent(IN) :: x0
-      integer(C64), intent(IN) :: key(2), counter0(4)
+      integer(kind=C64), intent(IN) :: key(2), counter0(4)
       real(kind=WP) :: xvec(3)
       real(kind=WP) :: xlen, requiredLen
-      integer(C64) :: c(4), attempt
+      integer(kind=C64) :: c(4), attempt
       real(kind=WP), parameter :: eps = TINY(1.0_WP)
       requiredLen = MAX(0.0_WP, 1.0_WP - x0 * x0)
       if (requiredLen <= eps) then
@@ -135,12 +135,12 @@ contains
      !! an SU(3) heatbath update use disjoint Philox substreams.
      !!
       real(kind=WP), intent(IN) :: alpha, beta
-      integer(C64), intent(IN) :: key(2), counter0(4)
+      integer(kind=C64), intent(IN) :: key(2), counter0(4)
       integer, intent(IN) :: subgroup_id
       complex(kind=WC), dimension(2, 2) :: X
       real(kind=WP) :: lambda2
       real(kind=WP), dimension(0:3) :: xAll
-      integer(C64) :: c(4)
+      integer(kind=C64) :: c(4)
       c = counter0
       c(2) = INT(subgroup_id, C64)
       ! c = [linearised index, subgroupID, 0, 0]
@@ -166,13 +166,13 @@ contains
       complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
       real(kind=WP), intent(IN) :: beta
       integer, intent(IN) :: coord(4), mu, dims(4)
-      integer(C64), intent(IN) :: key(2)
+      integer(kind=C64), intent(IN) :: key(2)
       complex(kind=WC), dimension(2, 2) :: Unew
 
       complex(kind=WC), dimension(2, 2) :: XMatrix, V, Vdag
       complex(kind=WC) :: detV
       real(kind=WP) :: alpha
-      integer(C64) :: counter0(4)
+      integer(kind=C64) :: counter0(4)
       real(kind=WP), parameter :: eps = TINY(1.0_WP)
       ! Calculate the staple
       call stapleAt(U, V, coord, mu)
@@ -222,7 +222,7 @@ contains
       integer :: nt, nx, ny, nz
       integer :: it, ix, iy, iz, mu, colour
       integer :: dims4(4)
-      integer(C64) :: key(2)
+      integer(kind=C64) :: key(2)
       integer, dimension(4) :: coord
       real(kind=WP), parameter :: eps = TINY(1.0_WP)
       dataShape = SHAPE(U)

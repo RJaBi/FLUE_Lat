@@ -25,13 +25,13 @@ contains
      !! Generate a bunch of SU2 matrices
      !! Check that they are indeed SU2 matrices
       type(error_type), allocatable, intent(OUT) :: error
-      real(WP) :: r(4)
-      complex(WC) :: U(2, 2)
+      real(kind=WP) :: r(4)
+      complex(kind=WC) :: U(2, 2)
       integer(kind=C64), dimension(4) :: counter
       integer(kind=C64), dimension(2) :: key
       integer(kind=C64) :: randInt
       integer :: i
-      real(WP), parameter :: tol = 1.0E-12_WP
+      real(kind=WP), parameter :: tol = 1.0E-12_WP
       call seed_rng_fixed(12345)
       do i = 1, 100
          randInt = dist_rand(C64)
@@ -60,10 +60,10 @@ contains
      !! Construct SU3 matrices
      !! Check that they are indeed unitary with det 1
       type(error_type), allocatable, intent(OUT) :: error
-      real(WP) :: r1(4), r2(4), r3(4)
-      complex(WC) :: R(2, 2), S(2, 2), T(2, 2), U(3, 3)
+      real(kind=WP) :: r1(4), r2(4), r3(4)
+      complex(kind=WC) :: R(2, 2), S(2, 2), T(2, 2), U(3, 3)
       integer :: i
-      real(WP), parameter :: tol = 1.0E-12_WP
+      real(kind=WP), parameter :: tol = 1.0E-12_WP
       integer(kind=C64), dimension(4) :: counter
       integer(kind=C64), dimension(2) :: key
       integer(kind=C64) :: randInt

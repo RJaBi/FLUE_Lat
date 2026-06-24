@@ -29,9 +29,9 @@ contains
    subroutine fill_commuting_su3(U, theta)
       ! A simple exact SU(3) background:
       ! A = diag(exp(i theta), exp(-i theta), 1)
-      complex(WC), intent(OUT) :: U(:, :, :, :, :, :, :)
-      real(WP), intent(IN) :: theta
-      complex(WC) :: A(3, 3)
+      complex(kind=WC), intent(OUT) :: U(:, :, :, :, :, :, :)
+      real(kind=WP), intent(IN) :: theta
+      complex(kind=WC) :: A(3, 3)
       integer :: mu, nt, nx, ny, nz
 
       A = CMPLX(0.0_WP, 0.0_WP, kind=WC)
@@ -47,8 +47,8 @@ contains
 
    subroutine assert_all_links_su3(error, U, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: U(:, :, :, :, :, :, :)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: U(:, :, :, :, :, :, :)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
       integer :: mu, nt, nx, ny, nz
 
@@ -73,12 +73,12 @@ contains
    !=========================================================
    subroutine test_stout_identity_preserved(error)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: U(3, 3, 4, 2, 2, 2, 2)
-      complex(WC) :: USmear(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: U(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: USmear(3, 3, 4, 2, 2, 2, 2)
       integer :: mu, nt, nx, ny, nz
-      real(WP), parameter :: rho = 0.10_WP
+      real(kind=WP), parameter :: rho = 0.10_WP
       integer, parameter :: nSweeps = 1
-      real(WP), parameter :: tol = 1.0E-13_WP
+      real(kind=WP), parameter :: tol = 1.0E-13_WP
 
       call fill_identity_su3(U)
       call StoutSmearLinks(U, rho, nSweeps, USmear)
@@ -103,11 +103,11 @@ contains
    !=========================================================
    subroutine test_stout_preserves_su3(error)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: U(3, 3, 4, 2, 2, 2, 2)
-      complex(WC) :: USmear(3, 3, 4, 2, 2, 2, 2)
-      real(WP), parameter :: rho = 0.10_WP
+      complex(kind=WC) :: U(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: USmear(3, 3, 4, 2, 2, 2, 2)
+      real(kind=WP), parameter :: rho = 0.10_WP
       integer, parameter :: nSweeps = 2
-      real(WP), parameter :: tol = 1.0E-10_WP
+      real(kind=WP), parameter :: tol = 1.0E-10_WP
 
       call fill_commuting_su3(U, 0.23_WP)
       call StoutSmearLinks(U, rho, nSweeps, USmear)
@@ -120,11 +120,11 @@ contains
    !=========================================================
    subroutine test_stout_zero_sweeps_is_identity(error)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: U(3, 3, 4, 2, 2, 2, 2)
-      complex(WC) :: USmear(3, 3, 4, 2, 2, 2, 2)
-      real(WP), parameter :: rho = 0.10_WP
+      complex(kind=WC) :: U(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: USmear(3, 3, 4, 2, 2, 2, 2)
+      real(kind=WP), parameter :: rho = 0.10_WP
       integer, parameter :: nSweeps = 0
-      real(WP), parameter :: tol = 1.0E-14_WP
+      real(kind=WP), parameter :: tol = 1.0E-14_WP
 
       call fill_commuting_su3(U, 0.31_WP)
       call StoutSmearLinks(U, rho, nSweeps, USmear)
@@ -135,8 +135,8 @@ contains
 
    subroutine assert_close_field_su3(error, A, B, tol, message)
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), intent(IN) :: A(:, :, :, :, :, :, :), B(:, :, :, :, :, :, :)
-      real(WP), intent(IN) :: tol
+      complex(kind=WC), intent(IN) :: A(:, :, :, :, :, :, :), B(:, :, :, :, :, :, :)
+      real(kind=WP), intent(IN) :: tol
       character(len=*), intent(IN) :: message
 
       call testdrive_check_close_field(error, MAXVAL(ABS(A - B)) < tol, message)

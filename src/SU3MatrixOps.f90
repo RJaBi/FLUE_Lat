@@ -51,7 +51,7 @@ contains
    ! stripped from cola and de-colour vectored
    pure subroutine normalise_vector(v)
       complex(kind=WC), dimension(3), intent(INOUT) :: v
-      real(WP) :: norm
+      real(kind=WP) :: norm
       norm = SQRT(SUM(real(v)**2 + AIMAG(v)**2))
       v = v / norm
    end subroutine normalise_vector

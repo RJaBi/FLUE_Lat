@@ -26,7 +26,7 @@ contains
    end subroutine collect_gauge_path
 
    pure function datashape_from_field(U) result(ds)
-      complex(WC), intent(IN) :: U(:, :, :, :, :, :, :)
+      complex(kind=WC), intent(IN) :: U(:, :, :, :, :, :, :)
       integer :: ds(7)
       ds = SHAPE(U)
    end function datashape_from_field
@@ -36,7 +36,7 @@ contains
    subroutine test_periodcoord_no_wrap_interior(error)
     !! Check that periodcoord does not effect the interior points
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: data(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: data(3, 3, 4, 2, 2, 2, 2)
       integer :: coord(4), got(4), expected(4), ds(7)
       call fill_identity_su3(data)
       ds = datashape_from_field(data)
@@ -50,7 +50,7 @@ contains
    subroutine test_periodcoord_wrap_forward_t(error)
     !! Check forward wrapping
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: data(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: data(3, 3, 4, 2, 2, 2, 2)
       integer :: coord(4), got(4), expected(4), ds(7)
       call fill_identity_su3(data)
       ds = datashape_from_field(data)
@@ -65,7 +65,7 @@ contains
    subroutine test_periodcoord_wrap_backward_t(error)
     !! Check backwards wrapping
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: data(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: data(3, 3, 4, 2, 2, 2, 2)
       integer :: coord(4), got(4), expected(4), ds(7)
       call fill_identity_su3(data)
       ds = datashape_from_field(data)
@@ -80,7 +80,7 @@ contains
    subroutine test_periodcoord_wrap_all_axes(error)
       ! Do a wrap on all axes
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: data(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: data(3, 3, 4, 2, 2, 2, 2)
       integer :: coord(4), got(4), expected(4), ds(7)
       call fill_identity_su3(data)
       ds = datashape_from_field(data)
@@ -99,10 +99,10 @@ contains
     !! Generic path on an identity field multiplies identity together
     !! I.e. should return identity
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: data(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: data(3, 3, 4, 2, 2, 2, 2)
       integer :: coord(4), path(4)
-      complex(WC) :: P(3, 3)
-      real(WP), parameter :: tol = 1.0E-14_WP
+      complex(kind=WC) :: P(3, 3)
+      real(kind=WP), parameter :: tol = 1.0E-14_WP
       call fill_identity_su3(data)
       coord = [1, 1, 1, 1]
       path = [1, -1, 1, -1]
@@ -116,11 +116,11 @@ contains
     !! Make sure that going forward then back cancels to give identity
     !! As gauge links are unitary
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: data(3, 3, 4, 2, 2, 2, 2)
-      complex(WC) :: A(3, 3), P(3, 3)
+      complex(kind=WC) :: data(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: A(3, 3), P(3, 3)
       integer :: coord(4), path(2)
       integer :: i, j, k, l
-      real(WP), parameter :: tol = 1.0E-12_WP
+      real(kind=WP), parameter :: tol = 1.0E-12_WP
       call fill_identity_su3(data)
       A = CMPLX(0.0_WP, 0.0_WP, kind=WC)
       A(1, 1) = EXP(CMPLX(0.0_WP, 0.3_WP, kind=WC))
@@ -145,11 +145,11 @@ contains
    subroutine test_genericpath_two_step_product(error)
     !! Check that going forward is working as intended
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: data(3, 3, 4, 2, 2, 2, 2)
-      complex(WC) :: A(3, 3), P(3, 3), ref(3, 3)
+      complex(kind=WC) :: data(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: A(3, 3), P(3, 3), ref(3, 3)
       integer :: coord(4), path(2)
       integer :: i, j, k, l
-      real(WP), parameter :: tol = 1.0E-12_WP
+      real(kind=WP), parameter :: tol = 1.0E-12_WP
       call fill_identity_su3(data)
       A = CMPLX(0.0_WP, 0.0_WP, kind=WC)
       A(1, 1) = EXP(CMPLX(0.0_WP, 0.2_WP, kind=WC))
@@ -175,11 +175,11 @@ contains
    subroutine test_genericpath_periodic_single_wrap(error)
     !! Test generic path across boundary forward
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: data(3, 3, 4, 2, 2, 2, 2)
-      complex(WC) :: A(3, 3), P(3, 3)
+      complex(kind=WC) :: data(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: A(3, 3), P(3, 3)
       integer :: coord(4), path(1)
       integer :: i, j, k, l
-      real(WP), parameter :: tol = 1.0E-12_WP
+      real(kind=WP), parameter :: tol = 1.0E-12_WP
       call fill_identity_su3(data)
       A = CMPLX(0.0_WP, 0.0_WP, kind=WC)
       A(1, 1) = EXP(CMPLX(0.0_WP, 0.17_WP, kind=WC))
@@ -205,11 +205,11 @@ contains
    subroutine test_genericpath_periodic_wrap_backtrack(error)
     !! Test generic path across boundary backwards
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: data(3, 3, 4, 2, 2, 2, 2)
-      complex(WC) :: A(3, 3), P(3, 3)
+      complex(kind=WC) :: data(3, 3, 4, 2, 2, 2, 2)
+      complex(kind=WC) :: A(3, 3), P(3, 3)
       integer :: coord(4), path(2)
       integer :: i, j, k, l
-      real(WP), parameter :: tol = 1.0E-12_WP
+      real(kind=WP), parameter :: tol = 1.0E-12_WP
       call fill_identity_su3(data)
       A = CMPLX(0.0_WP, 0.0_WP, kind=WC)
       A(1, 1) = EXP(CMPLX(0.0_WP, 0.29_WP, kind=WC))

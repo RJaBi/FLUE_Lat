@@ -93,22 +93,22 @@ contains
    subroutine benchmark_heatbath_case(error, case_name, action_tag, xi, beta)
       type(error_type), allocatable, intent(OUT) :: error
       character(len=*), intent(IN) :: case_name, action_tag
-      real(WP), intent(IN) :: xi, beta
+      real(kind=WP), intent(IN) :: xi, beta
       integer, parameter :: NS = 4
       integer, parameter :: NT = 8
       integer, parameter :: nTraj = 8
       integer, parameter :: nRepeat = 3
-      real(WP), parameter :: tolerance = 0.30_WP
-      complex(WC) :: U(3, 3, 4, NT, NS, NS, NS)
-      complex(WC) :: UNew(3, 3, 4, NT, NS, NS, NS)
-      real(WP) :: total_time(nRepeat), time_per_traj(nRepeat), median_t
-      real(WP) :: baseline_update
+      real(kind=WP), parameter :: tolerance = 0.30_WP
+      complex(kind=WC) :: U(3, 3, 4, NT, NS, NS, NS)
+      complex(kind=WC) :: UNew(3, 3, 4, NT, NS, NS, NS)
+      real(kind=WP) :: total_time(nRepeat), time_per_traj(nRepeat), median_t
+      real(kind=WP) :: baseline_update
       logical :: found_baseline
       integer :: irep, iTraj
-      real(WP) :: aplaq, splaq, tplaq
+      real(kind=WP) :: aplaq, splaq, tplaq
       type(watchtype) :: watch
       real(kind=SP) :: watchtime
-      real(WP) :: sumTrP, plaq_time
+      real(kind=WP) :: sumTrP, plaq_time
       integer :: nPlaq
       ! Sites linearisation
       integer, allocatable, dimension(:, :, :) :: sites_t, sites_x, sites_y, sites_z
@@ -195,9 +195,9 @@ contains
    !=========================================================
    ! Helpers
    !=========================================================
-   pure real(WP) function median3(x) result(m)
-      real(WP), intent(IN) :: x(3)
-      real(WP) :: a, b, c
+   pure real(kind=WP) function median3(x) result(m)
+      real(kind=WP), intent(IN) :: x(3)
+      real(kind=WP) :: a, b, c
       a = x(1)
       b = x(2)
       c = x(3)

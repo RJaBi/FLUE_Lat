@@ -21,8 +21,8 @@ contains
      !! This just tests that an SU3 matrix of 3 SU2 should be identity
      !! Which by definition is unitary and has determinant 1
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: R(2, 2), S(2, 2), T(2, 2), U(3, 3)
-      real(WP), parameter :: tol = 1.0E-14_WP
+      complex(kind=WC) :: R(2, 2), S(2, 2), T(2, 2), U(3, 3)
+      real(kind=WP), parameter :: tol = 1.0E-14_WP
       R = Ident2x2
       S = Ident2x2
       T = Ident2x2

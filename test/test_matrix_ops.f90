@@ -32,8 +32,8 @@ contains
    subroutine test_multiply_matmat_full(error)
      !! Test multiplyMatMat by comparing to intrinsic matmul
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: a(3, 3), b(3, 3), got(3, 3), ref(3, 3)
-      real(WP), parameter :: tol = 1.0E-14_WP
+      complex(kind=WC) :: a(3, 3), b(3, 3), got(3, 3), ref(3, 3)
+      real(kind=WP), parameter :: tol = 1.0E-14_WP
 
       a = CMPLX(0.0_WP, 0.0_WP, kind=WC)
       b = CMPLX(0.0_WP, 0.0_WP, kind=WC)
@@ -60,9 +60,9 @@ contains
      !! Test the trace multiply subroutines
      !! By comparing to doing it explicitly
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: a(3, 3), b(3, 3), prod(3, 3), tr_ref, tr_got
-      real(WP) :: rtr_ref, rtr_got
-      real(WP), parameter :: tol = 1.0E-14_WP
+      complex(kind=WC) :: a(3, 3), b(3, 3), prod(3, 3), tr_ref, tr_got
+      real(kind=WP) :: rtr_ref, rtr_got
+      real(kind=WP), parameter :: tol = 1.0E-14_WP
 
       a = CMPLX(0.0_WP, 0.0_WP, kind=WC)
       b = CMPLX(0.0_WP, 0.0_WP, kind=WC)
@@ -88,9 +88,9 @@ contains
    subroutine test_real_trace_mat(error)
      !! Test taking the trace by knowing expected
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: a(3, 3)
-      real(WP), parameter :: tol = 1.0E-14_WP
-      real(WP) :: expected
+      complex(kind=WC) :: a(3, 3)
+      real(kind=WP), parameter :: tol = 1.0E-14_WP
+      real(kind=WP) :: expected
 
       a = CMPLX(0.0_WP, 0.0_WP, kind=WC)
       a(1, 1) = CMPLX(1.0_WP, 0.5_WP, kind=WC)
@@ -105,8 +105,8 @@ contains
      !! Tests taking the trace and making traceless matrix
      !! By asserting that it returns a traceless matrix
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: a(3, 3), b(3, 3), c(3, 3)
-      real(WP), parameter :: tol = 1.0E-12_WP
+      complex(kind=WC) :: a(3, 3), b(3, 3), c(3, 3)
+      real(kind=WP), parameter :: tol = 1.0E-12_WP
 
       a = CMPLX(0.0_WP, 0.0_WP, kind=WC)
       b = CMPLX(0.0_WP, 0.0_WP, kind=WC)
@@ -123,8 +123,8 @@ contains
      !! Tests that fixSU3 does project to SU3 properly
      !! By checking unitarity and determinant
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: u(3, 3)
-      real(WP), parameter :: tol = 1.0E-8_WP
+      complex(kind=WC) :: u(3, 3)
+      real(kind=WP), parameter :: tol = 1.0E-8_WP
 
       u = Ident3x3
       u(1, 1) = CMPLX(1.1_WP, 0.1_WP, kind=WC)
@@ -141,8 +141,8 @@ contains
    subroutine test_fix_su3_matrix_idempotent(error)
      !! Check that fixSU3 doesn't change result if already in SU3
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: u(3, 3), u1(3, 3), u2(3, 3)
-      real(WP), parameter :: tol = 1.0E-10_WP
+      complex(kind=WC) :: u(3, 3), u1(3, 3), u2(3, 3)
+      real(kind=WP), parameter :: tol = 1.0E-10_WP
 
       u = Ident3x3
       u(1, 1) = CMPLX(0.95_WP, 0.02_WP, kind=WC)
@@ -160,8 +160,8 @@ contains
    subroutine test_exp_iq_zero(error)
      !! Testing that exp(i*Q) where Q = 0 gives identity
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC) :: q(3, 3), v(3, 3)
-      real(WP), parameter :: tol = 1.0E-14_WP
+      complex(kind=WC) :: q(3, 3), v(3, 3)
+      real(kind=WP), parameter :: tol = 1.0E-14_WP
 
       q = CMPLX(0.0_WP, 0.0_WP, kind=WC)
       v = ExpIQ(q)
@@ -172,8 +172,8 @@ contains
    subroutine test_exp_iq_unitary_and_inverse(error)
      !! Testing that expIQ works properly
       type(error_type), allocatable, intent(OUT) :: error
-      complex(WC), dimension(3, 3) :: q, v, vinv, ref, negQ
-      real(WP), parameter :: tol = 1.0E-10_WP
+      complex(kind=WC), dimension(3, 3) :: q, v, vinv, ref, negQ
+      real(kind=WP), parameter :: tol = 1.0E-10_WP
 
       q = CMPLX(0.0_WP, 0.0_WP, kind=WC)
       ! Hermitian and traceless

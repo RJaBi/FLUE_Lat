@@ -53,7 +53,7 @@ contains
       logical, intent(IN) :: use_symanzik
       integer, dimension(4), intent(in) :: coord
       real(kind=WP), intent(in) :: xi
-      integer(C64), intent(IN) :: key(2)
+      integer(kind=C64), intent(IN) :: key(2)
       complex(kind=WC) :: Uout(3, 3)
 
     !!
@@ -68,7 +68,7 @@ contains
     !!   5) Reunitarize the final matrix.
     !!
       complex(kind=WC), dimension(3, 3) :: staple, W
-      integer(C64) :: counter0(4)
+      integer(kind=C64) :: counter0(4)
       Uout = U(:, :, mu, coord(1), coord(2), coord(3), coord(4))
 
       if (use_symanzik) then
@@ -110,7 +110,7 @@ contains
       complex(kind=WC), dimension(3, 3), intent(INOUT) :: ULink, W
       integer, intent(IN) :: i1, i2, subgroup_id
       real(kind=WP), intent(IN) :: beta
-      integer(C64), intent(IN) :: key(2), counter0(4)
+      integer(kind=C64), intent(IN) :: key(2), counter0(4)
       complex(kind=WC), dimension(2, 2) :: MfromW, SU2_M, SU2_X, SU2_U
       complex(kind=WC), dimension(3, 3) :: embed, Wtemp
       real(kind=WP), dimension(0:3) :: aQuart
@@ -194,7 +194,7 @@ contains
       complex(kind=WC), intent(IN) :: U(:, :, :, :, :, :, :)
       real(kind=WP), intent(IN) :: beta
       complex(kind=WC), intent(INOUT) :: UUpdated(:, :, :, :, :, :, :)
-      integer(C64), intent(IN) :: master_key(2)
+      integer(kind=C64), intent(IN) :: master_key(2)
       integer, intent(IN) :: sweep_id
       integer, intent(IN) :: sites_it(:, :, :)
       integer, intent(IN) :: sites_ix(:, :, :)
@@ -211,7 +211,7 @@ contains
       integer :: ncolours
       integer :: dims4(4)
       logical :: use_symanzik
-      integer(C64) :: key(2)
+      integer(kind=C64) :: key(2)
       complex(kind=WC) :: Uloc(3, 3)
       integer :: shapeU(7)
       real(kind=WP) :: xig
