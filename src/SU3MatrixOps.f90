@@ -15,16 +15,16 @@ contains
 
    ! stripped from cola and de-colour vectored
    pure subroutine orthogonalise_vectors(w, v)
-      complex(kind=WC), dimension(3), intent(inout) :: w
-      complex(kind=WC), dimension(3), intent(in) :: v
+      complex(kind=WC), dimension(3), intent(INOUT) :: w
+      complex(kind=WC), dimension(3), intent(IN) :: v
       complex(kind=WC) :: vdotw
       vdotw = SUM(CONJG(v) * w)
       w = w - v * vdotw
    end subroutine orthogonalise_vectors
    ! stripped from cola and de-colour vectored
    pure subroutine vector_product(x, v, w)
-      complex(kind=WC), dimension(3), intent(out) :: x
-      complex(kind=WC), dimension(3), intent(in) :: v, w
+      complex(kind=WC), dimension(3), intent(OUT) :: x
+      complex(kind=WC), dimension(3), intent(IN) :: v, w
       integer :: ic, jc, kc
       integer, parameter :: nc = 3
       do ic = 1, nc
@@ -35,7 +35,7 @@ contains
    end subroutine vector_product
    ! stripped from cola and de-colour vectored
    pure subroutine FixSU3Matrix(U_x)
-      complex(kind=WC), dimension(3, 3), intent(inout) :: U_x
+      complex(kind=WC), dimension(3, 3), intent(INOUT) :: U_x
       complex(kind=WC), dimension(3) :: v1, v2, v3
       v1 = U_x(1, :)
       call normalise_vector(v1)
@@ -50,15 +50,15 @@ contains
    end subroutine FixSU3Matrix
    ! stripped from cola and de-colour vectored
    pure subroutine normalise_vector(v)
-      complex(kind=WC), dimension(3), intent(inout) :: v
+      complex(kind=WC), dimension(3), intent(INOUT) :: v
       real(WP) :: norm
       norm = SQRT(SUM(real(v)**2 + AIMAG(v)**2))
       v = v / norm
    end subroutine normalise_vector
    ! explicitly unroll 3x3 matrix mult
    pure subroutine MultiplyMatMat(MM, left, right)
-      complex(kind=WC), dimension(3, 3), intent(in) :: left, right
-      complex(kind=WC), dimension(3, 3), intent(out) :: MM
+      complex(kind=WC), dimension(3, 3), intent(IN) :: left, right
+      complex(kind=WC), dimension(3, 3), intent(OUT) :: MM
       !"""
       !Multiple left by right. Assumes 3x3 (colour) (complex) matrices
       !"""
@@ -78,8 +78,8 @@ contains
 
    pure subroutine MultiplyMatMatDag(MM, left, right)
       ! A B^\dag
-      complex(kind=WC), dimension(3, 3), intent(in) :: left, right
-      complex(kind=WC), dimension(3, 3), intent(out) :: MM
+      complex(kind=WC), dimension(3, 3), intent(IN) :: left, right
+      complex(kind=WC), dimension(3, 3), intent(OUT) :: MM
       !"""
       !Multiple left by right^\dagger. Assumes 3x3 (colour) (complex) matrices
       !"""
@@ -98,8 +98,8 @@ contains
    end subroutine MultiplyMatMatDag
 
    pure subroutine MultiplyMatdagMatdag(MM, left, right)
-      complex(kind=WC), dimension(3, 3), intent(in) :: left, right
-      complex(kind=WC), dimension(3, 3), intent(out) :: MM
+      complex(kind=WC), dimension(3, 3), intent(IN) :: left, right
+      complex(kind=WC), dimension(3, 3), intent(OUT) :: MM
       !"""
       !#Multiplies two (3,3) complex matrices together. Takes conjugate
       !Does (left*right)^dagger
@@ -119,7 +119,7 @@ contains
    end subroutine MultiplyMatdagMatdag
 
    pure function RealTraceMat(left) result(trMM)
-      complex(kind=WC), dimension(3, 3), intent(in) :: left
+      complex(kind=WC), dimension(3, 3), intent(IN) :: left
       real(kind=WP) :: TrMM
       !"""
       !# !Takes the real part of the trace of (3,3) complex numbers left
@@ -129,7 +129,7 @@ contains
    end function RealTraceMat
 
    pure function TraceMat(left) result(trMM)
-      complex(kind=WC), dimension(3, 3), intent(in) :: left
+      complex(kind=WC), dimension(3, 3), intent(IN) :: left
       complex(kind=WC) :: TrMM
       !"""
       !# !Takes the trace of (3,3) complex numbers left
@@ -139,8 +139,8 @@ contains
    end function TraceMat
 
    pure subroutine TraceMultMatMat(TrMM, left, right)
-      complex(kind=WC), dimension(3, 3), intent(in) :: left, right
-      complex(kind=WC), intent(out) :: TrMM
+      complex(kind=WC), dimension(3, 3), intent(IN) :: left, right
+      complex(kind=WC), intent(OUT) :: TrMM
       !"""
       !# !Takes the trace of (3,3) complex numbers left, right multiplied together
       !Tr(left*right)
@@ -151,8 +151,8 @@ contains
    end subroutine TraceMultMatMat
 
    pure subroutine RealTraceMultMatMat(RTrMM, left, right)
-      complex(kind=WC), dimension(3, 3), intent(in) :: left, right
-      real(kind=WP), intent(out) :: RTrMM
+      complex(kind=WC), dimension(3, 3), intent(IN) :: left, right
+      real(kind=WP), intent(OUT) :: RTrMM
       complex(kind=WC) :: TrMM
       !"""
       !# !Takes the real trace of (3,3) complex numbers left, right multiplied together
@@ -163,8 +163,8 @@ contains
    end subroutine RealTraceMultMatMat
 
    pure subroutine TraceLessConjgSubtract(TrSub, left, right)
-      complex(kind=WC), dimension(3, 3), intent(in) :: left, right
-      complex(kind=WC), dimension(3, 3), intent(out) :: TrSub
+      complex(kind=WC), dimension(3, 3), intent(IN) :: left, right
+      complex(kind=WC), dimension(3, 3), intent(OUT) :: TrSub
       complex(kind=WC) :: trMM
       !"""
       !# Takes the traceless conjugate subtraction of A and B
@@ -176,8 +176,8 @@ contains
    end subroutine TraceLessConjgSubtract
 
    pure subroutine colourDecomp(com, A)
-      complex(kind=WC), dimension(3, 3), intent(in) :: A
-      complex(kind=WC), dimension(8), intent(out) :: com
+      complex(kind=WC), dimension(3, 3), intent(IN) :: A
+      complex(kind=WC), dimension(8), intent(OUT) :: com
       !"""
       !# Decompose the matrix M[][] into the SU(3) Gell-Mann components
       !"""
@@ -193,10 +193,10 @@ contains
    end subroutine colourDecomp
 
    pure function ExpIQ(Q) result(V)
-      complex(kind=WC), dimension(3, 3), intent(in) :: Q
+      complex(kind=WC), dimension(3, 3), intent(IN) :: Q
       complex(kind=WC), dimension(3, 3) :: V
       !"""
-      !Compute the matrix exponential $V=exp(iQ)$ where Q is hermitian
+      !Compute the matrix exponential $V=exp(iQ)$ where Q is hermitian and traceless
       !"""
       real(kind=WP), parameter :: eps = EPSILON(1.0_WP)
       complex(kind=WC), dimension(3, 3) :: Q2, Q3
