@@ -38,23 +38,27 @@ module test_helpers
 
 contains
 
-   pure real(kind=WP) function maxabs_mat2(a, b) result(v)
+   pure function maxabs_mat2(a, b) result(v)
       complex(kind=WC), intent(IN) :: a(2, 2), b(2, 2)
+      real(kind=WP) :: v
       v = MAXVAL(ABS(a - b))
    end function maxabs_mat2
 
-   pure real(kind=WP) function maxabs_mat3(a, b) result(v)
+   pure function maxabs_mat3(a, b) result(v)
       complex(kind=WC), intent(IN) :: a(3, 3), b(3, 3)
+      real(kind=WP) :: v
       v = MAXVAL(ABS(a - b))
    end function maxabs_mat3
 
-   pure complex(kind=WC) function det2x2(a) result(d)
+   pure function det2x2(a) result(d)
       complex(kind=WC), intent(IN) :: a(2, 2)
+      complex(kind=WC) :: d
       d = a(1, 1) * a(2, 2) - a(1, 2) * a(2, 1)
    end function det2x2
 
-   pure complex(kind=WC) function det3x3(a) result(d)
+   pure function det3x3(a) result(d)
       complex(kind=WC), intent(IN) :: a(3, 3)
+      complex(kind=WC) :: d
       d = a(1, 1) * (a(2, 2) * a(3, 3) - a(2, 3) * a(3, 2)) &
           - a(1, 2) * (a(2, 1) * a(3, 3) - a(2, 3) * a(3, 1)) &
           + a(1, 3) * (a(2, 1) * a(3, 2) - a(2, 2) * a(3, 1))

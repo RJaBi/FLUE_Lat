@@ -89,7 +89,7 @@ contains
                     IEOR(t2, SHIFTL(t1, 7)))   ! shiftl(t1,7) = t1 * 2^7 = t1 * 128
    end subroutine derive_stage_key
 
-   pure integer function ncolours_for_action(use_symanzik) result(ncolours)
+   pure function ncolours_for_action(use_symanzik) result(ncolours)
       !!
       !! Return the number of independent colour classes needed for the action.
       !!
@@ -100,7 +100,7 @@ contains
       !! not sufficient there.
       !!
       logical, intent(IN) :: use_symanzik
-
+      integer :: ncolours
       if (use_symanzik) then
          ncolours = 4
       else
@@ -108,7 +108,7 @@ contains
       end if
    end function ncolours_for_action
 
-   pure integer function site_colour(coord, mu, use_symanzik) result(colour)
+   pure function site_colour(coord, mu, use_symanzik) result(colour)
       !!
       !! Compute the colour class of a site for a fixed link direction mu.
       !!
@@ -125,6 +125,7 @@ contains
       !!
       integer, intent(IN) :: coord(4), mu
       logical, intent(IN) :: use_symanzik
+      integer :: colour
       integer :: transverse_parity
 
       if (use_symanzik) then
@@ -135,7 +136,7 @@ contains
       end if
    end function site_colour
 
-   pure integer(kind=C64) function site_linear_index(coord, dims) result(idx)
+   pure function site_linear_index(coord, dims) result(idx)
      !!
      !! Convert a 4D lattice coordinate to a unique 1-based linear site index.
      !!
@@ -146,6 +147,7 @@ contains
      !! site has its own independent random-number namespace.
      !!
       integer, intent(IN) :: coord(4), dims(4)
+      integer(kind=C64) :: idx
       idx = INT((((coord(1) - 1) * dims(2) + (coord(2) - 1)) * dims(3) + &
                  (coord(3) - 1)) * dims(4) + (coord(4) - 1), C64) + 1_C64
    end function site_linear_index

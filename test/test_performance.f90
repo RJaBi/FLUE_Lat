@@ -195,8 +195,9 @@ contains
    !=========================================================
    ! Helpers
    !=========================================================
-   pure real(kind=WP) function median3(x) result(m)
+   pure function median3(x) result(m)
       real(kind=WP), intent(IN) :: x(3)
+      real(kind=WP) :: m
       real(kind=WP) :: a, b, c
       a = x(1)
       b = x(2)
