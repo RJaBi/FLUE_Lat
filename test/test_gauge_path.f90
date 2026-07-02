@@ -148,7 +148,7 @@ contains
       complex(kind=WC) :: data(3, 3, 4, 2, 2, 2, 2)
       complex(kind=WC) :: A(3, 3), P(3, 3), ref(3, 3)
       integer :: coord(4), path(2)
-      integer :: i, j, k, l
+      integer :: i, j, k, l, mu
       real(kind=WP), parameter :: tol = 1.0E-12_WP
       call fill_identity_su3(data)
       A = CMPLX(0.0_WP, 0.0_WP, kind=WC)
@@ -159,7 +159,9 @@ contains
          do j = 1, SIZE(data, 5)
             do k = 1, SIZE(data, 6)
                do l = 1, SIZE(data, 7)
-                  data(:, :, 1, i, j, k, l) = A
+                  do mu =1, SIZE(data, 3)
+                     data(:, :, mu, i, j, k, l) = A
+                  end do
                end do
             end do
          end do

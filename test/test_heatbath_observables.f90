@@ -5,6 +5,7 @@ module test_heatbath_observables
    use FLUE_wloops, only: genPlaquette
    use philox, only: C64
    use stdlib_ascii, only: to_lower
+   use stdlib_strings, only: to_string
    use test_helpers, only: seed_rng_fixed, fill_identity_su3
    use testdrive, only: new_unittest, unittest_type, error_type, check
    use tomlf, only: toml_table, toml_error, toml_load, get_value
@@ -90,26 +91,26 @@ contains
       if (ALLOCATED(error)) return
       ! Basic sanity first
       call check(error, ieee_is_finite(aplaq) .AND. ABS(aplaq) <= 1.0_WP + 1.0E-12_WP, &
-                 "average plaquette should be finite and bounded")
+                 "average plaquette "//to_string(aplaq)//" should be finite and bounded")
       if (ALLOCATED(error)) return
       if (xi /= 1.0_WP) then
          call check(error, ieee_is_finite(splaq) .AND. ABS(splaq) <= 1.0_WP + 1.0E-12_WP, &
-                    "spatial plaquette should be finite and bounded")
+                    "spatial plaquette "//to_string(splaq)//"  should be finite and bounded")
          if (ALLOCATED(error)) return
          call check(error, ieee_is_finite(tplaq) .AND. ABS(tplaq) <= 1.0_WP + 1.0E-12_WP, &
-                    "temporal plaquette should be finite and bounded")
+                    "temporal plaquette "//to_string(tplaq)//" should be finite and bounded")
          if (ALLOCATED(error)) return
       end if
       ! Reference-value regression
       call check(error, ABS(aplaq - ref_aplaq) < tol_aplaq, &
-                 "average plaquette should match the stored heatbath reference")
+                 "average plaquette "//to_string(aplaq)//" should match the stored heatbath reference "//to_string(ref_aplaq))
       if (ALLOCATED(error)) return
       if (xi /= 1.0_WP) then
          call check(error, ABS(splaq - ref_splaq) < tol_splaq, &
-                    "spatial plaquette should match the stored heatbath reference")
+              "spatial plaquette "//to_string(splaq)//" should match the stored heatbath reference "//to_string(ref_splaq))
          if (ALLOCATED(error)) return
          call check(error, ABS(tplaq - ref_tplaq) < tol_tplaq, &
-                    "temporal plaquette should match the stored heatbath reference")
+              "temporal plaquette "//to_string(tplaq)//" should match the stored heatbath reference "//to_string(ref_tplaq))
       end if
    end subroutine run_heatbath_observable_case
 
