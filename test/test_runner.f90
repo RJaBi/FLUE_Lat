@@ -30,7 +30,8 @@ program tester
 
    do is = 1, SIZE(testsuites)
       write (ERROR_UNIT, '(1x, a)') "Testing: "//testsuites(is)%name
-      call run_testsuite(testsuites(is)%collect, ERROR_UNIT, stat)
+      call run_testsuite(testsuites(is)%collect, ERROR_UNIT, stat, parallel=.false.)
+      write (ERROR_UNIT, *) 'These tests finished'
    end do
 
    if (stat > 0) then
