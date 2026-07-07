@@ -14,7 +14,7 @@ module FLUE_SU2_heatbath
    use FLUE_SU2_random, only: constructSU2Matrix
    use FLUE_SU2_wloops, only: SU2_genericPath
    use FLUE_wloops, only: periodCoord
-   use Philox, only: philox_uniform_co, philox_uniform_oo, c64
+   use Philox, only: philox_uniform_co, philox_uniform_oo, c64, philox_fill_uniform_oo, philox_fill_uniform_co
    implicit none(type, external)
    private
 
@@ -40,8 +40,9 @@ contains
     !!
       real(kind=WP), intent(IN) :: alpha, beta
       integer(kind=C64), intent(IN) :: key(2), counter0(4)
-      real(kind=WP) :: lambda2, rr
-      real(kind=WP) :: ri(3)
+      real(kind=WP) :: lambda2
+      !real(kind=WP) :: ri(3), rr
+      real(kind=WP), dimension(4) :: rvec
       integer(kind=C64) :: c(4), attempt
       real(kind=WP), parameter :: eps = TINY(1.0_WP)
       if (alpha <= eps .OR. beta <= eps) then
@@ -54,13 +55,14 @@ contains
          c(3) = attempt
          c(4) = 1_C64
          ! c = [linearised index, subgroup ID, attempt, 1]
-         ri(1) = philox_uniform_oo(c, key, 1_C64, 0.0_WP, 1.0_WP)
+         !ri(1) = philox_uniform_oo(c, key, 1_C64, 0.0_WP, 1.0_WP)
          ! counter, key, idx, bounds
-         ri(2) = philox_uniform_oo(c, key, 2_C64, 0.0_WP, 1.0_WP)
-         ri(3) = philox_uniform_oo(c, key, 3_C64, 0.0_WP, 1.0_WP)
-         rr = philox_uniform_oo(c, key, 4_C64, 0.0_WP, 1.0_WP)
+         !ri(2) = philox_uniform_oo(c, key, 2_C64, 0.0_WP, 1.0_WP)
+         !ri(3) = philox_uniform_oo(c, key, 3_C64, 0.0_WP, 1.0_WP)
+         !rr = philox_uniform_oo(c, key, 4_C64, 0.0_WP, 1.0_WP)
+         call philox_fill_uniform_oo(c, key, 1_C64, 0.0_WP, 1.0_WP, rvec)
          ! Got random numbers, construct lambda2
-         lambda2 = -(LOG(ri(1)) + LOG(ri(3)) * COS(TWO_PI * ri(2))**2) / &
+         lambda2 = -(LOG(rvec(1)) + LOG(rvec(3)) * COS(TWO_PI * rvec(2))**2) / &
                    (2.0_WP * alpha * beta)
          ! if lambda2 isn't suitable, try again
          if (lambda2 < 0.0_WP) then
@@ -72,7 +74,7 @@ contains
             cycle
          end if
          ! If it is suitable exit
-         if (rr * rr <= 1.0_WP - lambda2) exit
+         if (rvec(4) * rvec(4) <= 1.0_WP - lambda2) exit
          ! If it isn't, go again
          attempt = attempt + 1_C64
       end do
@@ -109,9 +111,10 @@ contains
          c(3) = attempt
          c(4) = 2_C64
          ! c = [linearised site index, subgroup ID, attempt, 2]
-         xvec(1) = philox_uniform_co(c, key, 1_C64, -1.0_WP, 1.0_WP)
-         xvec(2) = philox_uniform_co(c, key, 2_C64, -1.0_WP, 1.0_WP)
-         xvec(3) = philox_uniform_co(c, key, 3_C64, -1.0_WP, 1.0_WP)
+         call philox_fill_uniform_co(c, key, 1_C64, -1.0_WP, 1.0_WP, xvec)
+         !xvec(1) = philox_uniform_co(c, key, 1_C64, -1.0_WP, 1.0_WP)
+         !xvec(2) = philox_uniform_co(c, key, 2_C64, -1.0_WP, 1.0_WP)
+         !xvec(3) = philox_uniform_co(c, key, 3_C64, -1.0_WP, 1.0_WP)
          xlen = SUM(xvec**2)
          ! If suitable, exit
          if (xlen <= 1.0_WP .AND. xlen > eps) exit
