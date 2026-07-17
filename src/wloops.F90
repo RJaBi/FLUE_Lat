@@ -127,8 +127,8 @@ contains
    end subroutine genplaquette
 
    pure function cloverloopmunucoord(data, nt, nx, ny, nz, mu, nu) result(u_xd)
+     integer, intent(in) :: nt, nx, ny, nz, mu, nu
       complex(kind=wc), dimension(3, 3, 4, nt, nx, ny, nz), intent(in) :: data
-      integer, intent(in) :: nt, nx, ny, nz, mu, nu
       integer, dimension(4) :: coord
       complex(kind=wc), dimension(3, 3, nt, nx, ny, nz) :: u_xd
       complex(kind=wc), dimension(3, 3) :: clovleaf, thisu
@@ -202,9 +202,9 @@ contains
 #else
       pure function loop5munucoord(data, nt, nx, ny, nz, mu, nu) result(u_xd)
 #endif
-         ! See hep-lat/0203008
+        ! See hep-lat/0203008
+        integer, intent(in) :: nt, nx, ny, nz, mu, nu         
          complex(kind=wc), dimension(3, 3, 4, nt, nx, ny, nz), intent(in) :: data
-         integer, intent(in) :: nt, nx, ny, nz, mu, nu
          integer, dimension(4) :: coord
          complex(kind=wc), dimension(3, 3, nt, nx, ny, nz) :: u_xd
          complex(kind=wc), dimension(3, 3) :: clovleaf, thisu, worku
