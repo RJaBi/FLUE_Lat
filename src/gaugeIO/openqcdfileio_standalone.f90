@@ -1,6 +1,7 @@
 !! Functions to read & write openQCD format gaugefields
 module FLUE_openQCDFileIO_SA
-   use FLUE_constants, only: WP, WC
+  use FLUE_constants, only: WP, WC
+  use FLUE_endianIO, only: need_endian_swap, endianSwap
    use FLUE_SU3MatrixOps, only: FixSU3Matrix
    use FLUE_wloops, only: genPlaquette
    implicit none(type, external)
@@ -46,6 +47,8 @@ contains
       integer :: jx, jy, jz, jt
       integer, dimension(4) :: dmu
       logical :: fixSU3Set
+      ! endian
+      logical :: needEndianSwap
 
       if (PRESENT(fixSU3)) then
          fixSU3Set = fixSU3
@@ -54,9 +57,20 @@ contains
       end if
 
       write (*, *) "here ", TRIM(filename)
-      open (infl, file=TRIM(filename), form="unformatted", access="stream", status="old", action="read", convert="little_endian")
+      open (infl, file=TRIM(filename), form="unformatted", access="stream", status="old", action="read")
       read (infl) ntdim, nxdim, nydim, nzdim, plaq
+      ! check if we need an endian swap
+      ! data is little endian, i.e. false
+      needEndianSwap = need_endian_swap(.false.)
 
+      if (needEndianSwap) then
+         ntdim = endianSwap(ntdim)
+         nxdim = endianSwap(nxdim)
+         nydim = endianSwap(nydim)
+         nzdim = endianSwap(nzdim)
+         plaq = endianSwap(plaq)
+      end if
+      
       !allocate(U_xd(nxdim,nydim,nzdim,ntdim,4,3,3))
 
       ! z varies quickest, then y, then x, then t
@@ -81,14 +95,22 @@ contains
                      !read(infl) U_g(mu,ix,iy,iz,it)%cl(:,:)
                      !read(infl) U_g(mu,jx,jy,jz,jt)%cl(:,:)
                      read (infl) UTmp
+                     if (needEndianSwap) then
+                        UTmp = endianSwap(UTmp)
+                     end if
                      U_xd(it, ix, iy, iz, mu, :, :) = UTmp
                      read (infl) UTmp
+                     if (needEndianSwap) then
+                        UTmp = endianSwap(UTmp)
+                     end if
                      U_xd(jt, jx, jy, jz, mu, :, :) = UTmp
 
                      U_xd(it, ix, iy, iz, mu, :, :) = TRANSPOSE(U_xd(it, ix, iy, iz, mu, :, :))
                      U_xd(jt, jx, jy, jz, mu, :, :) = TRANSPOSE(U_xd(jt, jx, jy, jz, mu, :, :))
+                     
                      if (fixSU3Set) then
                         ! Welll FixSU3Matrix did nothing to the average plaquette value
+                        
                         UTmp = U_xd(it, ix, iy, iz, mu, :, :)
                         call FixSU3Matrix(UTmp)
                         U_xd(it, ix, iy, iz, mu, :, :) = UTmp
@@ -131,6 +153,10 @@ contains
       integer :: jx, jy, jz, jt
       integer, dimension(4) :: dmu
       logical :: fixSU3Set
+      ! endian
+      logical :: needEndianSwap
+      integer :: NX_little, NY_little, NZ_Little, NT_Little
+      real(kind=WP) :: plaq_little
 
       do it = 1, 3
          do iz = 1, 3
@@ -146,8 +172,25 @@ contains
 
       !write (*, *) 'here ', TRIM(filename)
       open (infl, file=TRIM(filename), form="unformatted", access="stream", &
-            status="replace", action="write", convert="little_endian")
-      write (infl) nt, nx, ny, nz, plaq
+           status="replace", action="write")
+
+      ! check if we need to swap endian
+      !.false. means file output is little endian
+      needEndianSwap = need_endian_swap(.false.)
+      if (needEndianSwap) then
+         nt_little = endianSwap(nt)
+         nx_little = endianSwap(nx)
+         ny_little = endianSwap(ny)
+         nz_little = endianSwap(nz)
+         plaq = endianSwap(plaq)
+      else
+         nt_little = nt
+         ny_little = ny
+         nz_little = nz
+         nx_little = nx
+      end if
+      
+      write (infl) nt_little, nx_little, ny_little, nz_little, plaq_little
 
       !allocate(U(nxdim,nydim,nzdim,ntdim,4,3,3))
 
@@ -179,8 +222,14 @@ contains
                      U(jt, jx, jy, jz, mu, :, :) = TRANSPOSE(U(jt, jx, jy, jz, mu, :, :))
 
                      UTmp = U(it, ix, iy, iz, mu, :, :)
+                     if (needEndianSwap) then
+                        UTmp = endianSwap(UTmp)
+                     end if
                      write (infl) UTmp
                      UTmp = U(jt, jx, jy, jz, mu, :, :)
+                     if (needEndianSwap) then
+                        UTmp = endianSwap(UTmp)
+                     end if
                      write (infl) UTmp
 
                   end do

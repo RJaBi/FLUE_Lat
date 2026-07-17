@@ -2,6 +2,7 @@
 module FLUE_SU2_HKLS
    use, intrinsic :: ISO_C_BINDING, only: C_INT, C_DOUBLE_COMPLEX, C_LONG
    use FLUE_constants, only: WP, WC
+   use FLUE_endianIO, only: need_endian_swap, endianSwap, endian_swap_c_double_complex
    !use FLUE_SU3MatrixOps, only: FixSU3Matrix
    !use FLUE_wloops, only: genPlaquette
    implicit none(type, external)
@@ -27,17 +28,24 @@ contains
       ! counters
       integer :: it, ix, iy, iz, mu, ab, aa, bb
       integer :: ioStatus
-
+      ! endian
+      logical :: needEndianSwap
+      
       if (PRESENT(bigEndian)) then
          littleEndian = .NOT. bigEndian
       else
          littleEndian = .TRUE.
       end if
       if (littleEndian) then
-         open (infl, file=TRIM(filename), form="unformatted", access="stream", status="old", action="read", convert="little_endian")
+         ! .true. means little data
+         needEndianSwap = need_endian_swap(.true.)
       else
-         open (infl, file=TRIM(filename), form="unformatted", access="stream", status="old", action="read", convert="big_endian")
+         ! .false. means big data
+         needEndianSwap = need_endian_swap(.false.)
       end if
+      ! Open in host
+      open (infl, file=TRIM(filename), form="unformatted", access="stream", status="old", action="read")
+      
       read (infl) old_nproc
       do ab = 1, 2
          do mu = 1, 4
@@ -83,6 +91,11 @@ contains
       end do
       ! Shift the mu ordering
       U_xd = CSHIFT(U_xd, -1, dim=3)
+      if (needEndianSwap) then
+         U_xd = endian_swap_c_double_complex(U_xd)
+         old_nproc = endianSwap(old_nproc)
+         seed = endianSwap(seed)
+      end if
    end subroutine ReadGaugeField_HKLS
 
    subroutine WriteGaugeField_HKLS(filename, NX, NY, NZ, NT, U_xd, seed, old_nproc)
@@ -97,6 +110,10 @@ contains
       integer, parameter :: infl = 107
       ! counters
       integer :: it, ix, iy, iz, mu, ab, aa, bb
+      ! endian
+      logical :: needEndianSwap
+      integer(kind=C_INT) :: old_nproc_little
+      integer(kind=C_LONG), dimension(size(seed)) :: seed_little
 
       ! put it in 1x2
       do it = 1, NT
@@ -112,9 +129,21 @@ contains
       ! Shift the mu ordering
       UHold = CSHIFT(UHold, 1, dim=5)
       open (infl, file=TRIM(filename), form="unformatted", access="stream", &
-            status="replace", action="write", convert="little_endian")
+            status="replace", action="write")
 
-      write (infl) old_nproc
+      ! check if need to swap endian
+      ! .true. means we want little
+      needEndianSwap = need_endian_swap(.true.)
+      if (needEndianSwap) then
+         old_nproc_little = endianSwap(old_nproc)
+         seed_little = endianSwap(seed)
+         UHold = endian_swap_c_double_complex(UHold)
+      else
+         old_nproc_little = old_nproc
+         seed_little = seed
+      end if
+      
+      write (infl) old_nproc_little
       do ab = 1, 2
          do mu = 1, 4
             do it = 1, NT

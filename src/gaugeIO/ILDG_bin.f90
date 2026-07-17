@@ -3,6 +3,7 @@ module FLUE_ILDG_bin
    !use stdlib_linalg, only: det
    use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT
    use FLUE_constants, only: WP, WC
+   use FLUE_endianIO, only: need_endian_swap, endianSwap
    use FLUE_SU3MatrixOps, only: FixSU3Matrix
    implicit none(type, external)
    private
@@ -22,6 +23,7 @@ contains
       ! counters
       integer :: it, ix, iy, iz, mu, nu
       logical :: fixSU3Set
+      logical :: needEndianSwap
 
       if (PRESENT(fixSU3)) then
          fixSU3Set = fixSU3
@@ -34,11 +36,19 @@ contains
       irecl = matrix_len * 4 * NX * NY * NZ
       ! write(*,*) matrix_len, irecl, 3, 3, 4, nx, ny, nz, nt
       open (infl, file=TRIM(filename), form='unformatted', access='direct', &
-            status='old', action='read', recl=irecl, convert='BIG_ENDIAN')
+            status='old', action='read', recl=irecl)
       do it = 1, NT
          read (infl, rec=it) URead(:, :, :, :, :, :, it)
       end do
       close (infl)
+
+      ! Checks if need to swap endian
+      ! .false. means the data was big endian
+      needEndianSwap = need_endian_swap(.false.)
+      if (needEndianSwap) then
+         URead = endianSwap(URead)
+      end if
+      
       ! THen really dumbly re-order the indices
       do it = 1, NT
          do ix = 1, NX
@@ -82,7 +92,8 @@ contains
       ! counters
       integer :: it, ix, iy, iz, mu, nu
       logical :: fixSU3Set
-
+      logical :: needEndianSwap
+      
       if (PRESENT(fixSU3)) then
          fixSU3Set = fixSU3
       else
@@ -120,12 +131,19 @@ contains
          end do
       end do
 
+      ! swap endianess if required
+      ! .false. means must be big endian
+      needEndianSwap = need_endian_swap(.false.)
+      if (needEndianSwap) then
+         URead = endianSwap(URead)
+      end if
+      
       ! Then write the gaugefield
       matrix_len = 16 * 3 * 3
       irecl = matrix_len * 4 * NX * NY * NZ
       ! write(*,*) matrix_len, irecl, 3, 3, 4, nx, ny, nz, nt
       open (infl, file=TRIM(filename), form='unformatted', access='direct', &
-            status='replace', action='write', recl=irecl, convert='BIG_ENDIAN')
+            status='replace', action='write', recl=irecl)
       do it = 1, NT
          write (infl, rec=it) URead(:, :, :, :, :, :, it)
       end do

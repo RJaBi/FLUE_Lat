@@ -14,7 +14,8 @@
 !!
 
 module FLUE_CSSM_bin
-   use FLUE_constants, only: WP, WC, C_INT
+  use FLUE_constants, only: WP, WC, C_INT
+  use FLUE_endianIO, only: need_endian_swap, endianSwap, endian_swap_i32
    use FLUE_SU3MatrixOps, only: FixSU3Matrix, orthogonalise_vectors, vector_product
    implicit none(type, external)
    private
@@ -37,11 +38,12 @@ contains
       complex(kind=WC), dimension(3) :: v1, v2, v3
 
       integer, parameter :: nc = 3
+      logical :: needEndianSwap
 
       allocate (G_tr(nx, ny, nz, nt, nc, nc - 1))
       allocate (ReG(nx, ny, nz, nt, nc, nc - 1))
       allocate (ImG(nx, ny, nz, nt, nc, nc - 1))
-      open (101, file=filename, form='unformatted', status='old', action='read', convert='BIG_ENDIAN')
+      open (101, file=filename, form='unformatted', status='old', action='read')
       ! File format means we read the first two rows of G_x.
       ! Instead we read the first two columns of G_tr (the transpose of G_x) for better memory alignment.
       do ic = 1, nc - 1
@@ -49,6 +51,15 @@ contains
          read (101) ImG(:, :, :, :, :, ic)
       end do
       close (101)
+
+      ! check if we need to swap endianess
+      ! .true. means data is big
+      needEndianSwap = need_endian_swap(.true.)
+      if (needEndianSwap) then
+         ReG = endianSwap(ReG)
+         ImG = endianSwap(ImG)
+      end if
+      
       G_tr(1:nx, 1:ny, 1:nz, 1:nt, :, :) = CMPLX(ReG(1:nx, 1:ny, 1:nz, 1:nt, :, :), ImG(1:nx, 1:ny, 1:nz, 1:nt, :, :), kind=WC)
       do it = 1, nt
          do iz = 1, nz
@@ -88,10 +99,17 @@ contains
       integer :: ic, mu, it, iz, ix, iy
       ! For reconstructing from two rows
       complex(kind=WC), dimension(3) :: v1, v2, v3
-      open (infl, file=filename, form='unformatted', status='old', action='read', convert='BIG_ENDIAN')
+      ! endian
+      logical :: needEndianSwap
+
+      open (infl, file=filename, form='unformatted', status='old', action='read')
       read (infl) nconfig, beta, nxdim, nydim, nzdim, ntdim
       !write(*,*) nconfig, beta, nxdim, nydim, nzdim, ntdim
 
+      ! check if we need to swap endianess
+      ! .true. means data is big
+      needEndianSwap = need_endian_swap(.true.)
+      
       allocate (ReU(NX, NY, NZ, NT, 4, 2, 3))
       allocate (ImU(NX, NY, NZ, NT, 4, 2, 3))
 
@@ -100,6 +118,16 @@ contains
          read (infl) ImU(:, :, :, :, :, ic, :)
       end do
 
+      if (needEndianSwap) then
+         nconfig = endian_swap_i32(nconfig)
+         beta = endianSwap(beta)
+         nxdim = endian_swap_i32(nxdim)
+         nydim = endian_swap_i32(nydim)
+         nzdim = endian_swap_i32(nzdim)
+         ntdim = endian_swap_i32(ntdim)
+         ReU = endianSwap(ReU)
+         ImU = endianSwap(ImU)
+      end if
       !read(infl) lastPlaq, plaqbarAvg, uzero
       close (infl)
       ! Get the two rows of the SU(3) matrix

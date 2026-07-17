@@ -1,5 +1,6 @@
 module FLUE_SU2_CSSM
-   use FLUE_constants, only: WP, WC
+  use FLUE_constants, only: WP, WC
+  use FLUE_endianIO, only: need_endian_swap, endianSwap
    use FLUE_SU2_wloops, only: SU2_genPlaquette
    implicit none(type, external)
    private
@@ -25,6 +26,10 @@ contains
       real(kind=WP) :: lastPlaq, plaqbarAvg, uzero
       real(kind=WP) :: time, sumtrp
       integer :: nP
+      ! endian
+      logical :: needEndianSwap
+      integer :: nx_little, ny_little, nz_little, nt_little, nfig_little
+      real(kind=WP) :: beta_little
 
       call SU2_genPlaquette(U_xd, NT, NX, NY, NZ, 1, 4, 4, sumTrP, nP, time)
 
@@ -49,9 +54,35 @@ contains
       UWrite = CSHIFT(UWrite, 1, dim=5)
       UWReal = real(UWrite, kind=WP)
       UWImag = AIMAG(UWrite)
+
+      ! check whether need endian swap
+      ! .false. means big data
+      needEndianSwap = need_endian_swap(.false.)
+      if (needEndianSwap) then
+         nt_little = endianSwap(nt)
+         nx_little = endianSwap(nx)
+         ny_little = endianSwap(ny)
+         nz_little = endianSwap(nz)
+         nfig_little = endianSwap(nfig)
+         beta_little = endianSwap(beta)
+         UWReal = endianSwap(UWReal)
+         UWImag = endianSwap(UWImag)
+         lastPlaq = endianSwap(lastPlaq)
+         plaqbarAvg = endianSwap(plaqBarAvg)
+         uzero = endianSwap(uzero)
+      else
+         nt_little = nt
+         nx_little = nx
+         ny_little = ny
+         nz_little = nz
+         nfig_little = nfig
+         beta_little = beta
+      end if
+      
       open (infl, file=TRIM(filename), form="unformatted", access="stream", &
-            status="replace", action="write", convert="big_endian")
-      write (infl) nfig, beta, NX, NY, NZ, NT
+           status="replace", action="write")
+      
+      write (infl) nfig_little, beta_little, NX_little, NY_little, NZ_little, NT_little
       ! write links
       write (infl) UWReal
       write (infl) UWImag
