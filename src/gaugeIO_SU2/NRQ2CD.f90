@@ -1,24 +1,35 @@
-!! Functions to write NRQ2CD format
 
 module FLUE_SU2_NRQ2CD
+  !< Functions to read and write NRQ2CD format for SU2
+  !< As specified by Seyong Kim
    use FLUE_constants, only: WC
    implicit none(type, external)
    private
    public :: writeGaugeField_NRQ2CD
    public :: readGaugeField_NRQ2CD
 contains
-   subroutine writeGaugeField_NRQ2CD(filename, NX, NY, NZ, NT, U)
-      character(len=*), intent(IN) :: filename
-      integer, intent(IN) :: NX, NY, NZ, NT
-      complex(kind=WC), dimension(2, 2, 4, NT, NX, NY, NZ), intent(IN) :: U
-      integer :: ix, iy, iz, it, mu
-      integer :: ix2, ip, par
-      integer :: c1, c2, infl
-      integer :: ip5d2
-      complex(kind=WC), dimension(:, :, :, :, :), allocatable :: s
+  subroutine writeGaugeField_NRQ2CD(filename, NX, NY, NZ, NT, U)
+    !< Write a SU2 gaugefield to NRQ2CD format
+    character(len=*), intent(IN) :: filename
+    !< filename to write to
+    integer, intent(IN) :: NX, NY, NZ, NT
+    !< lattice dimensions
+    complex(kind=WC), dimension(2, 2, 4, NT, NX, NY, NZ), intent(IN) :: U
+    !< internal representation of input gaugefield
+    integer :: ix, iy, iz, it, mu
+    !< counters
+    integer :: ix2, ip, par
+    !< useful sizes and parity variable
+    integer :: c1, c2
+    !< colour counter variables
+    integer :: infl
+    !< file unit
+    integer :: ip5d2
+    !< useful working size variable
+    complex(kind=WC), dimension(:, :, :, :, :), allocatable :: s
+    !< re-ordered gaugefield
       ip5d2 = INT(NX * NY * NZ * NT * 0.5)
       allocate (s(ip5d2, 2, 2, 4, 0:1))
-      write (*, *) 'a', U(:, :, 2, 1, 1, 3, 1)
       !------------------------------------------------------------
       ! Rearrangement
       !------------------------------------------------------------
@@ -47,8 +58,6 @@ contains
       end do
       ! Shift the mu-ordering so that xyzt
       s = CSHIFT(s, 1, dim=4)
-      write (*, *) 'b25o', s(25, :, :, 1, 0)
-      write (*, *) 'b25e', s(25, :, :, 1, 1)
       !------------------------------------------------------------
       ! Write to disk (raw binary, stream I/O)
       !------------------------------------------------------------
@@ -60,13 +69,23 @@ contains
    end subroutine writeGaugeField_NRQ2CD
 
    subroutine readGaugeField_NRQ2CD(filename, NX, NY, NZ, NT, U)
-      character(len=*), intent(IN) :: filename
-      integer, intent(IN) :: NX, NY, NZ, NT
-      complex(kind=WC), dimension(2, 2, 4, NT, NX, NY, NZ), intent(OUT) :: U
-      integer :: ix, iy, iz, it, mu
-      integer :: ix2, ip, par
-      integer :: infl, ip5d2
-      complex(kind=WC), dimension(:, :, :, :, :), allocatable :: s
+     !< Read a SU2 gaugefield from NRQ2CD format
+     character(len=*), intent(IN) :: filename
+     !< filename to read from
+     integer, intent(IN) :: NX, NY, NZ, NT
+     !< lattice dimensions
+     complex(kind=WC), dimension(2, 2, 4, NT, NX, NY, NZ), intent(OUT) :: U
+     !< output gaugefield
+     integer :: ix, iy, iz, it, mu
+     !< counters
+     integer :: ix2, ip, par
+     !< useful sizes and parity variables
+     integer :: infl
+     !< file unit
+     integer :: ip5d2
+     !< useful working size variable
+     complex(kind=WC), dimension(:, :, :, :, :), allocatable :: s
+     !< gaugefield as read from disk before re-ordering
       ! Optional but sensible: the mapping assumes NX is even
       if (MOD(NX, 2) /= 0) then
          write (*, *) "readGaugeField_NRQ2CD: NX must be even.", NX

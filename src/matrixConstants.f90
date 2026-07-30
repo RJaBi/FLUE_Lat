@@ -1,54 +1,53 @@
-!! Matrix constants module
-!!
-!! Provides predefined constant matrices used throughout FLUE, including
-!! the 3x3 identity matrix for SU(3) operations and the 2x2 Pauli/Sigma matrices
-!! for SU(2) operations.
-!!
-!! Note: Matrix elements are stored in row-major order for visual clarity.
-!! Fortran uses column-major order, so the optional order=[2,1] argument
-!! is used in RESHAPE for correct representation.
-!!
-!! @author FLUE Developers
-!! @version 1.0
-
 module FLUE_matrixConstants
+  !< Module: FLUE_matrixConstants
+  !< Purpose:
+  !<   This module provides a collection of predefined constant matrices used
+  !<   throughout FLUE. These include identity matrices for SU(2) and SU(3)
+  !<   operations together with the three Pauli matrices that form a basis of the
+  !<   SU(2) Lie algebra.
+  !<
+  !< All matrices are defined as compile-time constants with complex-valued
+  !< elements of kind ``WC``. Matrix entries are written in row-major order for
+  !< human readability and converted to Fortran's native column-major storage
+  !< layout through the ``RESHAPE`` intrinsic using ``order=[2,1]``.
+  !<
+  !<
+  !< The Pauli matrices satisfy
+  !< $
+  !< [\sigma_i,\sigma_j] = 2 i \epsilon_{ijk}\sigma_k
+  !< $
+  !< and
+  !< $
+  !< \{\sigma_i,\sigma_j\} = 2\delta_{ij}I_2.
+  !< $
    use FLUE_constants, only: WC, WP
    implicit none(type, external)
-
-  !! 3x3 Identity matrix for SU(3) operations
-  !! Used in group theory calculations and matrix operations
    complex(kind=WC), dimension(3, 3), parameter :: Ident3x3 = RESHAPE(source=[ &
                                                                       (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
                                                                       (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
                                                                       (0.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP)], &
                                                                       shape=[3, 3], order=[2, 1])
-
-  !! 2x2 Identity matrix for SU(2) operations
-  !! Used in group theory calculations and matrix operations
+   !< 3x3 Identity matrix in complex variable
    complex(kind=WC), dimension(2, 2), parameter :: Ident2x2 = RESHAPE(source=[ &
                                                                       (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
                                                                       (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP)], &
                                                                       shape=[2, 2], order=[2, 1])
-
-  !! Pauli/Sigma matrices for SU(2) operations
-  !! First Pauli matrix (sigma_x)
+   !< 2x2 Identity matrix in complex variable
    complex(kind=WC), dimension(2, 2), parameter :: sigma1 = RESHAPE(source=[ &
                                                                     (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP), &
                                                                     (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP)], &
                                                                     shape=[2, 2], order=[2, 1])
-
-  !! Second Pauli matrix (sigma_y)
+   !< First Pauli matrix (sigma_x)
    complex(kind=WC), dimension(2, 2), parameter :: sigma2 = RESHAPE(source=[ &
                                                                     (0.0_WP, 0.0_WP), (0.0_WP, -1.0_WP), &
                                                                     (0.0_WP, 1.0_WP), (0.0_WP, 0.0_WP)], &
                                                                     shape=[2, 2], order=[2, 1])
-
-  !! Third Pauli matrix (sigma_z)
+   !< Second Pauli matrix (sigma_y)
    complex(kind=WC), dimension(2, 2), parameter :: sigma3 = RESHAPE(source=[ &
                                                                     (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
                                                                     (0.0_WP, 0.0_WP), (-1.0_WP, 0.0_WP)], &
                                                                     shape=[2, 2], order=[2, 1])
-
+   !< Third Pauli matrix (sigma_z)
    private
 
    public :: Ident3x3, Ident2x2

@@ -1,4 +1,6 @@
 module FLUE
+  !< Top level module exposing all external (i.e. app or python interface)
+  !< subroutines/constants/functions
    use FLUE_constants, only: WP, WC, PI, SP, C_INT
    use FLUE_CSSM_bin, only: ReadGaugeTransformation_cola, ReadGaugeField_CSSM
    use FLUE_gluonProp, only: scalarGluonProp, calc_mom_space_scalarD
@@ -24,7 +26,8 @@ module FLUE
    use FLUE_wloops, only: polyakov, genPlaquette, magnetic, genericPath, periodCoord
    implicit none(type, external)
 
-   character(len=*), parameter :: version = "0.1.1"
+   character(len=*), parameter :: version = "0.1.2"
+   !< Version of the FLUE software
    public
    !public :: calc_mom_space_scalarD
    !public :: Ident, MultiplyMatMat, MultiplyMatdagMatdag
