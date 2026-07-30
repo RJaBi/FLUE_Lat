@@ -1,6 +1,5 @@
-!! Calculate, spatial, temporal plaquettes
-
 module FLUE_SU2_wloops
+  !< For wilson-loop (or staple) calculations in SU2
    use FLUE_constants, only: WP, WC, SP
    use FLUE_wloops, only: periodCoord
    use M_stopwatch, only: watchtype, create_watch, start_watch, stop_watch, destroy_watch, read_watch
@@ -10,21 +9,32 @@ module FLUE_SU2_wloops
                                                                        (1.0_WP, 0.0_WP), (0.0_WP, 0.0_WP), &
                                                                        (0.0_WP, 0.0_WP), (1.0_WP, 0.0_WP)], &
                                                                        shape=[2, 2])
+   !< 2x2 Identity matrix in complex variable
    public
 contains
 
-   pure function SU2_genericPath(data, coordBase, path) result(U_xd)
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(in) :: data
-      integer, dimension(4), intent(in) :: coordBase
-      integer, dimension(:), intent(in) :: path
-      complex(kind=WC), dimension(2, 2) :: U_xd
+  pure function SU2_genericPath(data, coordBase, path) result(U_xd)
+    !< Returns the links starting from coordbase multiplied together along path
+    !< Used to construct wilson loops, staples, etc
+    complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(in) :: data
+    !< The gaugefield of shape 2,2,4,nt,nx,ny,nz
+    integer, dimension(4), intent(in) :: coordBase
+    !< The starting coordinate [it, ix, iy, iz]
+    integer, dimension(:), intent(in) :: path
+    !< The path to follow in terms of +ve/-ve mu/nu/etc
+    complex(kind=WC), dimension(2, 2) :: U_xd
+    !< The resulting path ordered multiplication of links
       ! internal
-      complex(kind=WC), dimension(2, 2) :: amat, bmat
-      integer, dimension(4) :: coord, pCoord
-      integer, dimension(7) :: dataShape
-      ! counters
-      integer :: pp
-      integer :: mu
+    complex(kind=WC), dimension(2, 2) :: amat, bmat
+    !< Working SU2 variables
+    integer, dimension(4) :: coord, pCoord
+    !< coordinate holders for moving around [it, ix, iy, iz]
+    integer, dimension(7) :: dataShape
+    !< The shape of the data [2,2,4,nt,nx,ny,nz]
+    integer :: pp
+    !< counter for step along path
+    integer :: mu
+    !< direction to move in
       coord = coordBase
       U_xd = Ident_SU2
       ! Do this to prevent the array temporary in periodCoord
@@ -52,21 +62,39 @@ contains
    end function SU2_genericPath
 
    subroutine SU2_genPlaquette(data, NT, NX, NY, NZ, muStart, muEnd, nuEnd, sumTrP, nP, time)
-      complex(kind=WC), dimension(2, 2, 4, NT, NX, NY, NZ), intent(in) :: data
-      integer, intent(in) :: muStart, muEnd, nuEnd
-      integer, intent(in) :: NT, NX, NY, NZ
-      real(kind=WP), intent(out) :: sumTrP, time
-      integer, intent(out) :: nP
-      ! Counters
-      integer :: mu, nu, nnx, nny, nnz, nnt
+     !< Calculates the plaquette using genplaquette
+     !< Outputs the sum over all real trace plaquettes, the number of plaquettes and the time taken
+     !< Do all plaquettes using mustart=1, muend=4, nuend=4
+     !< Do spatial plaquettes using mustart=2, muend=4, nuend=4
+     !< Do temporal plaquettes using mustart=1, muend=1, nuend=4
+     complex(kind=WC), dimension(2, 2, 4, NT, NX, NY, NZ), intent(in) :: data
+     !< The gaugefield
+     integer, intent(in) :: muStart, muEnd, nuEnd
+     !< which dimensions to loop over
+     integer, intent(in) :: NT, NX, NY, NZ
+     !< The size of the lattice
+     real(kind=WP), intent(out) :: sumTrP
+     !< Sum of ReTr(P) of all plaquettes
+     real(kind=WP), intent(out) :: time
+     !< Time taken for calculation
+     integer, intent(out) :: nP
+     !< Number of plaquettes
+     integer :: mu, nu, nnx, nny, nnz, nnt
+     !< counters
       ! other variables
-      complex(kind=WC), dimension(2, 2) :: plaq
-      integer, dimension(7) :: dataShape
-      integer, dimension(4) :: plaqPath, coordBase
-      real(kind=WP) :: P
+     complex(kind=WC), dimension(2, 2) :: plaq
+     !< plaquette variable holder
+     integer, dimension(7) :: dataShape
+     !< Size of the gaugefield
+     integer, dimension(4) :: plaqPath, coordBase
+     !< Variables for constructing all plaquettes using genericPath_SU2
+     real(kind=WP) :: P
+     !< real trace of single plaquette
       ! Timers
-      type(watchtype) :: watch
-      real(Kind=SP) :: watchtime
+     type(watchtype) :: watch
+     !< holds multiple types of timer (cpu, wall, etc)
+     real(Kind=SP) :: watchtime
+     !< output wall time
       call create_watch(watch)
       call start_watch(watch)
       dataShape = (/2, 2, 4, NT, NX, NY, NZ/)

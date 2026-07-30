@@ -1,5 +1,5 @@
-!! Functions to read & write openQCD format gaugefields
 module FLUE_openQCDFileIO_SA
+  !< Functions to read and write openqcd format gaugefields
    use FLUE_constants, only: WP, WC
    use FLUE_SU3MatrixOps, only: FixSU3Matrix
    use FLUE_wloops, only: genPlaquette
@@ -10,42 +10,49 @@ module FLUE_openQCDFileIO_SA
 
 contains
 
-  !! Maps an integer a to the set of integers [1,b] i.e. positive integers with cycle length b.
-   elemental function modc(a, b) result(c)
+  elemental function modc(a, b) result(c)
+    !< Maps an integer a to the set of integers [1,b] i.e. positive integers with cycle length b.
     !! Taken directly from COLA
-      integer, intent(IN) :: a, b
-      integer :: c
-      !c = a - ((a-1)/b)*b
-      c = MODULO(a - 1, b) + 1
+    integer, intent(IN) :: a, b
+    !< input variables
+    integer :: c
+    !< result
+    !c = a - ((a-1)/b)*b
+    c = MODULO(a - 1, b) + 1
    end function modc
 
-!  function determinant(matrix) result(det)
-!    complex(c_double_complex), dimension(3,3), intent(in) :: matrix
-!    complex(c_double_complex) :: det
-!
-!    det = matrix(1,1)*(matrix(2,2)*matrix(3,3) - matrix(2,3)*matrix(3,2)) - &
-!         matrix(1,2)*(matrix(2,1)*matrix(3,3) - matrix(2,3)*matrix(3,1)) + &
-!         matrix(1,3)*(matrix(2,1)*matrix(3,2) - matrix(2,2)*matrix(3,1))
-!  end function determinant
-
    function ReadGaugeField_OpenQCD(filename, NX, NY, NZ, NT, fixSU3) result(U_out)
-      character(len=*), intent(IN) :: filename
-      integer, intent(IN) :: NX, NY, NZ, NT
-      logical, optional, intent(IN) :: fixSU3
-      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U_xd
-      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ) :: U_out
+     !< Reads an openqcd format gaugefield into internal form [3,3,4,NT,NX,NY,NZ]
+     character(len=*), intent(IN) :: filename
+     !< The file to be read
+     integer, intent(IN) :: NX, NY, NZ, NT
+     !< Dimensions of gaugefield
+     logical, optional, intent(IN) :: fixSU3
+     !< Optionally reproject each link to SU3
+     complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U_xd
+     !< For reading
+     complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ) :: U_out
+     !< Output gaugefield
       !complex(kind=WP), dimension(:,:,:,:,:,:,:), allocatable :: U_xd
 
-      complex(kind=WC), dimension(3, 3) :: UTmp
-      integer, parameter :: infl = 107
+     complex(kind=WC), dimension(3, 3) :: UTmp
+     !< SU3 matrix. Read each link individually
+     integer, parameter :: infl = 107
+     !< read from this file unit
       ! Header info
-      real(kind=WP) :: plaq
-      integer :: ntdim, nxdim, nydim, nzdim
+     real(kind=WP) :: plaq
+     !< plaquette in the header
+     integer :: ntdim, nxdim, nydim, nzdim
+     !< lattice dimensions in header
       ! counters
-      integer :: it, ix, iy, iz, mu, id
-      integer :: jx, jy, jz, jt
-      integer, dimension(4) :: dmu
-      logical :: fixSU3Set
+     integer :: it, ix, iy, iz, mu, id
+     !< counters 1
+     integer :: jx, jy, jz, jt
+     !< counters 2
+     integer, dimension(4) :: dmu
+     !< For backwards/forwards links
+     logical :: fixSU3Set
+     !< whether we are doing SU3 re-projection
 
       if (PRESENT(fixSU3)) then
          fixSU3Set = fixSU3
@@ -116,22 +123,32 @@ contains
    end function ReadGaugeField_OpenQCD
 
    subroutine writeGaugeField_OpenQCD(filename, U_in, NX, NY, NZ, NT)
-      character(len=*), intent(IN) :: filename
-      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ), intent(IN) :: U_in
-      integer, intent(IN) :: NX, NY, NZ, NT
-      complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U
-
-      complex(kind=WC), dimension(3, 3) :: UTmp
-      integer, parameter :: infl = 107
+     !< Writes an openqcd gaugefield to file
+     character(len=*), intent(IN) :: filename
+     !< file to write to
+     complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ), intent(IN) :: U_in
+     !< gaugefield to write
+     integer, intent(IN) :: NX, NY, NZ, NT
+     !< lattice dimensions
+     complex(kind=WC), dimension(NT, NX, NY, NZ, 4, 3, 3) :: U
+     !< reordered lattice
+     complex(kind=WC), dimension(3, 3) :: UTmp
+     !< single link writes
+     integer, parameter :: infl = 107
+     !< use this file unit
       ! Header info
-      real(kind=WP) :: plaq, sumTrP, time
-      integer :: NP
-      ! counters
-      integer :: it, ix, iy, iz, mu, id
-      integer :: jx, jy, jz, jt
-      integer, dimension(4) :: dmu
-      logical :: fixSU3Set
-
+     real(kind=WP) :: plaq, sumTrP, time
+     !< plaquette calc variables
+     integer :: NP
+     !< number of plaquettes
+     integer :: it, ix, iy, iz, mu, id
+     !< counters 1
+     integer :: jx, jy, jz, jt
+     !< counters 2
+     integer, dimension(4) :: dmu
+     !< backwards/forwards
+     logical :: fixSU3Set
+     !< whether we are doing SU3 re-projection
       do it = 1, 3
          do iz = 1, 3
             do mu = 1, 4

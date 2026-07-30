@@ -1,5 +1,6 @@
-!! Functions to read & write SU2 HKLS format
 module FLUE_SU2_HKLS
+  !< Functions to read and write HKLS format for SU2
+  !< As used by [su2hmc](https://doi.org/10.5281/zenodo.7164406)
    use, intrinsic :: ISO_C_BINDING, only: C_INT, C_DOUBLE_COMPLEX, C_LONG
    use FLUE_constants, only: WP, WC
    !use FLUE_SU3MatrixOps, only: FixSU3Matrix
@@ -11,22 +12,34 @@ module FLUE_SU2_HKLS
 
 contains
 
-   subroutine ReadGaugeField_HKLS(filename, NX, NY, NZ, NT, U_xd, seed, old_nproc, bigEndian)
-      character(len=*), intent(IN) :: filename
-      integer, intent(IN) :: NX, NY, NZ, NT
-      complex(kind=C_DOUBLE_COMPLEX), dimension(2, 2, 4, NT, NX, NY, NZ), intent(OUT) :: U_xd
-      integer(kind=C_INT), intent(OUT) :: old_nproc
-      integer(kind=C_LONG), dimension(:), allocatable, intent(OUT) :: seed
-      logical, intent(IN), optional :: bigEndian
-      ! for reading
-      complex(kind=C_DOUBLE_COMPLEX), dimension(NX, NY, NZ, NT, 4, 2) :: UHold
-      logical :: littleEndian
-      !complex(kind=C_DOUBLE_COMPLEX), dimension(4) :: UTmp
-      complex(kind=C_DOUBLE_COMPLEX) :: UTmp
-      integer, parameter :: infl = 107
-      ! counters
-      integer :: it, ix, iy, iz, mu, ab, aa, bb
-      integer :: ioStatus
+  subroutine ReadGaugeField_HKLS(filename, NX, NY, NZ, NT, U_xd, seed, old_nproc, bigEndian)
+    !< Read a gaugefield from HKLS format
+    !< Supports both old Fortran (single seed) and new C (seed per rank) formats
+    !< Supports old cray Fortran format (bigEndian=true)
+    character(len=*), intent(IN) :: filename
+    !< filename to read from
+    integer, intent(IN) :: NX, NY, NZ, NT
+    !< lattice dimensions
+    complex(kind=C_DOUBLE_COMPLEX), dimension(2, 2, 4, NT, NX, NY, NZ), intent(OUT) :: U_xd
+    !< output gaugefield
+    integer(kind=C_INT), intent(OUT) :: old_nproc
+    !< number of procs in header
+    integer(kind=C_LONG), dimension(:), allocatable, intent(OUT) :: seed
+    !< seeds - either single number or one for each proc
+    logical, intent(IN), optional :: bigEndian
+    !< Whether we are reading a big-Endian (cray-era) gaugefield
+    complex(kind=C_DOUBLE_COMPLEX), dimension(NX, NY, NZ, NT, 4, 2) :: UHold
+    !< For holding as we read
+    logical :: littleEndian
+    !< whether it is littleEndian or not
+    complex(kind=C_DOUBLE_COMPLEX) :: UTmp
+    !< Read single complex number a time
+    integer, parameter :: infl = 107
+    !< file unit
+    integer :: it, ix, iy, iz, mu, ab, aa, bb
+    !< counters
+    integer :: ioStatus
+    !< Used to test for multiple-seeds
 
       if (PRESENT(bigEndian)) then
          littleEndian = .NOT. bigEndian
@@ -86,17 +99,28 @@ contains
    end subroutine ReadGaugeField_HKLS
 
    subroutine WriteGaugeField_HKLS(filename, NX, NY, NZ, NT, U_xd, seed, old_nproc)
-      character(len=*), intent(IN) :: filename
-      integer, intent(IN) :: NX, NY, NZ, NT
-      complex(kind=C_DOUBLE_COMPLEX), dimension(2, 2, 4, NT, NX, NY, NZ), intent(IN) :: U_xd
-      integer(kind=C_INT), intent(IN) :: old_nproc
-      integer(kind=C_LONG), dimension(:), intent(IN) :: seed
+     !< Writes a gaugefield to HKLS format
+     !< supports little-endian only
+     !< Does support multiple or single seed
+     character(len=*), intent(IN) :: filename
+     !< filename to write to
+     integer, intent(IN) :: NX, NY, NZ, NT
+     !< lattice dimensions
+     complex(kind=C_DOUBLE_COMPLEX), dimension(2, 2, 4, NT, NX, NY, NZ), intent(IN) :: U_xd
+     !< input, internal representation of gaugefield
+     integer(kind=C_INT), intent(IN) :: old_nproc
+     !< number of processes for header
+     integer(kind=C_LONG), dimension(:), intent(IN) :: seed
+     !< seed(s) for header
       ! for writing
-      complex(kind=C_DOUBLE_COMPLEX), dimension(NX, NY, NZ, NT, 4, 2) :: UHold
-      complex(kind=C_DOUBLE_COMPLEX) :: UTmp
-      integer, parameter :: infl = 107
-      ! counters
-      integer :: it, ix, iy, iz, mu, ab, aa, bb
+     complex(kind=C_DOUBLE_COMPLEX), dimension(NX, NY, NZ, NT, 4, 2) :: UHold
+     !< re-ordered gaugefield
+     complex(kind=C_DOUBLE_COMPLEX) :: UTmp
+     !< write single complex number at a time
+     integer, parameter :: infl = 107
+     !< file unit
+     integer :: it, ix, iy, iz, mu, ab, aa, bb
+     !< counters
 
       ! put it in 1x2
       do it = 1, NT

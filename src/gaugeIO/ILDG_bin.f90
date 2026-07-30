@@ -1,6 +1,6 @@
-!! Functions to read and write ILDG binary data formats as from cola
+
 module FLUE_ILDG_bin
-   !use stdlib_linalg, only: det
+  !< Functions to read and write ILDG (binary) format gaugefields
    use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT
    use FLUE_constants, only: WP, WC
    use FLUE_SU3MatrixOps, only: FixSU3Matrix
@@ -11,17 +11,26 @@ module FLUE_ILDG_bin
 
 contains
 
-   function ReadGaugeField_ILDG(filename, NX, NY, NZ, NT, fixSU3) result(U_xd)
-      character(len=*), intent(IN) :: filename
-      integer, intent(IN) :: NX, NY, NZ, NT
-      logical, optional, intent(IN) :: fixSU3
-      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ) :: U_xd
-      complex(kind=WC), dimension(3, 3, 4, NX, NY, NZ, NT) :: URead
-      integer, parameter :: infl = 101
-      integer :: matrix_len, irecl
-      ! counters
-      integer :: it, ix, iy, iz, mu, nu
-      logical :: fixSU3Set
+  function ReadGaugeField_ILDG(filename, NX, NY, NZ, NT, fixSU3) result(U_xd)
+    !< Read a gaugefield in ILDG (binary) format
+    character(len=*), intent(IN) :: filename
+    !< filename to read from
+    integer, intent(IN) :: NX, NY, NZ, NT
+    !< lattice dimensions
+    logical, optional, intent(IN) :: fixSU3
+    !< optionally re-project to SU3
+    complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ) :: U_xd
+    !< Output gaugefield
+    complex(kind=WC), dimension(3, 3, 4, NX, NY, NZ, NT) :: URead
+    !< gaugefield read in
+    integer, parameter :: infl = 101
+    !< use this file unit
+    integer :: matrix_len, irecl
+    !< Step through data records
+    integer :: it, ix, iy, iz, mu, nu
+    !< counters
+    logical :: fixSU3Set
+    !< whether we are re-projecting each link
 
       if (PRESENT(fixSU3)) then
          fixSU3Set = fixSU3
@@ -72,16 +81,25 @@ contains
    end function ReadGaugeField_ILDG
 
    subroutine writeGaugeField_ILDG(filename, U_xd, NX, NY, NZ, NT, fixSU3)
-      character(len=*), intent(IN) :: filename
-      integer, intent(IN) :: NX, NY, NZ, NT
-      logical, optional, intent(IN) :: fixSU3
-      complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ), intent(IN) :: U_xd
-      complex(kind=WC), dimension(3, 3, 4, NX, NY, NZ, NT) :: URead
-      integer, parameter :: infl = 101
-      integer :: matrix_len, irecl
-      ! counters
-      integer :: it, ix, iy, iz, mu, nu
-      logical :: fixSU3Set
+     !< Write a gaugefield in ILDG (binary) format
+     character(len=*), intent(IN) :: filename
+     !< filename to read to
+     integer, intent(IN) :: NX, NY, NZ, NT
+     !< lattice dimensions
+     logical, optional, intent(IN) :: fixSU3
+     !< optionally re-project to SU3
+     complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ), intent(IN) :: U_xd
+     !< input gaugefield
+     complex(kind=WC), dimension(3, 3, 4, NX, NY, NZ, NT) :: URead
+     !< re-ordered gaugefield to write
+     integer, parameter :: infl = 101
+     !< use this file unit
+     integer :: matrix_len, irecl
+     !< step through records in data
+     integer :: it, ix, iy, iz, mu, nu
+     !< counters
+     logical :: fixSU3Set
+     !< whether we are re-projecting each link to SU3
 
       if (PRESENT(fixSU3)) then
          fixSU3Set = fixSU3

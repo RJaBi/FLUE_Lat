@@ -1,12 +1,9 @@
-!! A module to write the git and compiler versions
-!! Is pre-processed by the C pre-processor
 module FLUE_version
-#ifdef lFORTRAN
-   use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT
-#else
+  !< Module FLUE_version
+  !< Provides subroutines to write the compiler & compiler options used
+  !< as well as the git Hash (via preprocessor)
    use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, compiler_version, compiler_options
-#endif
-   implicit none(external)
+   implicit none(type, external)
    private
 
    public :: writeCompiler
@@ -14,25 +11,27 @@ module FLUE_version
    public :: writeGit
 
 contains
-   subroutine writeCompiler()
-      !if (this_image() == 1) then
-      write (OUTPUT_UNIT, *) 'This file was compiled by ', &
+  subroutine writeCompiler()
+    !< Writes the compiler_version and compiler_options to output_unit
+    write (OUTPUT_UNIT, *) 'This file was compiled by ', &
          COMPILER_VERSION(), ' using the options ', &
          COMPILER_OPTIONS()
-      FLUSH (OUTPUT_UNIT)
-      !end if
+    FLUSH (OUTPUT_UNIT)
    end subroutine writeCompiler
 
    subroutine writeGit()
+     !< Via the SETGITHASH macro
+     !< and the 'GITHASH.txt' file
+     !< writes the contents of that file to output_unit
 #ifdef SETGITHASH
 #include "GITHASH.txt"
-      character(len=*), parameter :: git_hash = GITHASH
+     character(len=*), parameter :: git_hash = GITHASH
+     !< The included git hash.
 #else
-      character(len=*), parameter :: git_hash = "Unknown"
+     character(len=*), parameter :: git_hash = "Unknown"
+     !< The included git hash
 #endif
-      !if (this_image() == 1) then
       write (OUTPUT_UNIT, *) 'Git Commit: ', git_hash
       FLUSH (OUTPUT_UNIT)
-      !end if
    end subroutine writeGit
 end module FLUE_version
