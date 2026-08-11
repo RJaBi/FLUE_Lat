@@ -70,7 +70,7 @@ contains
   !! @param stapleKernel   Procedure pointer to staple implementation
   !! @param xi             Anisotropy parameter
   !!
-  !! @return Updated SU(3) link matrix
+  !! returns Updated SU(3) link matrix
   !!
   !! ## Steps
   !! 1. Extract current link
