@@ -1,14 +1,14 @@
 module FLUE_SU2_heatbath
-   !!
-   !! SU(2) heatbath update using Philox only.
-   !!
-   !! Key points:
-   !!   * No stdlib random routines are used.
-   !!   * getLambda2() uses philox_uniform_oo on (0,1),
-   !!   * getXVec() uses philox_uniform_co on [-1,1)
-   !!   * The update is staged by direction and colour so the inner site loop can be
-   !!     expressed as do concurrent.
-   !!
+   !<
+   !< SU(2) heatbath update
+   !<
+   !< Key points:
+   !<   * No stdlib random routines are used.
+   !<   * getLambda2() uses philox_uniform_oo on (0,1),
+   !<   * getXVec() uses philox_uniform_co on [-1,1)
+   !<   * The update is staged by direction and colour so the inner site loop can be
+   !<     expressed as do concurrent.
+   !<
    use FLUE_constants, only: WP, WC, TWO_PI
    use FLUE_philox_helpers, only: derive_stage_key, site_linear_index, site_colour
    use FLUE_SU2_random, only: constructSU2Matrix
@@ -24,27 +24,34 @@ module FLUE_SU2_heatbath
 contains
 
    pure function getLambda2(alpha, beta, key, counter0) result(lambda2)
-     !!
-    !! Sample lambda^2 for the SU(2) heatbath accept/reject step.
-    !!
-    !! uses Philox draws directly.
-    !!
-    !! Random-number conventions:
-    !!   * ri(1:3) and rr are strictly in (0,1), so we use philox_uniform_oo.
-    !!
-    !! Counter usage:
-    !!   counter(1) = site id        (passed in through counter0)
-    !!   counter(2) = subgroup id    (set in constructXMatrix)
-    !!   counter(3) = attempt number (incremented here)
-    !!   counter(4) = phase id = 1   (lambda2 phase)
-    !!
-      real(kind=WP), intent(IN) :: alpha, beta
+     !<
+    !< Sample lambda^2 for the SU(2) heatbath accept/reject step.
+    !<
+    !< uses Philox draws directly.
+    !<
+    !< Random-number conventions:
+    !<   * ri(1:3) and rr are strictly in (0,1), so we use philox_fill_uniform_oo.
+    !<
+    !< Counter usage:
+    !<   counter(1) = site id        (passed in through counter0)
+    !<   counter(2) = subgroup id    (set in constructXMatrix)
+    !<   counter(3) = attempt number (incremented here)
+    !<   counter(4) = phase id = 1   (lambda2 phase)
+    !<
+     real(kind=WP), intent(IN) :: alpha, beta
+     !< alpha and beta parameters (beta is fixed for given sim.)
       integer(kind=C64), intent(IN) :: key(2), counter0(4)
+      !< Philox keys
       real(kind=WP) :: lambda2
-      !real(kind=WP) :: ri(3), rr
+      !< Output lambda 2
       real(kind=WP), dimension(4) :: rvec
-      integer(kind=C64) :: c(4), attempt
+      !< 4 random numbers
+      integer(kind=C64), dimension(4) :: c
+      !< The full counter for the philox draw
+      integer(kind=C64) :: attempt
+      !< A counter/philox key to handle the case where the random number draw does not meet requirements
       real(kind=WP), parameter :: eps = TINY(1.0_WP)
+      !< Smallest real number in WP precision
       if (alpha <= eps .OR. beta <= eps) then
          lambda2 = 0.0_WP
          return
@@ -54,12 +61,6 @@ contains
          c = counter0
          c(3) = attempt
          c(4) = 1_C64
-         ! c = [linearised index, subgroup ID, attempt, 1]
-         !ri(1) = philox_uniform_oo(c, key, 1_C64, 0.0_WP, 1.0_WP)
-         ! counter, key, idx, bounds
-         !ri(2) = philox_uniform_oo(c, key, 2_C64, 0.0_WP, 1.0_WP)
-         !ri(3) = philox_uniform_oo(c, key, 3_C64, 0.0_WP, 1.0_WP)
-         !rr = philox_uniform_oo(c, key, 4_C64, 0.0_WP, 1.0_WP)
          call philox_fill_uniform_oo(c, key, 1_C64, 0.0_WP, 1.0_WP, rvec)
          ! Got random numbers, construct lambda2
          lambda2 = -(LOG(rvec(1)) + LOG(rvec(3)) * COS(TWO_PI * rvec(2))**2) / &
@@ -81,25 +82,33 @@ contains
    end function getLambda2
 
    pure function getXVec(x0, key, counter0) result(xvec)
-    !!
-    !! Sample a 3-vector uniformly from the unit ball, then rescale it so that
-    !! ||xvec|| = sqrt(1 - x0^2).
-    !!
-    !! Random-number convention:
-    !!   * Each component is drawn from [-1,1), so we use philox_uniform_co.
-    !!
-    !! Counter usage:
-    !!   counter(1) = site id
-    !!   counter(2) = subgroup id
-    !!   counter(3) = attempt number
-    !!   counter(4) = phase id = 2   (x-vector phase)
-    !!
-      real(kind=WP), intent(IN) :: x0
+    !<
+    !< Sample a 3-vector uniformly from the unit ball, then rescale it so that
+    !< ||xvec|| = sqrt(1 - x0^2).
+    !<
+    !< Random-number convention:
+    !<   * Each component is drawn from [-1,1), so we use philox_fill_uniform_co.
+    !<
+    !< Counter usage:
+    !<   counter(1) = site id
+    !<   counter(2) = subgroup id
+    !<   counter(3) = attempt number
+    !<   counter(4) = phase id = 2   (x-vector phase)
+    !<
+     real(kind=WP), intent(IN) :: x0
+     !< The zeroth random number that sets the condition on the 3-vec of random numbers
       integer(kind=C64), intent(IN) :: key(2), counter0(4)
-      real(kind=WP) :: xvec(3)
+      !< Phiox key
+      real(kind=WP), dimension(3) :: xvec
+      !< 3-vector of random numbers
       real(kind=WP) :: xlen, requiredLen
-      integer(kind=C64) :: c(4), attempt
+      !< Length before rescaling, rescaled length
+      integer(kind=C64), dimension(4) :: c
+      !< The full counter for the philox draw
+      integer(kind=C64) :: attempt
+      !< A counter/philox key to handle the case where the random number draw does not meet the requirements
       real(kind=WP), parameter :: eps = TINY(1.0_WP)
+      !< Smallest real number in WP precision
       requiredLen = MAX(0.0_WP, 1.0_WP - x0 * x0)
       if (requiredLen <= eps) then
          xvec = 0.0_WP
@@ -125,25 +134,32 @@ contains
    end function getXVec
 
    pure function constructXMatrix(alpha, beta, key, counter0, subgroup_id) result(X)
-     !!
-     !! Construct the SU(2) heatbath matrix X used in the update.
-     !!
-     !! This wraps together:
-     !!   1) sampling lambda^2,
-     !!   2) constructing x0 = 1 - 2 lambda^2,
-     !!   3) sampling the spatial part x(1:3),
-     !!   4) building the corresponding SU(2) matrix.
-     !!
-     !! subgroup_id is carried in counter(2) so the three SU(2) sub-updates inside
-     !! an SU(3) heatbath update use disjoint Philox substreams.
-     !!
-      real(kind=WP), intent(IN) :: alpha, beta
+     !<
+     !< Construct the SU(2) heatbath matrix X used in the update.
+     !<
+     !< This wraps together:
+     !<   1) sampling lambda^2,
+     !<   2) constructing x0 = 1 - 2 lambda^2,
+     !<   3) sampling the spatial part x(1:3),
+     !<   4) building the corresponding SU(2) matrix.
+     !<
+     !< subgroup_id is carried in counter(2) so the three SU(2) sub-updates inside
+     !< an SU(3) heatbath update use disjoint Philox substreams.
+     !<
+     real(kind=WP), intent(IN) :: alpha, beta
+     !< alpha and beta parameters (beta fixed for given sim.)
       integer(kind=C64), intent(IN) :: key(2), counter0(4)
+      !< Philox keys
       integer, intent(IN) :: subgroup_id
+      !< Describes the SU2 subgroup
       complex(kind=WC), dimension(2, 2) :: X
+      !< SU2 matrix X
       real(kind=WP) :: lambda2
+      !< The appropriately distritubted lambda2
       real(kind=WP), dimension(0:3) :: xAll
-      integer(kind=C64) :: c(4)
+      !< the 3-vec of random numbers of given length
+      integer(kind=C64), dimension(4) :: c
+      !< The full counter for the philox draw [linearised index, subgroupID, 0, 0]
       c = counter0
       c(2) = INT(subgroup_id, C64)
       ! c = [linearised index, subgroupID, 0, 0]
@@ -154,29 +170,42 @@ contains
    end function constructXMatrix
 
    pure function su2_updated_link(U, beta, coord, mu, key, dims) result(Unew)
-      !!
-      !! Compute the new SU(2) link at one site and one direction.
-      !!
-      !! Steps:
-      !!   1) Compute the staple V.
-      !!   2) Compute alpha from det(V).
-      !!   3) Build the heatbath matrix X using Philox.
-      !!   4) Return the updated link:
-      !!        U' = X * (V / alpha)^dagger
-      !!
-      !! If alpha is too small, the code falls back to a mild update with alpha=1.
-      !!
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
+      !<
+      !< Compute the new SU(2) link at one site and one direction.
+      !<
+      !< Steps:
+      !<   1) Compute the staple V.
+      !<   2) Compute alpha from det(V).
+      !<   3) Build the heatbath matrix X using Philox.
+      !<   4) Return the updated link:
+      !<        U' = X * (V / alpha)^dagger
+      !<
+      !< If alpha is too small, the code falls back to a mild update with alpha=1.
+      !<
+     complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
+     !< Input gaugefield [2,2,4,nt,nx,ny,nz]
       real(kind=WP), intent(IN) :: beta
-      integer, intent(IN) :: coord(4), mu, dims(4)
-      integer(kind=C64), intent(IN) :: key(2)
+      !< beta-value
+      integer, intent(IN) :: coord(4)
+      !< Base coordinate of link to update [it,ix,iy,zi]
+      integer, intent(in) :: mu
+      !< Direction to update
+      integer, intent(in) :: dims(4)
+      !< Lattice dimensions [nt,nx,ny,nz]
+      integer(kind=C64), intent(IN), dimension(2) :: key
+      !< Philox key
       complex(kind=WC), dimension(2, 2) :: Unew
-
+      !< Updated SU2 link
       complex(kind=WC), dimension(2, 2) :: XMatrix, V, Vdag
+      !< Staple, StapleDagger, X-matrix
       complex(kind=WC) :: detV
+      !< determinant of staple
       real(kind=WP) :: alpha
-      integer(kind=C64) :: counter0(4)
+      !< sqrt(det(staple))
+      integer(kind=C64), dimension(4) :: counter0
+      !< Philox counter
       real(kind=WP), parameter :: eps = TINY(1.0_WP)
+      !< Smallest real number in WP precision
       ! Calculate the staple
       call stapleAt(U, V, coord, mu)
       ! get dterminant
@@ -198,36 +227,48 @@ contains
    end function su2_updated_link
 
    subroutine SU2_updateLinks(U, beta, UUpdated, master_key, sweep_id)
-      !!
-      !! Update all SU(2) links on the lattice.
-      !!
-      !! The update is staged by:
-      !!   * direction mu
-      !!   * checkerboard parity colour
-      !!
-      !! so that each do concurrent block updates an independent set of links.
-      !!
-      !! Inputs:
-      !!   U          : current lattice
-      !!   beta       : gauge coupling
-      !!   master_key : user-provided Philox master key
-      !!   sweep_id   : identifies the sweep so keys vary deterministically
-      !!
-      !! Output:
-      !!   UUpdated   : updated lattice
-      !!
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
+      !<
+      !< Update all SU(2) links on the lattice.
+      !<
+      !< The update is staged by:
+      !<   * direction mu
+      !<   * checkerboard parity colour
+      !<
+      !< so that each do concurrent block updates an independent set of links.
+      !<
+      !< Inputs:
+      !<   U          : current lattice
+      !<   beta       : gauge coupling
+      !<   master_key : user-provided Philox master key
+      !<   sweep_id   : identifies the sweep so keys vary deterministically
+      !<
+      !< Output:
+      !<   UUpdated   : updated lattice
+      !<
+     complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
+     !< Gaugefield [2,2,4,nt,nx,ny,nz]
       real(kind=WP), intent(IN) :: beta
+      !< beta-value
       complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(INOUT) :: UUpdated
+      !< Output updated gaugefield [2,2,4,nt,nx,ny,nz]
       integer(kind=C64), dimension(2), intent(IN) :: master_key
+      !< Philox Key
       integer, intent(IN) :: sweep_id
+      !< A counter for Philox
       integer, dimension(7) :: dataShape
+      !< Gaugefield diemnsions [2,2,4,nt,nx,ny,nz]
       integer :: nt, nx, ny, nz
+      !< Lattice dimensions
       integer :: it, ix, iy, iz, mu, colour
-      integer :: dims4(4)
-      integer(kind=C64) :: key(2)
+      !< Loop counters
+      integer, dimension(4) :: dims4
+      !< Lattice dimensions [nt,nx,ny,nz]
+      integer(kind=C64), dimension(2) :: key
+      !< Philox key
       integer, dimension(4) :: coord
+      !< Single site coordinate [it,ix,iy,zi]
       real(kind=WP), parameter :: eps = TINY(1.0_WP)
+      !< Smallest real number in WP precision
       dataShape = SHAPE(U)
       nt = dataShape(4)
       nx = dataShape(5)
@@ -260,20 +301,28 @@ contains
    end subroutine SU2_updateLinks
 
    pure subroutine stapleAt(U, V, coord, mu)
-      !!
-      !! Compute the standard Wilson-type staple for an SU(2) link.
-      !!
-      !! The staple is evaluated at the link U_mu(coord), and is the sum of the
-      !! forward and backward staples in all transverse directions nu != mu.
-      !!
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
+      !<
+      !< Compute the standard Wilson-type staple for an SU(2) link.
+      !<
+      !< The staple is evaluated at the link U_mu(coord), and is the sum of the
+      !< forward and backward staples in all transverse directions nu != mu.
+      !<
+     complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
+     !< Input gaugefield [2,2,4,nt,nx,ny,nz]
       integer, dimension(4), intent(IN) :: coord
+      !< Staple is at this coordinate
       integer, intent(IN) :: mu
+      !< Staple is in this direction
       complex(kind=WC), dimension(2, 2), intent(OUT) :: V
-
-      integer, dimension(4) :: thisCoord, step
+      !< Output Wilson-type staple
+      integer, dimension(4) :: thisCoord
+      !< single coordinate [it,ix,iy,iz]
+      integer, dimension(4) :: step
+      !< Used to navigate around gaugefield
       integer :: nu
+      !< counter
       integer, dimension(7) :: dataShape
+      !< Shape of gaugefield [2,2,4,it,ix,iy,iz]
       dataShape = SHAPE(U)
       step = 0
       step(mu) = 1
