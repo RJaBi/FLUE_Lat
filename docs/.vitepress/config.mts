@@ -1,9 +1,11 @@
-import { defineConfig } from 'vitepress'
+// .vitepress/config.mts
+import { withMermaid } from 'vitepress-plugin-mermaid'  // replace defineConfig import
 import apiSidebar from '../api/_sidebar.json'
 
-export default defineConfig({
+
+export default withMermaid({
   title: 'FLUE Documentation',
-  base: 'FLUE',
+  base: '/FLUE_Lat/',
   markdown: {
     math: true,
     languages: ['fortran-free-form', 'fortran-fixed-form'],
@@ -37,4 +39,6 @@ export default defineConfig({
       provider: 'local',
     },
   },
+  mermaid: {},
+
 })
