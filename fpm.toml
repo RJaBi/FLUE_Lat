@@ -121,3 +121,6 @@ It also allows blank lines in multi-line strings.
 preprocess = true
 display = ["public", "protected", "private"]
 max_frontpage_items = 4
+source = true
+graph = true
+output_dir =  "./docs/"
