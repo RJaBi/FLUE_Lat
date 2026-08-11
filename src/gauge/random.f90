@@ -1,4 +1,7 @@
 module FLUE_SU3_random
+  !< Contains a (unused) function to construct an SU3 matrix
+  !< From 3 SU2 matrices
+  !< i.e. Eqn 4.31 of Gattringer Lang textbook
    use FLUE_constants, only: WP, WC
    use FLUE_SU2_random, only: constructSU2Matrix
    use stdlib_intrinsics, only: stdlib_matmul
@@ -9,11 +12,15 @@ module FLUE_SU3_random
 
 contains
 
-   pure function constructSU3Matrix(R, S, T) result(U)
-      complex(kind=WC), dimension(2, 2), intent(IN) :: R, S, T
+  pure function constructSU3Matrix(R, S, T) result(U)
+    !< Constructs an SU3 matrix from 3 SU2 matrices
+    !< eqn 4.31 of Gattringer Lang textbook
+     complex(kind=WC), dimension(2, 2), intent(IN) :: R, S, T
+     !< Input SU2 matrices
       complex(kind=WC), dimension(3, 3) :: U
-    !! embed r,s,t into 3x3 matrices
+      !< output SU3 matrix
       complex(kind=WC), dimension(3, 3) :: RE, SE, TE
+      !< embedded SU2 matrices in 3x3 complex matrices
     !! in eqn 4.31 of Gattringer Lang
     !! embed r
       RE = (0.0_WP, 0.0_WP)
