@@ -35,7 +35,8 @@ csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
 toml-f      = { git = "https://github.com/toml-f/toml-f" }
 M_stopwatch        = { git = "https://github.com/urbanjost/M_stopwatch.git", branch= "main"}
 FJsample = { git = "https://github.com/RJaBi/FJsample" }
-philox = { git = "git@github.com:RJaBi/Philox_Fortran.git", branch = "main" }
+#philox = { git = "git@github.com:RJaBi/Philox_Fortran.git", branch = "main" }
+philox = {git = "../Philox_RNG", branch = "main"}
 test-drive = { git = "https://github.com/fortran-lang/test-drive", tag = "v0.6.1" }
 pyplot-fortran = { git="https://github.com/jacobwilliams/pyplot-fortran.git" }
 
@@ -47,7 +48,8 @@ pyplot-fortran = { git="https://github.com/jacobwilliams/pyplot-fortran.git" }
 [preprocess]
 [preprocess.cpp]
 suffixes = ["F90"]
-macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
+#macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
+macros=['SETGITHASH=Yes']
 
 #macros=['SETGITHASH=Yes']
 #macros=['SETGITHASH=Yes', 'OMP=1']
@@ -65,6 +67,32 @@ ignore = [
        "C011",    # allows missing default in select case statements
        "S233",    # incorrect-keyword-case. fprettyfi handles this for me
        ]
+extend-select = [
+	      "C061",    # missing-intent
+	      "C022",    # {dtype} has implicit kind
+	      "C032",    # magic number in IO statement
+	      "C043",    # file opened without action specifier
+	      "C142",    # Checks for exit or cycle in unnamed do loops
+	      "MOD001",  # checks for use of double precision or double complex types
+	      "MOD002",  # Checks for floating point literals that use d or D as the exponentiation
+	      "MOD031",  # Checks for any include statements
+	      "MOD201",  # Checks for the use of the old not-recommended mpi module.
+	      "S082",    # Catches multiple statements on the same line separated by a semicolon.
+	      "S102",    # Checks for inline comments that aren't preceded by at least two spaces.
+	      "S103",    # Checks for :: that aren't surrounded by a space on either side.
+	      "S201",    # Checks for unnecessary implicit none in module procedures
+	      "S211",    # Checks for multiple modules in one file
+	      "S212",    # Checks for programs and modules in one file
+	      "S221",    # Checks for programs and modules in one file
+	      "S251",    # Checks for unnecessary return statements
+	      "S252",    # Checks for else statements with a return statement in the preceeding if block
+	      "S253",    # Checks for else statements with a cycle statement in the preceeding if block
+	      "S254",    # Checks for else statements with a exit statement in the preceeding if block
+	      "S255",    # Checks for else statements with a stop statement in the preceeding if block
+	      "S262",    # Checks for variable declarations that mix declarations of both scalars and arrays.
+	      "S263",    # Checks for variable array declarations that either do or do not use the dimension attribute.
+	      "PORT",
+	      ]
 preview = true
 [extra.fortitude.check.per-file-ignores]
 # the c_wrapper gets parsed with f2py which can be a bit fussy
@@ -73,5 +101,23 @@ preview = true
     "C001", # 'implicit none' missing 'type'
     "C131", # module missing default accessibility statement
 ]
-#[extra.fortitude.check.incorrect-keyword-case]
-#keyword-case = "uppercase"
+[extra.fortitude.check.inconsistent-dimensions]
+# PREFER
+# ..., dimension(2,4,5) :: x
+# TO
+# ... :: x(2,4,5)
+prefer-attribute = "always"
+
+
+[extra.ford]
+project = "FLUE"
+# TOML allows comments, which is handy
+summary = """
+Splitting your summary over multiple lines
+is much easier in TOML.
+
+It also allows blank lines in multi-line strings.
+"""
+preprocess = true
+display = ["public", "protected", "private"]
+max_frontpage_items = 4

@@ -40,7 +40,9 @@ contains
     !<
      real(kind=WP), intent(IN) :: alpha, beta
      !< alpha and beta parameters (beta is fixed for given sim.)
-      integer(kind=C64), intent(IN) :: key(2), counter0(4)
+     integer(kind=C64), intent(IN), dimension(4) :: counter0
+     !< Philox keys
+      integer(kind=C64), intent(IN), dimension(2) :: key
       !< Philox keys
       real(kind=WP) :: lambda2
       !< Output lambda 2
@@ -57,7 +59,7 @@ contains
          return
       end if
       attempt = 0_C64
-      do
+      PhiloxAttempt: do
          c = counter0
          c(3) = attempt
          c(4) = 1_C64
@@ -68,17 +70,17 @@ contains
          ! if lambda2 isn't suitable, try again
          if (lambda2 < 0.0_WP) then
             attempt = attempt + 1_C64
-            cycle
+            cycle PhiloxAttempt
          end if
          if (lambda2 > 1.0_WP) then
             attempt = attempt + 1_C64
-            cycle
+            cycle PhiloxAttempt
          end if
          ! If it is suitable exit
-         if (rvec(4) * rvec(4) <= 1.0_WP - lambda2) exit
+         if (rvec(4) * rvec(4) <= 1.0_WP - lambda2) exit PhiloxAttempt
          ! If it isn't, go again
          attempt = attempt + 1_C64
-      end do
+      end do PhiloxAttempt
    end function getLambda2
 
    pure function getXVec(x0, key, counter0) result(xvec)
@@ -97,8 +99,10 @@ contains
     !<
      real(kind=WP), intent(IN) :: x0
      !< The zeroth random number that sets the condition on the 3-vec of random numbers
-      integer(kind=C64), intent(IN) :: key(2), counter0(4)
-      !< Phiox key
+     integer(kind=C64), intent(IN), dimension(4) :: counter0
+     !< Philox keys
+      integer(kind=C64), intent(IN), dimension(2) :: key
+      !< Philox key
       real(kind=WP), dimension(3) :: xvec
       !< 3-vector of random numbers
       real(kind=WP) :: xlen, requiredLen
@@ -115,7 +119,7 @@ contains
          return
       end if
       attempt = 0_C64
-      do
+      PhiloxAttempt: do
          c = counter0
          c(3) = attempt
          c(4) = 2_C64
@@ -126,10 +130,10 @@ contains
          !xvec(3) = philox_uniform_co(c, key, 3_C64, -1.0_WP, 1.0_WP)
          xlen = SUM(xvec**2)
          ! If suitable, exit
-         if (xlen <= 1.0_WP .AND. xlen > eps) exit
+         if (xlen <= 1.0_WP .AND. xlen > eps) exit PhiloxAttempt
          ! else go again
          attempt = attempt + 1_C64
-      end do
+      end do PhiloxAttempt
       xvec = xvec * (SQRT(requiredLen) / SQRT(xlen))
    end function getXVec
 
@@ -148,7 +152,9 @@ contains
      !<
      real(kind=WP), intent(IN) :: alpha, beta
      !< alpha and beta parameters (beta fixed for given sim.)
-      integer(kind=C64), intent(IN) :: key(2), counter0(4)
+     integer(kind=C64), intent(IN), dimension(4) :: counter0
+     !< Philox Keys
+      integer(kind=C64), intent(IN), dimension(2) :: key
       !< Philox keys
       integer, intent(IN) :: subgroup_id
       !< Describes the SU2 subgroup
@@ -186,11 +192,11 @@ contains
      !< Input gaugefield [2,2,4,nt,nx,ny,nz]
       real(kind=WP), intent(IN) :: beta
       !< beta-value
-      integer, intent(IN) :: coord(4)
+      integer, intent(IN), dimension(4) :: coord
       !< Base coordinate of link to update [it,ix,iy,zi]
       integer, intent(in) :: mu
       !< Direction to update
-      integer, intent(in) :: dims(4)
+      integer, intent(in), dimension(4) :: dims
       !< Lattice dimensions [nt,nx,ny,nz]
       integer(kind=C64), intent(IN), dimension(2) :: key
       !< Philox key
@@ -286,16 +292,16 @@ contains
             ! Get a key for the random number for this direction, checker, sweep and 'run' (master)
             call derive_stage_key(master_key, sweep_id, stage_tag=2, mu=mu, colour=colour, key=key)
             ! Can now parallelise over
-            do concurrent(it=1:nt, ix=1:nx, iy=1:ny, iz=1:nz) &
+            site: do concurrent(it=1:nt, ix=1:nx, iy=1:ny, iz=1:nz) &
                DEFAULT(none) SHARED(UUpdated, beta) LOCAL_INIT(mu, key, dims4, colour, coord)
                coord = (/it, ix, iy, iz/)
                if (site_colour(coord, mu, .FALSE.) /= colour) then
                   ! Skip this execution cause it's on the other 'colour'
-                  cycle
+                  cycle site
                end if
                UUpdated(:, :, mu, it, ix, iy, iz) = su2_updated_link( &
                                                     UUpdated, beta, coord, mu, key, dims4)
-            end do
+            end do site
          end do
       end do
    end subroutine SU2_updateLinks
@@ -329,11 +335,11 @@ contains
       thisCoord = coord + step
       thisCoord = periodCoord(thisCoord, dataShape)
       V = CMPLX(0.0_WP, 0.0_WP, kind=WC)
-      do nu = 1, 4
-         if (nu == mu) cycle
+      direction: do nu = 1, 4
+         if (nu == mu) cycle direction
          V = V + SU2_genericPath(U, thisCoord, [nu, -mu, -nu]) &
              + SU2_genericPath(U, thisCoord, [-nu, -mu, nu])
-      end do
+      end do direction
    end subroutine stapleAt
 
 end module FLUE_SU2_heatbath

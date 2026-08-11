@@ -91,7 +91,7 @@ contains
     !<        (1,2), (1,3), (2,3)
     !<   5) Reunitarize the final matrix.
     !<
-    complex(kind=WC), intent(IN) :: U(:, :, :, :, :, :, :)
+    complex(kind=WC), intent(IN), dimension(:, :, :, :, :, :, :) :: U
     !< Input gaugefield [3,3,4,nt,nx,ny,nz]
       real(kind=WP), intent(IN) :: beta
       !< beta value
@@ -107,11 +107,11 @@ contains
       !< Pointer used to switch which action is used
       integer(kind=C64), dimension(2), intent(IN) :: key
       !< Philox variable
-      complex(kind=WC) :: Uout(3, 3)
+      complex(kind=WC), dimension(3, 3) :: Uout
       !< Updated SU(3) link
       complex(kind=WC), dimension(3, 3) :: staple, W
       !< The staple and W= U * staple
-      integer(kind=C64) :: counter0(4)
+      integer(kind=C64), dimension(4) :: counter0
       !< Philox variable
       Uout = U(:, :, mu, coord(1), coord(2), coord(3), coord(4))
 
@@ -156,8 +156,10 @@ contains
       !< Philox variable
       real(kind=WP), intent(IN) :: beta
       !< beta variables
-      integer(kind=C64), intent(IN) :: key(2), counter0(4)
-      !< Philox variables
+      integer(kind=C64), intent(IN), dimension(4) :: counter0
+      !< Philox keys
+      integer(kind=C64), intent(IN), dimension(2) :: key
+      !< Philox key
       complex(kind=WC), dimension(2, 2) :: MfromW, SU2_M, SU2_X, SU2_U
       !< 2x2 (SU2) sub-matrices
       complex(kind=WC), dimension(3, 3) :: embed, Wtemp
@@ -209,15 +211,15 @@ contains
      !< Lattice dimensions
      logical, intent(IN) :: use_symanzik
      !< Selects checkerboard scheme
-     integer, allocatable, intent(OUT) :: sites_it(:, :, :)
+     integer, allocatable, intent(OUT), dimension(:, :, :) :: sites_it
      !< T: Output coordinate arrays (SoA layout)
-     integer, allocatable, intent(OUT) :: sites_ix(:, :, :)
+     integer, allocatable, intent(OUT), dimension(:, :, :) :: sites_ix
      !< X: Output coordinate arrays (SoA layout)
-     integer, allocatable, intent(OUT) :: sites_iy(:, :, :)
+     integer, allocatable, intent(OUT), dimension(:, :, :) :: sites_iy
      !< Y: Output coordinate arrays (SoA layout)
-     integer, allocatable, intent(OUT) :: sites_iz(:, :, :)
+     integer, allocatable, intent(OUT), dimension(:, :, :) :: sites_iz
      !< Z: Output coordinate arrays (SoA layout)
-     integer, allocatable, intent(OUT) :: counts(:, :)
+     integer, allocatable, intent(OUT), dimension(:, :) :: counts
      !< Number of sites per colour/checkerboard and direction
      integer :: mu, colour, it, ix, iy, iz
      !< counters
@@ -284,7 +286,7 @@ contains
       !< The beta value
       complex(kind=WC), dimension(:,:,:,:,:,:,:), intent(INOUT) :: UUpdated
       !< Updated gaugefield [3,3,4,nt,nx,ny,nz]
-      integer(kind=C64), intent(IN) :: master_key(2)
+      integer(kind=C64), intent(IN), dimension(2) :: master_key
       !< Master key for philox
       integer, intent(IN) :: sweep_id
       !< which sweep/trajectory it is. Used for Philox
@@ -414,8 +416,8 @@ contains
       thisCoord = coord + step
       thisCoord = periodCoord(thisCoord, dataShape)
       V = CMPLX(0.0_WP, 0.0_WP, kind=WC)
-      do nu = 1, 4
-         if (nu == mu) cycle
+      direction: do nu = 1, 4
+         if (nu == mu) cycle direction
          if (mu == 1 .OR. nu == 1) then
             aniFac = xi
          else
@@ -423,7 +425,7 @@ contains
          end if
          V = V + aniFac * (genericPath(U, thisCoord, [nu, -mu, -nu]) &
                            + genericPath(U, thisCoord, [-nu, -mu, nu]))
-      end do
+      end do direction
    end subroutine stapleWilson
 
 
@@ -457,8 +459,8 @@ contains
      ! Reusing step to avoid array temporary's
      step = step + coord
       thisCoord = periodCoord(step, dataShape)  ! x + mu
-      do nu = 1, 4
-         if (nu == mu) cycle
+      direction: do nu = 1, 4
+         if (nu == mu) cycle direction
          if (mu == 1 .OR. nu == 1) then
             aniFac = xi
          else
@@ -479,7 +481,7 @@ contains
          V = V + aniFac * genericPath(U, thisCoord, r5)
          r5 = [-nu, -mu, -mu, nu, mu]
          V = V + aniFac * genericPath(U, thisCoord, r5)
-      end do
+      end do direction
     end subroutine stapleRectangle
 
    pure subroutine stapleSymanzik(U, V, coord, mu, xi)
