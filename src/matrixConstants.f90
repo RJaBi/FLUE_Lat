@@ -1,6 +1,7 @@
 module FLUE_matrixConstants
-  !< Module: FLUE_matrixConstants
-  !< Purpose:
+  !< FLUE_matrixConstants
+  !<
+  !<
   !<   This module provides a collection of predefined constant matrices used
   !<   throughout FLUE. These include identity matrices for SU(2) and SU(3)
   !<   operations together with the three Pauli matrices that form a basis of the

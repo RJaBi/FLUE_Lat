@@ -1,4 +1,6 @@
 module FLUE_stoutSmearing
+  !< Module to do stout-link smearing on SU(3) gaugelinks
+  !< i.e. Morningstar & Peardon: hep-lat/0311018
    use FLUE_constants, only: WP, WC
    use FLUE_matrixConstants, only: Ident3x3
    use flue_wloops, only: genericPath
@@ -10,18 +12,30 @@ module FLUE_stoutSmearing
 
 contains
 
-   pure subroutine StoutSmearLinks(U, rho, nSweeps, USmeared)
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(in) :: U
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(out) :: USmeared
-      real(kind=WP), intent(in) :: rho
-      integer, intent(in) :: nSweeps
+  pure subroutine StoutSmearLinks(U, rho, nSweeps, USmeared)
+    !< Stout-Smear the gaugelinks in U
+    !< with a smearing weight of rho
+    !< Do it nSweeps times
+    !< output is in USmeared
+    !< i.e. MorningStar & Peardon
+    complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(in) :: U
+    !< Input gaugefield [3,3,4,nt,nx,ny,nz]
+    complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(out) :: USmeared
+    !< Output smeared gaugefield [3,3,4,nt,nx,ny,nz]
+    real(kind=WP), intent(in) :: rho
+    !< Smearing strength
+    integer, intent(in) :: nSweeps
+    !< Number of sweeps of smearing
       ! working arrays
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: UTemp
+    complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: UTemp
+    !< Temporary storage of smeared links
       ! Geometry
-      integer, dimension(7) :: dataShape
-      integer :: nt, nx, ny, nz
-      ! counters
-      integer :: ISweep
+    integer, dimension(7) :: dataShape
+    !< Shape of the gaugefield [3,3,4,nt,nx,ny,nz]
+    integer :: nt, nx, ny, nz
+    !< lattice dimensions
+    integer :: ISweep
+    !< counter
       dataShape = SHAPE(U)
       nt = dataShape(4)
       nx = dataShape(5)
@@ -40,19 +54,24 @@ contains
    end subroutine StoutSmearLinks
 
    pure subroutine StoutSmearOnce(U_old, rho, U_new)
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(in) :: U_old
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(out) :: U_new
-      real(kind=WP), intent(in) :: rho
+     !< Does a single sweep of stout-link smearing
+     complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(in) :: U_old
+     !< Input gaugefield [3,3,4,nt,nx,ny,nz]
+     complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(out) :: U_new
+     !< Output gaugefield after 1 sweep of smearing [3,3,4,nt,nx,ny,nz]
+     real(kind=WP), intent(in) :: rho
+     !< Smering strength
       ! lattice geometry
-      integer, dimension(7) :: dataShape
-      integer :: nx, ny, nz, nt
-      ! counters
-      integer :: it, ix, iy, iz, mu
-      ! staples holder
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: staples
-      ! for updating the links
-      complex(kind=WC), dimension(3, 3) :: U_link, C, Q, V, U_updated
-
+     integer, dimension(7) :: dataShape
+     !< Shape of the gaugefield [3,3,4,nt,nx,ny,nz]
+     integer :: nx, ny, nz, nt
+     !< Lattice dimensions
+     integer :: it, ix, iy, iz, mu
+     !< counters
+     complex(kind=WC), dimension(:, :, :, :, :, :, :), allocatable :: staples
+     !< Holds staples
+     complex(kind=WC), dimension(3, 3) :: U_link, C, Q, V, U_updated
+      !< for updating the links
       ! Get geometry
       dataShape = SHAPE(U_old)
       nt = dataShape(4)
@@ -102,24 +121,31 @@ contains
    end subroutine StoutSmearOnce
 
    pure subroutine ComputeSpatialStaples(data, rho, staples)
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(in) :: data
-      real(kind=WP), intent(in) :: rho
+     !< Computes *all* of the spatial staples for the gaugefield
+     !< with factor of smearing strength rho included
+     !< Computes sum of backward/forward staples at given site/direction
+     complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(in) :: data
+     !< Input gaugefield [3,3,4,nt,nx,ny,nz]
+     real(kind=WP), intent(in) :: rho
+     !< Smearing strength rho
       ! staples is only mu=1,2,3, i.e. spatial only
-      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(out) :: staples
-      ! Lattice dimensions
-      integer, dimension(7) :: dataShape
-      integer, dimension(4) :: coord
-      integer :: nt, nx, ny, nz
-      ! counters
-      integer :: it, iz, iy, ix, mu, nu
-      ! holders
-      complex(kind=WC), dimension(3, 3) :: stapleFwd, stapleBwd
+     complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(out) :: staples
+     !< Output staples [3,3,3,nt,nx,ny,nz]
+     integer, dimension(7) :: dataShape
+     !< The shape of the gaugefield [3,3,4,nt,nx,ny,nz]
+     integer, dimension(4) :: coord
+     !< Single site coordiinate [it,ix,iy,iz]
+     integer :: nt, nx, ny, nz
+     !< Lattice dimensions
+     integer :: it, iz, iy, ix, mu, nu
+     !< counters
+     complex(kind=WC), dimension(3, 3) :: stapleFwd, stapleBwd
+     !< Per site/direction forward and backward staples
       dataShape = SHAPE(data)
       nt = dataShape(4)
       nx = dataShape(5)
       ny = dataShape(6)
       nz = dataShape(7)
-
       staples = CMPLX(0.0_WP, 0.0_WP, kind=WC)
 #ifdef LOCALITYSUPPORT
       do concurrent(ix=1:nx, iy=1:ny, iz=1:nz, it=1:nt) &
@@ -134,8 +160,8 @@ contains
                      ! do spatial links only
                      do mu = 2, 4
                         ! do staples from all other directions
-                        do nu = 2, 4
-                           if (nu == mu) cycle
+                        direction: do nu = 2, 4
+                           if (nu == mu) cycle direction
                            ! Calculate forward staple
                            stapleFwd = genericPath(data, coord, (/nu, mu, -nu/))
                            staples(:, :, mu - 1, it, ix, iy, iz) = staples(:, :, mu - 1, it, ix, iy, iz) &
@@ -144,7 +170,7 @@ contains
                            stapleBwd = genericPath(data, coord, (/-nu, mu, nu/))
                            staples(:, :, mu - 1, it, ix, iy, iz) = staples(:, :, mu - 1, it, ix, iy, iz) &
                                                                    + stapleBwd
-                        end do
+                        end do direction
                      end do
 #ifdef LOCALITYSUPPORT
                   end do
@@ -158,10 +184,14 @@ contains
    end subroutine ComputeSpatialStaples
 
    pure function ComputeQMatrix(U, C) result(Q)
-      complex(kind=WC), dimension(3, 3), intent(in) :: U, C
-      complex(kind=WC), dimension(3, 3) :: Q
-      ! working matricesb
-      complex(kind=WC), dimension(3, 3) :: Omega, Diff
+     !< Computes the Q Matrix required
+     !< Eqn2 of Morningstar & Peardon
+     complex(kind=WC), dimension(3, 3), intent(in) :: U, C
+     !< Input gauge link and sum of staples
+     complex(kind=WC), dimension(3, 3) :: Q
+     !< Output Q Matrix
+     complex(kind=WC), dimension(3, 3) :: Omega, Diff
+     !< Omega = CU^\dagger. Diff is helper variable
       ! C is the raw staple sum.
       ! i.e. Eqn1 of Morningstar & Peadron
       call MultiplyMatMatDag(Omega, C, U)
