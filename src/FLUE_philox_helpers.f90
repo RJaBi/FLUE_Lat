@@ -62,17 +62,17 @@ contains
      !<
      !< The shift by 7 spreads t1 bits into different positions before mixing,
      !< reducing linear correlation between key(1) and key(2).
-     integer(kind=C64), intent(IN) :: master_key(2)
+     integer(kind=C64), intent(IN), dimension(2) :: master_key
      !< 128-bit base key (2 x 64-bit words)
      integer, intent(IN) :: sweep_id
      !< trajectory / sweep index
      integer, intent(IN) :: stage_tag
      !< algorithm stage identifier
-     integer, intent(IN) ::mu
+     integer, intent(IN) :: mu
      !< link direction
-     integer, intent(IN) ::colour
+     integer, intent(IN) :: colour
      !< checkerboard subset
-     integer(kind=C64), intent(OUT) :: key(2)
+     integer(kind=C64), intent(OUT), dimension(2) :: key
      !< derived 128-bit Philox key
      integer(kind=C64) :: t1, t2
      !< sweep_id/mu/colour & stage_tag/mu/colour keys to be mixed
@@ -125,7 +125,7 @@ contains
       !<   in the rectangular loops:
       !<      colour = 2*mod(coord(mu),2) + mod(sum(other coords),2)
       !<
-     integer, intent(IN) :: coord(4)
+     integer, intent(IN), dimension(4) :: coord
      !< coordinate of the link
      integer, intent(IN) :: mu
      !< integer direction of link
@@ -153,9 +153,9 @@ contains
      !< This linear index is used as counter(1) for the Philox stream so each
      !< site has its own independent random-number namespace.
      !<
-     integer, intent(IN) :: coord(4)
+     integer, intent(IN), dimension(4) :: coord
      !< site coordinate [it, ix, iy, iz]
-     integer, intent(IN) :: dims(4)
+     integer, intent(IN), dimension(4) :: dims
      !< total size of lattice [nt, nx, ny, nz]
      integer(kind=C64) :: idx
      !< linearised counter

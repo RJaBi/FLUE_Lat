@@ -49,17 +49,19 @@ contains
     ! TODO: Swap for fixSU3 ?
     integer, parameter :: nc = 3
     !< number of colours
+    integer :: infl
+    !< file unit
       allocate (G_tr(nx, ny, nz, nt, nc, nc - 1))
       allocate (ReG(nx, ny, nz, nt, nc, nc - 1))
       allocate (ImG(nx, ny, nz, nt, nc, nc - 1))
-      open (101, file=filename, form='unformatted', status='old', action='read', convert='BIG_ENDIAN')
+      open (newunit=infl, file=filename, form='unformatted', status='old', action='read', convert='BIG_ENDIAN')
       ! File format means we read the first two rows of G_x.
       ! Instead we read the first two columns of G_tr (the transpose of G_x) for better memory alignment.
       do ic = 1, nc - 1
-         read (101) ReG(:, :, :, :, :, ic)
-         read (101) ImG(:, :, :, :, :, ic)
+         read (infl) ReG(:, :, :, :, :, ic)
+         read (infl) ImG(:, :, :, :, :, ic)
       end do
-      close (101)
+      close (infl)
       G_tr(1:nx, 1:ny, 1:nz, 1:nt, :, :) = CMPLX(ReG(1:nx, 1:ny, 1:nz, 1:nt, :, :), ImG(1:nx, 1:ny, 1:nz, 1:nt, :, :), kind=WC)
       do it = 1, nt
          do iz = 1, nz
@@ -98,7 +100,7 @@ contains
       !< 32 bit integer is used for CSSM
       integer(i32) :: nconfig, nxdim, nydim, nzdim, ntdim
       !< config number, lattice dimensions
-      integer, parameter :: dp = KIND(1.0D0) !! Double precision real scalars.
+      integer, parameter :: dp = KIND(1.0D0)  !! Double precision real scalars.
       !< ensuring same data type (assume same compiler/system...)
       real(kind=dP) :: beta
       !< beta value of configs
