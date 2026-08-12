@@ -6,6 +6,9 @@ import apiSidebar from '../api/_sidebar.json'
 export default withMermaid({
   title: 'FLUE Documentation',
   base: '/FLUE_Lat/',
+  head: [
+  ['link', { rel: 'icon', href: '/images/lattice-063.png' }]
+   ],
   markdown: {
     math: true,
     languages: ['fortran-free-form', 'fortran-fixed-form'],
