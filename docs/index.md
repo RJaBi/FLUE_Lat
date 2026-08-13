@@ -15,6 +15,9 @@ hero:
     - theme: alt
       text: GitHub Repository
       link: https://github.com/RJaBi/FLUE_Lat
+    - theme: alt
+      text: Installation
+      link: /Installation/
 
 features:
   - icon:
@@ -29,12 +32,21 @@ features:
   - icon: "\U0001F40D"
     title: Python Integration
     details: Access (some) FLUE functionality from Python through provided wrapper interfaces.
+    link: /install/python
   - icon: "\U0001F4D6"
     title: API Documentation
-    details: Automatically generated from source-code documentation comments.
+    details: Automatically generated from source-code documentation comments using [FORMAL](https://szaghi.github.io/formal/).
     link: /api/
   - icon: "\U0001F513"
     title: Open Source
     details: MIT licensed and developed openly on GitHub.
     link: https://github.com/RJaBi/FLUE_Lat
 ---
+
+## Author
+
+**Ryan Bignell** -- [RJaBi](https://github.com/RJaBi/)
+
+# Copyright
+
+This project is distributed under the [MIT](http://opensource.org/licenses/MIT) License.
