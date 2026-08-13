@@ -27,7 +27,7 @@ jobs:
           cache: npm
           cache-dependency-path: docs/package-lock.json
       - run: pip install formal-ford2vitepress
-      - run: formal generate --project fpm.toml --output docs/api --mirror-sources --diagrams
+      - run: formal generate --output docs/api --mirror-sources --diagrams
       - run: cd docs && npm ci && npm run docs:build
       - uses: actions/upload-pages-artifact@v3
         with:
