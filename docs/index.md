@@ -20,8 +20,7 @@ hero:
       link: /Installation/
 
 features:
-  - icon:
-    title: Lattice QCD
+  - title: Lattice QCD
     details: Compute plaquettes, Wilson loops, Polyakov loops, improved field-strength tensors, and generate quenched configurations using heatbath. For SU(3) and SU(2) (partial support)
   - icon: "\u26A1"
     title: Modern Fortran Performance
@@ -32,7 +31,7 @@ features:
   - icon: "\U0001F40D"
     title: Python Integration
     details: Access (some) FLUE functionality from Python through provided wrapper interfaces.
-    link: /install/python
+    link: /Installation/python
   - icon: "\U0001F4D6"
     title: API Documentation
     details: Automatically generated from source-code documentation comments using [FORMAL](https://szaghi.github.io/formal/).
