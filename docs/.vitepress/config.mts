@@ -30,6 +30,7 @@ export default withMermaid({
       { text: 'Home', link: '/' },
       { text: 'API', link: '/api/' },
       { text: 'Installation', link: '/Installation/' },
+      { text: 'Applications', link: '/Applications/' },
     ],
 
     sidebar: {
@@ -49,6 +50,25 @@ export default withMermaid({
           items: [
             { text: 'Fortran', link: '/Installation/fortran' },
             { text: 'Python', link: '/Installation/python' },
+          ],
+        },
+      ],
+
+      '/Applications/': [
+        {
+          text: 'Applications',
+          items: [
+            { text: 'CSSM_to_OQCD', link: '/Applications/CSSM_to_OQCD' },
+            { text: 'ILDG_to_OQCD', link: '/Applications/ILDG_to_QCD' },
+            { text: 'OQCD_to_ILDG', link: '/Applications/OQCD_to_ILDG' },
+            { text: 'UNIT_to_OQCD', link: '/Applications/UNIT_to_OQCD' },
+            { text: 'SU2_HKLS_to_CSSM', link: '/Applications/SU2_HKLS_to_CSSM' },
+            { text: 'SU2_HKLS_to_NRQ2CD', link: '/Applications/SU2_HKLS_to_NRQ2CD' },
+            { text: 'SU3_heatbath', link: '/Applications/SU3_heatbath' },
+            { text: 'SU2_heatbath', link: '/Applications/SU2_heatbath' },
+            { text: 'OQCD_stoutSmear', link: '/Applications/OQCD_stoutSmear' },
+            { text: 'magnetic', link: '/Applications/magnetic' },
+            { text: 'superMWE', link: '/Applications/superMWE' },
           ],
         },
       ],

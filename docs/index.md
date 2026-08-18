@@ -46,6 +46,6 @@ features:
 
 **Ryan Bignell** -- [RJaBi](https://github.com/RJaBi/)
 
-# Copyright
+## Copyright
 
 This project is distributed under the [MIT](http://opensource.org/licenses/MIT) License.
