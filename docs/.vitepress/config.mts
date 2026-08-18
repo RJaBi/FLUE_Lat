@@ -59,7 +59,7 @@ export default withMermaid({
           text: 'Applications',
           items: [
             { text: 'CSSM_to_OQCD', link: '/Applications/CSSM_to_OQCD' },
-            { text: 'ILDG_to_OQCD', link: '/Applications/ILDG_to_QCD' },
+            { text: 'ILDG_to_OQCD', link: '/Applications/ILDG_to_OQCD' },
             { text: 'OQCD_to_ILDG', link: '/Applications/OQCD_to_ILDG' },
             { text: 'UNIT_to_OQCD', link: '/Applications/UNIT_to_OQCD' },
             { text: 'SU2_HKLS_to_CSSM', link: '/Applications/SU2_HKLS_to_CSSM' },
