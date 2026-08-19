@@ -20,6 +20,7 @@ module FLUE_philox_helpers
 
 contains
 
+  !$omp declare target
   subroutine derive_stage_key(master_key, sweep_id, stage_tag, mu, colour, key)
     !< Create a separated key for each stage
     !<

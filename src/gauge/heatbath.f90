@@ -58,27 +58,7 @@ module FLUE_heatbath
 
 contains
 
-  !====================================================================
-  !> Compute updated SU(3) link at a single lattice site
-  !!
-  !! @param U              Gauge field
-  !! @param beta           Gauge coupling
-  !! @param coord          Site coordinate (t,x,y,z)
-  !! @param mu             Direction index
-  !! @param key            Philox RNG key
-  !! @param dims4          Lattice dimensions
-  !! @param stapleKernel   Procedure pointer to staple implementation
-  !! @param xi             Anisotropy parameter
-  !!
-  !! returns Updated SU(3) link matrix
-  !!
-  !! ## Steps
-  !! 1. Extract current link
-  !! 2. Compute staple
-  !! 3. Form W = U * staple
-  !! 4. Apply SU(2) subgroup heatbath updates
-  !! 5. Reunitarize result
-  !====================================================================
+  !$omp declare target
   pure function su3_updated_link(U, beta, coord, mu, key, dims4, stapleKernel, xi) result(Uout)
     !<
     !< Compute the updated SU(3) link at one site and one direction.
@@ -129,6 +109,7 @@ contains
       call FixSU3Matrix(Uout)
     end function su3_updated_link
 
+    !$omp declare target
    pure subroutine apply_su2_subgroup_update(ULink, W, i1, i2, subgroup_id, beta, key, counter0)
      !<
      !< Apply one embedded SU(2) heatbath update inside SU(3).
@@ -255,31 +236,14 @@ contains
       end do
    end subroutine build_colour_sites
 
-
-   !===================================================================
-   !> Perform one full heatbath sweep of the lattice
-   !!
-   !! @param U             Input gauge field
-   !! @param beta          Gauge coupling
-   !! @param UUpdated      Output (updated links)
-   !! @param master_key    Philox seed key
-   !! @param sweep_id      Sweep index
-   !! @param sites_*       Site lists (SoA)
-   !! @param counts        Number of sites per colour
-   !! @param actionTag     "wilson" | "symanzik" | "iwasaki"
-   !! @param xi            Anisotropy
-   !!
-   !! ## Parallelism
-   !! Uses `do concurrent` over site lists for each `(mu, colour)` stage.
-   !!
-   !! ## RNG strategy
-   !! Each stage derives an independent Philox substream via
-   !! `derive_stage_key`.
-   !===================================================================
    subroutine updateLinks(U, beta, UUpdated, master_key, sweep_id, sites_it, sites_ix, sites_iy, sites_iz, counts, actionTag, xi)
-      !------------------------------------
-      ! Arguments
-      !------------------------------------
+     !< Perform one full heatbath sweep of the lattice
+     !< ## Parallelism
+     !< Uses `do concurrent` over site lists for each `(mu, colour)` stage.
+     !<
+     !< ## RNG strategy
+     !< Each stage derives an independent Philox substream via
+     !< `derive_stage_key`.
      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
      !< Input gaugefield [3,3,4,nt,nx,ny,nz]
       real(kind=WP), intent(IN) :: beta
@@ -301,7 +265,7 @@ contains
       integer, dimension(:,:),intent(IN) :: counts
       !< Number of sites per colour and direction
       character(len=*), intent(IN), optional :: actionTag
-      !< Specifies the action
+      !< Specifies the action. Wilson|Symanzik|Iwasaki
       real(kind=WP), intent(in), optional :: xi
       !< gauge anisotropy
       !------------------------------------
@@ -355,9 +319,9 @@ contains
       else
          xig = 1.0_WP
       end if
-      !====================================
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! MAIN UPDATE
-      !====================================
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       do mu = 1, 4
          do colour = 0, ncolours - 1
             call derive_stage_key(master_key, sweep_id, &
@@ -374,7 +338,9 @@ contains
                !------------------------------------
                ! Compute update (fully scalar args)
                !------------------------------------
-               Uloc = su3_updated_link(UUpdated, beta, coord, mu, key, dims4, stapleKernel, xig)
+               !Uloc = su3_updated_link(UUpdated, beta, coord, mu, key, dims4, stapleKernel, xig)
+               !Uloc = su3_updated_link(UUpdated, beta, coord, mu, key, dims4, xig)
+               Uloc = Ident3x3
                !------------------------------------
                ! Store result
                !------------------------------------
@@ -384,7 +350,7 @@ contains
       end do
    end subroutine updateLinks
 
-
+   !$omp declare target
    pure subroutine stapleWilson(U, V, coord, mu, xi)
      !<
      !< Compute the Wilson staple for one site
@@ -428,7 +394,7 @@ contains
       end do direction
    end subroutine stapleWilson
 
-
+   !$omp declare target
    pure subroutine stapleRectangle(U, V, coord, mu, xi)
      !< Computes the rectangle staple (1x2) as in the Symanzik
      !< improved action for one site

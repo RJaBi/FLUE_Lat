@@ -9,8 +9,9 @@ module flue_wloops
   implicit none(external)
   public
 
-contains
 
+contains
+  !$omp declare target
   pure function genericpath(data, coordbase, path) result(u_xd)
     !< Returns the links starting from coordbase multiplied together along path
     !< Used to construct wilson loops, staples, etc

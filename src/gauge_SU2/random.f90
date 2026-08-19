@@ -6,8 +6,9 @@ module FLUE_SU2_random
    implicit none(type, external)
    private
    public :: constructSU2Matrix
-contains
+ contains
 
+  !$omp declare target
   pure function constructSU2Matrix(r) result(U)
     !< Constructs an SU2 matrix from the quarternion representation
     !< i.e. Eqn 4.24 of Gattringer Lang

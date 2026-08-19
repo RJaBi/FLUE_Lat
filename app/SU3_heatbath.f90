@@ -12,15 +12,15 @@ PROGRAM SU3_heatbath
    IMPLICIT NONE(TYPE, EXTERNAL)
 
    ! Lattice geometry
-   INTEGER, PARAMETER :: NS = 4
-   INTEGER, PARAMETER :: NT = 4
+   INTEGER, PARAMETER :: NS = 12
+   INTEGER, PARAMETER :: NT = 12
    COMPLEX(kind=WC), DIMENSION(3, 3, 4, NT, NS, NS, NS) :: U, UNew
    ! Sites linearisation
    INTEGER, ALLOCATABLE, DIMENSION(:, :, :) :: sites_t, sites_x, sites_y, sites_z
    INTEGER, ALLOCATABLE, DIMENSION(:, :) :: counts
    ! steps
    INTEGER, PARAMETER :: nTherm = 0
-   INTEGER, PARAMETER :: nTraj = 200
+   INTEGER, PARAMETER :: nTraj = 20
    INTEGER, PARAMETER :: nSkip = 1
    ! simulation params
    REAL(kind=WP), PARAMETER :: beta = 2.8_WP
@@ -57,27 +57,28 @@ PROGRAM SU3_heatbath
    case ('iwasaki')
       useSymanzik = .true.
    end select
-
+   write(*,*) '1'
    CALL build_colour_sites(NT, NS, NS, NS, useSymanzik, sites_t, sites_x, sites_y, sites_z, counts)
-
+   write(*,*) '2'
    ! Thermallise
    DO iTraj = 1, nTherm
       CALL updateLinks(U, beta, UNew, key, iTraj, sites_t, sites_x, sites_y, sites_z, counts, TRIM(actionTag), xi=xi)
       U = UNew
    END DO
-
-   CALL genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrp, nPlaq, time)
-   aPlaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
-   IF (xi /= 1.0_WP) THEN
-      CALL genPlaquette(U, NT, NS, NS, NS, 2, 4, 4, sumTrp, nPlaq, time)
-      sPlaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
-      CALL genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrp, nPlaq, time)
-      tPlaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
-      WRITE (*, *) 'after therm', aplaq, splaq, tplaq
-   ELSE
-      WRITE (*, *) 'after therm', aplaq
-   END IF
+   write(*,*) '3'
+   !shortcircuit!CALL genPlaquette(U, NT, NS, NS, NS, 1, 4, 4, sumTrp, nPlaq, time)
+   !shortcircuit!aPlaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
+   !shortcircuit!IF (xi /= 1.0_WP) THEN
+   !shortcircuit!   CALL genPlaquette(U, NT, NS, NS, NS, 2, 4, 4, sumTrp, nPlaq, time)
+   !shortcircuit!   sPlaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
+   !shortcircuit!   CALL genPlaquette(U, NT, NS, NS, NS, 1, 1, 4, sumTrp, nPlaq, time)
+   !shortcircuit!   tPlaq = sumTrP / (3.0_WP * real(nPlaq, kind=WP))
+   !shortcircuit!   WRITE (*, *) 'after therm', aplaq, splaq, tplaq
+   !shortcircuit!ELSE
+   !shortcircuit!   WRITE (*, *) 'after therm', aplaq
+   !shortcircuit!END IF
    DO iTraj = 1, nTraj
+      write(*,*) 'about to updatelinks'
       CALL updateLinks(U, beta, UNew, key, iTraj + nTherm, sites_t, sites_x, sites_y, sites_z, counts, TRIM(actionTag), xi=xi)
       U = UNew
       IF (MOD(iTraj, nSkip) == 0) THEN
