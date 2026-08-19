@@ -59,8 +59,8 @@ MODULE FLUE_SU3MatrixOps
    !omp declare target
 
 CONTAINS
-  !$omp declare target
   pure subroutine orthogonalise_vectors(w, v)
+    !$omp declare target
     !< Orthogonalise a colour vector against another.
     !<
     !< Physical Interpretation:
@@ -80,8 +80,9 @@ CONTAINS
       w = w - v * vdotw
    END SUBROUTINE orthogonalise_vectors
 
-   !$omp declare target
+
    pure subroutine vector_product(x, v, w)
+     !$omp declare target
      !< Compute SU(3) vector product.
      !<
      !< Physical Interpretation:
@@ -106,8 +107,9 @@ CONTAINS
       END DO
    END SUBROUTINE vector_product
 
-   !$omp declare target
+
    pure subroutine FixSU3Matrix(U_x)
+     !$omp declare target
      !< Project a 3x3 matrix back onto SU(3).
      !<
      !< Physical Interpretation:
@@ -139,8 +141,8 @@ CONTAINS
       U_x(3, :) = v3(:)
    END SUBROUTINE FixSU3Matrix
 
-   !$omp declare target
    pure subroutine normalise_vector(v)
+     !$omp declare target
      !< Normalise a colour vector.
      !<
      !< Physical Interpretation:
@@ -156,8 +158,8 @@ CONTAINS
       v = v / norm
    END SUBROUTINE normalise_vector
 
-   !$omp declare target
    pure subroutine MultiplyMatMat(MM, left, right)
+     !$omp declare target
      !< Multiply two SU(3) matrices.
      !<
      !< Physical Interpretation:
@@ -294,8 +296,8 @@ CONTAINS
       TrMM = left(1, 1) + left(2, 2) + left(3, 3)
    END FUNCTION TraceMat
 
-   !$omp declare target
    pure subroutine TraceMultMatMat(TrMM, left, right)
+     !$omp declare target
      !< Trace of a product of matrices.
      !<
      !< Physical Interpretation:
@@ -316,8 +318,8 @@ CONTAINS
              left(3, 1) * right(1, 3) + left(3, 2) * right(2, 3) + left(3, 3) * right(3, 3)
    END SUBROUTINE TraceMultMatMat
 
-   !$omp declare target
    pure subroutine RealTraceMultMatMat(RTrMM, left, right)
+     !$omp declare target
      !< Real trace of matrix product.
      !<
      !< Computes:

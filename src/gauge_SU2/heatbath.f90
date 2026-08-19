@@ -23,8 +23,8 @@ module FLUE_SU2_heatbath
 
 contains
 
-  !$omp declare target
-   pure function getLambda2(alpha, beta, key, counter0) result(lambda2)
+  pure function getLambda2(alpha, beta, key, counter0) result(lambda2)
+    !$omp declare target
      !<
     !< Sample lambda^2 for the SU(2) heatbath accept/reject step.
     !<
@@ -138,8 +138,8 @@ contains
       xvec = xvec * (SQRT(requiredLen) / SQRT(xlen))
    end function getXVec
 
-   !$omp declare target
    pure function constructXMatrix(alpha, beta, key, counter0, subgroup_id) result(X)
+     !$omp declare target
      !<
      !< Construct the SU(2) heatbath matrix X used in the update.
      !<

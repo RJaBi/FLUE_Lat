@@ -41,8 +41,9 @@ module FLUE_heatbath
       !< Used to switch between Wilson / Symanzik / Iwasaki actions.
       pure subroutine stapleInterface(U, V, coord, mu, xi)
         !< StapleInterface
-         import :: WP, WC
-         implicit none(type, external)
+        import :: WP, WC
+        implicit none(type, external)
+        !$omp declare target
          complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
          !< Input gaugefield [3,3,4,nt,nx,ny,nz]
          integer, dimension(4), intent(IN) :: coord
@@ -58,8 +59,8 @@ module FLUE_heatbath
 
 contains
 
-  !$omp declare target
   pure function su3_updated_link(U, beta, coord, mu, key, dims4, stapleKernel, xi) result(Uout)
+    !$omp declare target
     !<
     !< Compute the updated SU(3) link at one site and one direction.
     !<
@@ -109,8 +110,8 @@ contains
       call FixSU3Matrix(Uout)
     end function su3_updated_link
 
-    !$omp declare target
-   pure subroutine apply_su2_subgroup_update(ULink, W, i1, i2, subgroup_id, beta, key, counter0)
+    pure subroutine apply_su2_subgroup_update(ULink, W, i1, i2, subgroup_id, beta, key, counter0)
+      !$omp declare target
      !<
      !< Apply one embedded SU(2) heatbath update inside SU(3).
      !<
@@ -338,9 +339,9 @@ contains
                !------------------------------------
                ! Compute update (fully scalar args)
                !------------------------------------
-               !Uloc = su3_updated_link(UUpdated, beta, coord, mu, key, dims4, stapleKernel, xig)
+               Uloc = su3_updated_link(UUpdated, beta, coord, mu, key, dims4, stapleKernel, xig)
                !Uloc = su3_updated_link(UUpdated, beta, coord, mu, key, dims4, xig)
-               Uloc = Ident3x3
+               !Uloc = Ident3x3
                !------------------------------------
                ! Store result
                !------------------------------------
@@ -350,8 +351,8 @@ contains
       end do
    end subroutine updateLinks
 
-   !$omp declare target
    pure subroutine stapleWilson(U, V, coord, mu, xi)
+     !$omp declare target
      !<
      !< Compute the Wilson staple for one site
      !<
@@ -394,8 +395,8 @@ contains
       end do direction
    end subroutine stapleWilson
 
-   !$omp declare target
    pure subroutine stapleRectangle(U, V, coord, mu, xi)
+     !$omp declare target
      !< Computes the rectangle staple (1x2) as in the Symanzik
      !< improved action for one site
      complex(kind=WC), dimension(:, :, :, :, :, :, :), intent(IN) :: U
@@ -450,7 +451,8 @@ contains
       end do direction
     end subroutine stapleRectangle
 
-   pure subroutine stapleSymanzik(U, V, coord, mu, xi)
+    pure subroutine stapleSymanzik(U, V, coord, mu, xi)
+      !$omp declare target
      !<
      !< Compute the tree-level Symanzik staple for one SU(3) link.
      !<
@@ -482,6 +484,7 @@ contains
 
 
    pure subroutine stapleIwasaki(U, V, coord, mu, xi)
+     !$omp declare target
      !<
      !< Compute the Iwasaki staple for one SU(3) link.
      !<

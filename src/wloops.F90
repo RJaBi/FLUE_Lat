@@ -11,8 +11,9 @@ module flue_wloops
 
 
 contains
-  !$omp declare target
+
   pure function genericpath(data, coordbase, path) result(u_xd)
+    !$omp declare target
     !< Returns the links starting from coordbase multiplied together along path
     !< Used to construct wilson loops, staples, etc
     complex(kind=wc), dimension(:, :, :, :, :, :, :), intent(in) :: data
@@ -626,6 +627,7 @@ contains
                                   end function magnetic
 
                                   pure function periodcoord(coord, datashape)
+                                    !$omp declare target
                                     !< Handles periodic boundary conditions
                                     !< Only handles steps of 1!
                                     integer, dimension(7), intent(in) :: datashape

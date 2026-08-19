@@ -20,8 +20,8 @@ module FLUE_philox_helpers
 
 contains
 
-  !$omp declare target
   subroutine derive_stage_key(master_key, sweep_id, stage_tag, mu, colour, key)
+    !$omp declare target
     !< Create a separated key for each stage
     !<
      !< Construct t1 by packing (sweep_id, mu, colour) into a 64-bit integer
@@ -145,6 +145,7 @@ contains
    end function site_colour
 
    pure function site_linear_index(coord, dims) result(idx)
+     !$omp declare target
      !<
      !< Convert a 4D lattice coordinate to a unique 1-based linear site index.
      !<

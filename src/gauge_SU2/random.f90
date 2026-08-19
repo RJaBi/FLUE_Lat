@@ -8,8 +8,8 @@ module FLUE_SU2_random
    public :: constructSU2Matrix
  contains
 
-  !$omp declare target
-  pure function constructSU2Matrix(r) result(U)
+   pure function constructSU2Matrix(r) result(U)
+     !$omp declare target
     !< Constructs an SU2 matrix from the quarternion representation
     !< i.e. Eqn 4.24 of Gattringer Lang
      real(kind=WP), dimension(0:3), intent(IN) :: r

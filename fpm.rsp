@@ -3,7 +3,7 @@
 @build_ifx
 option build --version
 options --compiler ifx
-options --flag "-g -O3 -xHost -fopenmp-offload-mandatory -fopenmp -fopenmp-target-do-concurrent -fopenmp-targets=spir64 -qopt-report=3 -qopt-report-phase=all"
+options --flag "-g -O3 -fopenmp-offload-mandatory -fopenmp -fopenmp-target-do-concurrent -fopenmp-targets=spir64 -qopt-report=3 -qopt-report-phase=all"
 
 @run_ifx
 option run --version
