@@ -1,5 +1,7 @@
 [![Fortitude](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/PlasmaFAIR/fortitude/main/docs/assets/badge/v0.json)](https://github.com/PlasmaFAIR/fortitude)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
+[![Static Badge](https://img.shields.io/badge/Docs-Formal-A172CF)](https://github.com/szaghi/formal)
+
 # <img width="30" height="30" alt="FLUE Favicon" src="https://github.com/user-attachments/assets/407cb74b-5fdf-4ab4-b46c-79cee3e57c85" />LUE
 <p align="center">
   <img width="3845" height="1027" alt="FLUE banner" src="https://github.com/user-attachments/assets/afea2fee-3099-41f6-b1d0-1634a8d89e6e" />
