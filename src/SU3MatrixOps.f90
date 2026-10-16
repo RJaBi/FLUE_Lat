@@ -46,7 +46,8 @@ MODULE FLUE_SU3MatrixOps
    PRIVATE
    PUBLIC :: MultiplyMatMat, MultiplyMatDagMatDag, &
              TraceMultMatMat, RealTraceMultMatMat, TracelessConjgSubtract, &
-             colourDecomp, RealTraceMat, MultiplyMatMatDag, TraceMat
+             colourDecomp, RealTraceMat, MultiplyMatMatDag, TraceMat, &
+             RealTraceMultMatMatDag, colourDecompResidual, adjointToResidual
    PUBLIC :: FixSU3Matrix
    PUBLIC :: orthogonalise_vectors, vector_product
    PUBLIC :: ExpIQ
@@ -325,9 +326,27 @@ CONTAINS
       !"""
       CALL TraceMultMatMat(TrMM, left, right)
       RTrMM = real(TrMM, kind=WP)
-   END SUBROUTINE RealTraceMultMatMat
+    END SUBROUTINE RealTraceMultMatMat
 
-   pure subroutine TraceLessConjgSubtract(TrSub, left, right)
+    pure subroutine RealTraceMultMatMatDag(RTrMM, left, right)
+     !< Real trace of matrix product.
+     !<
+     !< Computes:
+     !<   Real(Tr(left * right^\dagger))
+     complex(kind=WC), dimension(3, 3), intent(IN) :: left, right
+     !< Input SU(3) Matrices
+     real(kind=WP), intent(OUT) :: RTrMM
+     !< Resulting ReTrace
+     complex(kind=WC) :: TrMM
+     !< full complex trace of left * right^\dagger
+     complex(kind=WC), dimension(3,3) :: rightDag
+     !< right^\dagger
+     rightDag = conjg(transpose(right))
+      CALL TraceMultMatMat(TrMM, left, rightDag)
+      RTrMM = real(TrMM, kind=WP)
+    END SUBROUTINE RealTraceMultMatMatDag
+
+    pure subroutine TraceLessConjgSubtract(TrSub, left, right)
      !< Traceless anti-Hermitian projection.
      !<
      !< Physical Interpretation:
@@ -350,14 +369,14 @@ CONTAINS
       !# Takes the traceless conjugate subtraction of A and B
       ! TrSub = A - B^dagger - Tr(A-B^dagger) / 3.0
       !
-      TrSub = left - CONJG(TRANSPOSE(right))
+     TrSub = left - CONJG(TRANSPOSE(right))
       CALL TraceMultMatMat(TrMM, TrSub, Ident3x3)
-      TrSub = TrSub - trMM / 3.0_WP
+      TrSub = TrSub - (trMM / 3.0_WP) * Ident3x3
    END SUBROUTINE TraceLessConjgSubtract
 
 
    pure subroutine colourDecomp(com, A)
-     !< Decompose matrix into Gell-Mann basis.
+     !< Decompose Hermitian matrix into Gell-Mann basis.
      !<
      !< Physical Interpretation:
      !<   Converts matrix representation into Lie algebra coefficients:
@@ -391,7 +410,372 @@ CONTAINS
       com(8) = real(A(1, 1), kind=WP) + real(A(2, 2), kind=WP) - (2.0_WP / (3.0_WP**0.5_WP)) * real(A(3, 3), kind=WP)
    END SUBROUTINE colourDecomp
 
+   pure subroutine colourDecompResidual(omega, A)
+     !< Decompose traceless anti-Hermitian matrix
+     !<
+     !<    A = i * sum_a omega(a) * lambda_a
+     !<
+     !< into the 8 real coefficients omega(a).
+     complex(kind=WC), dimension(3,3), intent(in) :: A
+     !< Input traceless anti-hermitian matrix
+     real(kind=WP),    dimension(8),   intent(out) :: omega
+     !< output 8 real coefficents
+     real(kind=WP), parameter :: invSqrt3 = 1.0_WP / sqrt(3.0_WP)
+     !< 1.0 / sqrt3
+     omega(1) = aimag(A(1,2))
+     omega(2) = real(A(1,2),kind=WP)
+     omega(3) = 0.5_WP * (aimag(A(1,1)) - aimag(A(2,2)))
+     omega(4) = aimag(A(1,3))
+     omega(5) = real(A(1,3),kind=WP)
+     omega(6) = aimag(A(2,3))
+     omega(7) = real(A(2,3),kind=WP)
+     omega(8) = 0.5_WP * invSqrt3 * &
+          (aimag(A(1,1)) + aimag(A(2,2)) - 2.0_WP*aimag(A(3,3)))
+   end subroutine colourDecompResidual
+
+   pure subroutine adjointToResidual(A, omega)
+     !< Does inverse of
+     !< Decompose traceless anti-Hermitian matrix
+     !<
+     !<    A = i * sum_a omega(a) * lambda_a
+     !<
+     !< into the 8 real coefficients omega(a).
+     complex(kind=WC), dimension(3,3), intent(out) :: A
+     !< output tracelss anti-hermitian matrix
+     real(kind=WP),    dimension(8),   intent(in)  :: omega
+     !< input 8 real coefficents
+     real(kind=WP), parameter :: invSqrt3 = 1.0_WP / sqrt(3.0_WP)
+     !< 1.0/sqrt3
+     A = (0.0_WP,0.0_WP)
+     ! lambda1
+     A(1,2) = A(1,2) + cmplx(0.0_WP, omega(1), kind=WC)
+     A(2,1) = A(2,1) + cmplx(0.0_WP, omega(1), kind=WC)
+     ! lambda2
+     A(1,2) = A(1,2) + omega(2)
+     A(2,1) = A(2,1) - omega(2)
+     ! lambda3
+     A(1,1) = A(1,1) + cmplx(0.0_WP, omega(3), kind=WC)
+     A(2,2) = A(2,2) - cmplx(0.0_WP, omega(3), kind=WC)
+     ! lambda4
+     A(1,3) = A(1,3) + cmplx(0.0_WP, omega(4), kind=WC)
+     A(3,1) = A(3,1) + cmplx(0.0_WP, omega(4), kind=WC)
+     ! lambda5
+     A(1,3) = A(1,3) + omega(5)
+     A(3,1) = A(3,1) - omega(5)
+     ! lambda6
+     A(2,3) = A(2,3) + cmplx(0.0_WP, omega(6), kind=WC)
+     A(3,2) = A(3,2) + cmplx(0.0_WP, omega(6), kind=WC)
+     ! lambda7
+     A(2,3) = A(2,3) + omega(7)
+     A(3,2) = A(3,2) - omega(7)
+     ! lambda8
+     A(1,1) = A(1,1) + cmplx(0.0_WP, invSqrt3*omega(8), kind=WC)
+     A(2,2) = A(2,2) + cmplx(0.0_WP, invSqrt3*omega(8), kind=WC)
+     A(3,3) = A(3,3) - cmplx(0.0_WP, 2.0_WP*invSqrt3*omega(8), kind=WC)
+   end subroutine adjointToResidual
+
    pure function ExpIQ(Q) result(V)
+     !< Compute exponential of Lie algebra element.
+     !<
+     !< Physical Interpretation:
+     !<   Core operation in gauge field evolution:
+     !<
+     !<     U_new = exp(i Q) * U_old
+     !<
+     !<   where:
+     !<     Q ∈ su(3) is Hermitian and traceless
+     !<
+     !<   Used in:
+     !<     - Heatbath
+     !<
+     !< Algorithm:
+     !<   Uses Cayley-Hamilton theorem to avoid explicit diagonalisation:
+     !<
+     !<     exp(iQ) = f1 * I + f2 * Q + f3 * Q^2
+     !<
+     !<   with coefficients determined from invariants:
+     !<     c0 = (1/3) Tr(Q^3)
+     !<     c1 = (1/2) Tr(Q^2)
+     !<
+     !< Numerical Stability:
+     !<   - Uses Taylor expansion for small eigenvalues
+     !<   - Clamps acos argument for safety
+     !<   - Handles sign structure explicitly
+     !<
+     !< Arguments:
+     !<   Q : Hermitian, traceless matrix (su(3) element)
+     !<
+     !< Returns:
+     !<   V : SU(3) matrix
+     !<
+     !< Notes:
+     !<   - Produces unitary matrix up to numerical precision.
+     !<   - Avoids costly eigen-decomposition.
+     !< For small Q, a direct Taylor expansion is used:
+     !<
+     !<   exp(iQ)
+     !<      = I + iQ - Q^2/2 - iQ^3/6 + Q^4/24
+     !<        + iQ^5/120 - Q^6/720 + O(Q^7).
+     !<
+     !< This small-Q branch must retain the term iQ. Returning exactly
+     !< the identity for a small but nonzero Q destroys the first-order
+     !< response and can therefore produce zero finite-difference
+     !< Jacobian-vector products.
+     complex(kind=WC), dimension(3,3), intent(in) :: Q
+     !< Hermitian traceless input matrix
+     complex(kind=WC), dimension(3,3) :: V
+     !< Output SU(3) matrix
+     real(kind=WP), parameter :: machineEpsilon = epsilon(1.0_WP)
+     !< machine epsilon version in WP
+     ! c1 = Tr(Q^2)/2 is quadratic in the size of Q.
+     !
+     ! For c1 <= 1e-6, the characteristic-polynomial coefficients
+     ! can suffer cancellation. The sixth-order Taylor expansion is
+     ! accurate and preserves the first derivative at Q=0.
+     real(kind=WP), parameter :: smallC1 = 1.0e-6_WP
+     !< criteria for what small c_1 is
+     complex(kind=WC), parameter :: imaginaryUnit = cmplx(0.0_WP, 1.0_WP, kind=WC)
+     !< imaginary i
+     complex(kind=WC), dimension(3,3) :: Q2
+     !< Q^2
+     complex(kind=WC), dimension(3,3) :: Q3
+     !< Q^3
+     complex(kind=WC), dimension(3,3) :: Q4
+     !< Q^4
+     complex(kind=WC), dimension(3,3) :: Q5
+     !< Q^5
+     complex(kind=WC), dimension(3,3) :: Q6
+     !Q^6
+     real(kind=WP) :: c0
+     !< (1/3) Tr(Q^3)
+     real(kind=WP) :: c1
+     !< (1/2) Tr(Q^2)
+     real(kind=WP) :: c0Max
+     !< max possible value of |c0| for current c1, $2(\frac{c_1}{3})^{3/2}$
+     real(kind=WP) :: w
+     !< $\sqrt{c_1/3)cos(\frac{\theta}{3})$
+     real(kind=WP) :: u
+     !< \sqrt{c_1}sin(\frac{\theta}{3})$
+     real(kind=WP) :: w2
+     !< $w^2$
+     real(kind=WP) :: u2
+     !< $u^2$
+     real(kind=WP) :: xi0
+     !< $sin(w)/w$ Used for small sine expansion
+     real(kind=WP) :: pm
+     !< sign of c0
+     real(kind=WP) :: theta
+     !< $\theta = acos(\frac{c_0}{c_0^{\text{max}}})$
+     real(kind=WP) :: denominator
+     !< $9u^2 - w^2$
+     real(kind=WP) :: acosArgument
+     !< Used to handle small argument in acos
+     complex(kind=WC), dimension(3) :: h
+     !< for Cayley-Hamilton
+     complex(kind=WC), dimension(3) :: f
+     !< for Cayley-Hamilton
+     integer :: jj
+     !< counter
+     !============================================================
+     ! Construct Q^2 and c1
+     !============================================================
+     call MultiplyMatMat( &
+          Q2, &
+          Q, &
+          Q)
+     ! For Hermitian Q:
+     !
+     !   c1 = Tr(Q^2)/2 >= 0.
+     !
+     ! Roundoff can make the computed value slightly negative, so
+     ! clamp it before taking any square roots.
+     c1 = max( &
+          0.0_WP, &
+          0.5_WP*RealTraceMat(Q2))
+     !============================================================
+     ! Small-Q Taylor branch
+     !============================================================
+     if (c1 <= smallC1) then
+        call MultiplyMatMat( &
+             Q3, &
+             Q2, &
+             Q)
+        call MultiplyMatMat( &
+             Q4, &
+             Q2, &
+             Q2)
+        call MultiplyMatMat( &
+             Q5, &
+             Q4, &
+             Q)
+        call MultiplyMatMat( &
+             Q6, &
+             Q3, &
+             Q3)
+        ! exp(iQ) through sixth order:
+        !
+        !   I
+        !   + i Q
+        !   - Q^2/2!
+        !   - i Q^3/3!
+        !   + Q^4/4!
+        !   + i Q^5/5!
+        !   - Q^6/6!
+        V = Ident3x3                                      &
+             + imaginaryUnit*Q                            &
+             - (1.0_WP/2.0_WP)*Q2                        &
+             - (imaginaryUnit/6.0_WP)*Q3                 &
+             + (1.0_WP/24.0_WP)*Q4                       &
+             + (imaginaryUnit/120.0_WP)*Q5               &
+             - (1.0_WP/720.0_WP)*Q6
+        return
+     end if
+     !============================================================
+     ! Construct Q^3 and c0
+     !============================================================
+     call MultiplyMatMat( &
+          Q3, &
+          Q2, &
+          Q)
+     c0 = (1.0_WP/3.0_WP)*RealTraceMat(Q3)
+     ! Save the sign of c0, then work with |c0|.
+     pm = sign(1.0_WP, c0)
+     c0 = abs(c0)
+     ! Maximum possible value of |c0| for the current c1.
+     c0Max = 2.0_WP*(c1/3.0_WP)**1.5_WP
+     !============================================================
+     ! Defensive degenerate fallback
+     !============================================================
+     if (c0Max <= machineEpsilon) then
+        call MultiplyMatMat( &
+             Q4, &
+             Q2, &
+             Q2)
+        call MultiplyMatMat( &
+             Q5, &
+             Q4, &
+             Q)
+        call MultiplyMatMat( &
+             Q6, &
+             Q3, &
+             Q3)
+        V = Ident3x3                                      &
+             + imaginaryUnit*Q                            &
+             - (1.0_WP/2.0_WP)*Q2                        &
+             - (imaginaryUnit/6.0_WP)*Q3                 &
+             + (1.0_WP/24.0_WP)*Q4                       &
+             + (imaginaryUnit/120.0_WP)*Q5               &
+             - (1.0_WP/720.0_WP)*Q6
+        return
+     end if
+     !============================================================
+     ! Calculate theta
+     !============================================================
+     ! Clamp the argument against small violations of the analytic
+     ! range caused by floating-point roundoff.
+     acosArgument = min( &
+          1.0_WP, &
+          max(-1.0_WP, c0/c0Max))
+     theta = acos(acosArgument)
+     !============================================================
+     ! Calculate u and w
+     !============================================================
+     u = sqrt(c1/3.0_WP)*cos(theta/3.0_WP)
+     w = sqrt(c1)*sin(theta/3.0_WP)
+     u2 = u*u
+     w2 = w*w
+     !============================================================
+     ! Calculate xi0 = sin(w)/w
+     !============================================================
+     if (abs(w) <= 0.05_WP) then
+        ! Stable expansion:
+        !
+        ! sin(w)/w =
+        !   1 - w^2/6 + w^4/120 - w^6/5040 + ...
+        xi0 = 1.0_WP                                      &
+             - (w2/6.0_WP)                                &
+             * (1.0_WP                                    &
+             - (w2/20.0_WP)                               &
+             * (1.0_WP                                    &
+             - w2/42.0_WP))
+     else
+        xi0 = sin(w)/w
+     end if
+     !============================================================
+     ! Calculate intermediate Cayley-Hamilton coefficients
+     !============================================================
+     h(1) =                                                &
+          (u2-w2)                                          &
+          * exp(imaginaryUnit*2.0_WP*u)                    &
+          + (                                              &
+          8.0_WP*u2*cos(w)                            &
+          + imaginaryUnit*2.0_WP*u                    &
+          * (3.0_WP*u2+w2)*xi0                        &
+          )                                              &
+          * exp(-imaginaryUnit*u)
+     h(2) =                                                &
+          2.0_WP*u                                         &
+          * exp(imaginaryUnit*2.0_WP*u)                    &
+          - (                                              &
+          2.0_WP*u*cos(w)                             &
+          - imaginaryUnit*(3.0_WP*u2-w2)*xi0          &
+          )                                              &
+          * exp(-imaginaryUnit*u)
+     h(3) =                                                &
+          exp(imaginaryUnit*2.0_WP*u)                      &
+          - (                                              &
+          cos(w)                                      &
+          + imaginaryUnit*3.0_WP*u*xi0                &
+          )                                              &
+          * exp(-imaginaryUnit*u)
+     !============================================================
+     ! Normalize the coefficients
+     !============================================================
+     denominator = 9.0_WP*u2-w2
+     ! In an exactly degenerate case, the analytic numerator and
+     ! denominator approach zero together. Avoid dividing two small
+     ! computed quantities and use the Taylor representation.
+     if (abs(denominator) <= &
+          machineEpsilon*max(1.0_WP, c1)) then
+        call MultiplyMatMat( &
+             Q4, &
+             Q2, &
+             Q2)
+        call MultiplyMatMat( &
+             Q5, &
+             Q4, &
+             Q)
+        call MultiplyMatMat( &
+             Q6, &
+             Q3, &
+             Q3)
+        V = Ident3x3                                      &
+             + imaginaryUnit*Q                            &
+             - (1.0_WP/2.0_WP)*Q2                        &
+             - (imaginaryUnit/6.0_WP)*Q3                 &
+             + (1.0_WP/24.0_WP)*Q4                       &
+             + (imaginaryUnit/120.0_WP)*Q5               &
+             - (1.0_WP/720.0_WP)*Q6
+        return
+     end if
+     f = h/denominator
+     !============================================================
+     ! Restore the sign dependence of c0
+     !============================================================
+     if (pm < 0.0_WP) then
+        do jj = 1, 3
+           f(jj) = &
+                (-1.0_WP)**(jj-1)*conjg(f(jj))
+        end do
+     end if
+     !============================================================
+     ! Construct exp(iQ)
+     !============================================================
+     V = f(1)*Ident3x3 + f(2)*Q + f(3)*Q2
+   end function ExpIQ
+
+
+   pure function ExpIQ_OLD(Q) result(V)
      !< Compute exponential of Lie algebra element.
      !<
      !< Physical Interpretation:
@@ -504,6 +888,6 @@ CONTAINS
       ! Form the result
       V = f(1) * Ident3x3 + f(2) * Q + f(3) * Q2
 
-   END FUNCTION ExpIQ
+    END FUNCTION ExpIQ_OLD
 
 END MODULE FLUE_SU3MatrixOps
