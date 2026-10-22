@@ -533,23 +533,23 @@ CONTAINS
      ! can suffer cancellation. The sixth-order Taylor expansion is
      ! accurate and preserves the first derivative at Q=0.
      real(kind=WP), parameter :: smallC1 = 1.0e-6_WP
-     !< criteria for what small c_1 is
+     !< criteria for what small $c_1$ is
      complex(kind=WC), parameter :: imaginaryUnit = cmplx(0.0_WP, 1.0_WP, kind=WC)
      !< imaginary i
      complex(kind=WC), dimension(3,3) :: Q2
-     !< Q^2
+     !< $Q^2$
      complex(kind=WC), dimension(3,3) :: Q3
-     !< Q^3
+     !< $Q^3$
      complex(kind=WC), dimension(3,3) :: Q4
-     !< Q^4
+     !< $Q^4$
      complex(kind=WC), dimension(3,3) :: Q5
-     !< Q^5
+     !< $Q^5$
      complex(kind=WC), dimension(3,3) :: Q6
-     !Q^6
+     !< $Q^6$
      real(kind=WP) :: c0
-     !< (1/3) Tr(Q^3)
+     !< $(1/3) Tr(Q^3)$
      real(kind=WP) :: c1
-     !< (1/2) Tr(Q^2)
+     !< $(1/2) Tr(Q^2)$
      real(kind=WP) :: c0Max
      !< max possible value of |c0| for current c1, $2(\frac{c_1}{3})^{3/2}$
      real(kind=WP) :: w

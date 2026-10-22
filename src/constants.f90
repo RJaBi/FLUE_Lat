@@ -23,7 +23,8 @@ module FLUE_constants
 !< real(kind=WP) :: theta
 !< theta = 2.0_WP * PI
 !<```
-   use, intrinsic :: ISO_C_BINDING, only: C_DOUBLE, C_DOUBLE_COMPLEX, C_FLOAT, C_INT
+  use, intrinsic :: ISO_C_BINDING, only: C_DOUBLE, C_DOUBLE_COMPLEX, C_FLOAT, C_INT
+  use stdlib_kinds, only: DP
    implicit none(type, external)
    public
    integer, parameter :: WP = C_DOUBLE
@@ -36,5 +37,22 @@ module FLUE_constants
    !< 2π.
    integer, parameter :: SP = C_FLOAT
    !< Single precision kind
+
+ contains
+
+   subroutine assertSTDLIBKindCompatibility()
+     !< Checks that WP is equal to stdlib's DP
+     !< and that WC must correspond to complex DP
+     !< stops if it is not
+      if (WP /= DP) then
+         error stop &
+            "FLUE wp must equal stdlib dp for CG implementation"
+      end if
+      if (WC /= kind(cmplx(0.0_DP, 0.0_DP, kind=DP))) then
+         error stop &
+            "FLUE WC must be the complex kind corresponding to stdlib DP"
+      end if
+    end subroutine assertSTDLIBKindCompatibility
+
 end module FLUE_constants
 

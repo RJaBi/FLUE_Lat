@@ -3,6 +3,9 @@ module FLUE
   !< subroutines/constants/functions
    use FLUE_constants, only: WP, WC, PI, SP, C_INT
    use FLUE_CSSM_bin, only: ReadGaugeTransformation_cola, ReadGaugeField_CSSM
+   ! use FLUE_gaugeFix_coulomb_fft
+   use FLUE_gaugeFix, only: gaugeFix, gaugeFix_info, gaugeFix_options, applyFiniteGaugeTransformField
+   use FLUE_gaugeFix_Coulomb, only: Coulomb_functional, Coulomb_residual, Coulomb_theta, Coulomb_constructUpdateField
    use FLUE_gluonProp, only: scalarGluonProp, calc_mom_space_scalarD
    use FLUE_gpManip, only: Q_Average, cone_cut
    use FLUE_heatbath, only: updateLinks, build_colour_sites
@@ -21,12 +24,13 @@ module FLUE
    use FLUE_SU3MatrixOps, only: MultiplyMatMat, MultiplyMatDagMatDag, &
                                 TraceMultMatMat, RealTraceMultMatMat, TracelessConjgSubtract, &
                                 colourDecomp, RealTraceMat, FixSU3Matrix, &
-                                orthogonalise_vectors, vector_product, ExpIQ
+                                orthogonalise_vectors, vector_product, ExpIQ, &
+                                RealTraceMultMatMatDag, colourDecompResidual, adjointToResidual
    use FLUE_version, only: writeCompiler, writeGit
    use FLUE_wloops, only: polyakov, genPlaquette, magnetic, genericPath, periodCoord
    implicit none(type, external)
 
-   character(len=*), parameter :: version = "0.1.2"
+   character(len=*), parameter :: version = "0.1.3"
    !< Version of the FLUE software
    public
    !public :: calc_mom_space_scalarD
