@@ -3,6 +3,7 @@ MODULE FLUE_c
    USE FLUE, ONLY: ReadGaugeField_ILDG, writeGaugeField_ILDG, &
                    ReadGaugeField_OpenQCD, writeGaugeField_OpenQCD, &
                    ReadGaugefield_CSSM, &
+                   ReadGaugeField_NERSC, writeGaugeField_NERSC, &
                    genplaquette, StoutSmearLinks
   !! Note that the c_wrapper and python uses order [NT, NX, NY, NZ, mu, colour, colour]
   !! This contrasts the internal ordering of [colour, colour, mu, NT, NX, NY, NZ]
@@ -30,6 +31,22 @@ CONTAINS
       END DO
       CALL writeGaugeField_ILDG(filename, uinternal, NX, NY, NZ, NT, .TRUE.)
    END SUBROUTINE writeGaugeField_ILDG_c
+
+   SUBROUTINE writeGaugeField_NERSC_c(filename, U_xd, NX, NY, NZ, NT)
+      CHARACTER(kind=C_CHAR, len=*), INTENT(IN) :: filename
+      INTEGER(kind=C_INT), INTENT(IN) :: NX, NY, NZ, NT
+      COMPLEX(kind=C_DOUBLE_COMPLEX), DIMENSION(NT, NX, NY, NZ, 4, 3, 3), INTENT(IN) :: U_xd
+      COMPLEX(kind=C_DOUBLE_COMPLEX), DIMENSION(3, 3, 4, NT, NX, NY, NZ) :: uinternal
+      INTEGER :: mu, ac, bc
+      DO ac = 1, 3
+         DO bc = 1, 3
+            DO mu = 1, 4
+               uinternal(ac, bc, mu, :, :, :, :) = U_xd(:, :, :, :, mu, ac, bc)
+            END DO
+         END DO
+      END DO
+      CALL writeGaugeField_NERSC(filename, uinternal, NX, NY, NZ, NT)
+    END SUBROUTINE writeGaugeField_NERSC_c
 
    SUBROUTINE writeGaugeField_OpenQCD_c(filename, U_xd, NX, NY, NZ, NT)
       CHARACTER(kind=C_CHAR, len=*), INTENT(IN) :: filename
@@ -95,6 +112,22 @@ CONTAINS
          END DO
       END DO
    END FUNCTION ReadGaugeField_CSSM_c
+
+   FUNCTION ReadGaugeField_NERSC_c(filename, NX, NY, NZ, NT) RESULT(U_xd)
+      CHARACTER(kind=C_CHAR, len=*), INTENT(IN) :: filename
+      INTEGER(kind=C_INT), INTENT(IN) :: NX, NY, NZ, NT
+      COMPLEX(kind=C_DOUBLE_COMPLEX), DIMENSION(NT, NX, NY, NZ, 4, 3, 3) :: U_xd
+      COMPLEX(kind=C_DOUBLE_COMPLEX), DIMENSION(3, 3, 4, NT, NX, NY, NZ) :: uinternal
+      INTEGER :: mu, ac, bc
+      uinternal = ReadGaugeField_NERSC(filename, NX, NY, NZ, NT, .TRUE.)
+      DO ac = 1, 3
+         DO bc = 1, 3
+            DO mu = 1, 4
+               U_xd(:, :, :, :, mu, ac, bc) = uinternal(ac, bc, mu, :, :, :, :)
+            END DO
+         END DO
+      END DO
+    END FUNCTION ReadGaugeField_NERSC_c
 
    ! wloops
    SUBROUTINE genplaquette_c(data, nt, nx, ny, nz, mustart, muend, nuend, sumtrp, np, time)

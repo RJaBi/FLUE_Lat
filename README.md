@@ -116,8 +116,8 @@ Available routines are:
 
 IO Routines:
 
-`write[ILDG/OQCD](filename, U, NS, NT)`
-`read[ILDG/OQCD/CSSM](filename, NS, NT)`
+`write[ILDG/OQCD/NERSC](filename, U, NS, NT)`
+`read[ILDG/OQCD/NERSC/CSSM](filename, NS, NT)`
 
 plaquette routines:
 
