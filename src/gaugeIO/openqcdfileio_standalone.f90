@@ -60,7 +60,6 @@ contains
          fixSU3Set = .TRUE.
       end if
 
-      write (*, *) "here ", TRIM(filename)
       open (infl, file=TRIM(filename), form="unformatted", access="stream", status="old", action="read", convert="little_endian")
       read (infl) ntdim, nxdim, nydim, nzdim, plaq
 
@@ -71,6 +70,7 @@ contains
          do ix = 1, nxdim
             do iy = 1, nydim
                do iz = 1, nzdim
+                  ! allow(C142)
                   if (MODULO(ix + iy + iz + it - 4, 2) == 0) cycle  ! Format only considers odd points
 
                   do id = 1, 4
@@ -175,6 +175,7 @@ contains
          do ix = 1, nx
             do iy = 1, ny
                do iz = 1, nz
+                  ! allow(C142)
                   if (MODULO(ix + iy + iz + it - 4, 2) == 0) cycle  ! Format only considers odd points
 
                   do id = 1, 4
