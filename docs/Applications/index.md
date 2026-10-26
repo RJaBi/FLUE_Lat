@@ -15,6 +15,7 @@ fpm run [Application Name] -- [Arg1] [Arg2] [Arg3]...
 | UNIT_to_OQCD       | Write a unit gaugefield (i.e. colour matrix is Real 3x3 Identity) to openqcd                          | inputFile outputFile NT NS  |
 | CSSM_to_OQCD       | Convert a gauge field cssm to openqcd                                                                 | inputFile outputFile NT NS  |
 | OQCD_to_ILDG       | Convert a gauge field openqcd to ILDG-bin in big endian                                               | inputFile outputFile NT NS  |
+| OQCD_to_NERSC       | Convert a gauge field openqcd to NERSC format                                                        | inputFile outputFile NT NS  |
 | SU2_HKLS_to_CSSM   | Convert a $SU(2)$ gaugefield in HKLS to cssm                                                          | inputFile outputFile NT NS  |
 | SU2_HKLS_to_NRQ2CD | Convert a $SU(2)$ gaugefield in HKLS to NRQ2CD                                                        | inputFile outputFile NT NS  |
 | OQCD_stoutSmear    | Stout smear (spatial) an openqcd gauge field and print average unsmeared and smeared plaquette values | inputFile rho nSweeps NT NS |
