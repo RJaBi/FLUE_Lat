@@ -146,7 +146,7 @@ contains
             end do
          end do
       end do
-      U_xd = CSHIFT(U_xd, -1, dim=5)
+      U_xd = CSHIFT(U_xd, -1, dim=3)
    end function ReadGaugeField_CSSM
 
 end module FLUE_CSSM_bin
