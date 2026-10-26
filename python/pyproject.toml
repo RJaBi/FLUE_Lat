@@ -20,12 +20,12 @@ skip = ["*-win32"]
 
 [project]
 name = "FLUE"
-version = "0.1.0"
-authors = [{name = "Brandolín, Salvador Eduardo", email = "salvadorebrandolin@unc.edu.ar"}]
+version = "0.1.3"
+authors = [{name = "Ryan Bignell", email = "ryan07bignell+github@gmail.com"}]
 license = {text = "MIT License"}
 readme = "README.md"
-description = "Fortran with Python API example"
-keywords = ["Fortran", "API",]
+description = "Gaugefield operations for lattice QCD"
+keywords = ["Fortran", "lattice-qcd",]
 classifiers = [
     "Development Status :: 1 - Planning",
     "Intended Audience :: Science/Research",
@@ -35,9 +35,7 @@ classifiers = [
 ]
 
 
-urls = {Homepage = "https://github.com/SalvadorBrandolin/fortran_meson_py"}
-
-
+urls = {Homepage = "https://rjabi.github.io/FLUE_Lat/"}
 dependencies = [
     'numpy',
 ]

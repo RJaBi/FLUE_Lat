@@ -86,6 +86,7 @@ gaugeIO_sources = [
   'FLUE/gaugeIO/ildg.py',
   'FLUE/gaugeIO/cssm.py',
   'FLUE/gaugeIO/oqcd.py',
+  'FLUE/gaugeIO/nersc.py'
 ]
 py.install_sources(gaugeIO_sources, subdir:'FLUE/gaugeIO')
 
