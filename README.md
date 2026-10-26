@@ -31,14 +31,14 @@ Note that $SU(2)$ supports only the `Generic path based Wilson line` and the `ge
 ---
 ## Gauge Formats $(SU3)$
 
-The supported formats are `openqcd` and an ILDG-like binary format. This is the ILDG binary data format in big endian. The `cssm` format stores some metadata, and then only the first two rows of the $SU(3)$ matrix. The `cssm` format assumes big endian.
+The supported formats are `openqcd` and an ILDG-like binary format. This is the ILDG binary data format in big endian. The `cssm` format stores some metadata, and then only the first two rows of the $SU(3)$ matrix. The `cssm` format assumes big endian. The `nersc` format does not correctly implement the checksum (uses `1234567`) and only supports `IEEE64LITTLE`. The `nersc` reader does not do any checks and assumes a fixed header size.
 
 | Format   | Read    | Write   |
 |----------|---------|---------|
 | openqcd  | &check; | &check; |
 | ildg-bin | &check; | &cross; |
 | cssm     | &check; | &cross; |
-
+| nersc    | &check; | &check; |
 
 The internal representation of a $SU(3)$ gauge field is `(3, 3, 4, NT, NS, NS, NS)`.
 
