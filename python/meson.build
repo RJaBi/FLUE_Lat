@@ -9,7 +9,8 @@ add_languages('fortran', native: false)
 
 # Set the fortran compiler
 env = environment()
-FortCompiler = 'gfortran'
+#FortCompiler = 'gfortran'
+FortCompiler = meson.get_compiler('fortran').cmd_array()[0]
 env.set('FC', FortCompiler)
 env.set('FPM_FC', FortCompiler)
 
