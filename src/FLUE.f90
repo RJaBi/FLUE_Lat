@@ -9,7 +9,7 @@ module FLUE
    use FLUE_ILDG_bin, only: ReadGaugeField_ILDG, writeGaugeField_ILDG
    use FLUE_matrixConstants, only: Ident3x3, Ident2x2, sigma1, sigma2, sigma3
    use FLUE_mom, only: get_qhat
-   use FLUE_NERSCFileIO, only: WriteGaugeField_NERSC, readGaugeField_NERSC
+   use FLUE_NERSCFileIO, only: WriteGaugeField_NERSC, readGaugeField_NERSC, header_NERSC, writeGaugeField_NERSC_FullHeader
    use FLUE_openQCDFileIO_SA, only: ReadGaugeField_OpenQCD, writeGaugeField_OpenQCD
    use FLUE_stoutSmearing, only: StoutSmearLinks
    use FLUE_SU2_CSSM, only: writeGaugeField_SU2_CSSM

@@ -7,6 +7,46 @@ module FLUE_NERSCFileIO
   private
   public :: WriteGaugeField_NERSC
   public :: ReadGaugeField_NERSC
+  public :: header_NERSC
+  public :: writeGaugeField_NERSC_FullHeader
+
+  type :: header_NERSC
+     character(len=3) :: storage_format = '1.0'
+     !< I don't know what other versions are...
+     integer :: dimension_1, dimension_2, dimension_3, dimension_4
+     !< Lattice dimensions, nx, ny, nz, nt
+     character(len=12) :: floating_point = 'IEEE64LITTLE'
+     !< Technically this should be IEEE64 in whatever compiled endian & precision (WC)
+     character(len=16) :: datatype = '4D_SU3_GAUGE_3X3'
+     !< Only support 4D_SU3_GAUGE_3X3
+     character(len=7) :: checksum = '1234567'
+     !< Proper checksum not implemented yet
+     real(kind=WP) :: plaquette, link_trace
+     !< Average plaquette and link_trace
+     integer :: sequence_number = -1
+     !< Probably the config number?. negative numbers wont be written
+     character(len=256) :: creator = ''
+     !< The creator of the nersc file
+     character(len=256) :: creator_hardware = ''
+     !< what hardware was used
+     character(len=256) :: creation_date = ''
+     !< When the gaugefield was generated in format for C++ std::get_time(&tm, "%A %B %d %H:%M:%S %Y")
+     character(len=256) :: archive_date = ''
+     !< When it was made into NERSC format in format for C++ std::get_time(&tm, "%A %B %d %H:%M:%S %Y")
+     ! "%A %B %d %H:%M:%S %Y" Means
+     ! Full Weekday | Full Month | Day of the month 2 digits |
+     ! hour range [0, 23], leading zero allowed but not required |
+     ! minute range [0, 59], leading zero allowed but not required |
+     ! second range [00, 59], leading zero allowed but not required |
+     ! year as 4 digit number, leading zero allowed but not required
+     ! i.e. an example is
+     ! Tuesday October 27 14:48:30 2026
+     character(len=256) :: ensemble_id = ''
+     !< some form of ID for the ensemble?
+     character(len=256) :: ensemble_label = ''
+     !< some form of label for the ensemble
+  end type header_NERSC
+
 
 contains
 
@@ -17,7 +57,21 @@ contains
     integer, intent(in) :: NX, NY, NZ, NT
     !< Lattice dimensions
     complex(kind=WC), dimension(3,3,4,NT,NX,NY,NZ), intent(in) :: U_in
+
+    type(header_NERSC) :: header
+    call writeGaugeField_NERSC_FullHeader(filename, U_in, NX, NY, NZ, NT, header)
+  end subroutine WriteGaugeField_NERSC
+
+  subroutine WriteGaugeField_NERSC_FullHeader(filename, U_in, NX, NY, NZ, NT,header)
+    !< Writes a gaugefield to file in NESRC format
+    character(len=*), intent(in) :: filename
+    !< File to write to
+    integer, intent(in) :: NX, NY, NZ, NT
+    !< Lattice dimensions
+    complex(kind=WC), dimension(3,3,4,NT,NX,NY,NZ), intent(in) :: U_in
     !< gaugefield to write
+    type(header_NERSC), intent(in) :: header
+    !< Header to write
     complex(kind=WC), dimension(3,3,4,NT,NX,NY,NZ) :: UShift
     !< gaugefield but cshift mu so x is first
     integer :: fileUnit
@@ -62,16 +116,32 @@ contains
          action='write')
 
     write(fileUnit,'(a)') 'BEGIN_HEADER'
-    write(fileUnit,'(a)') 'STORAGE_FORMAT = 1.0'
+    write(fileUnit,'(a)') 'STORAGE_FORMAT = '// trim(header%storage_format)
     write(fileUnit,'(a,i0)') 'DIMENSION_1 = ', NX
     write(fileUnit,'(a,i0)') 'DIMENSION_2 = ', NY
     write(fileUnit,'(a,i0)') 'DIMENSION_3 = ', NZ
     write(fileUnit,'(a,i0)') 'DIMENSION_4 = ', NT
-    write(fileUnit,'(a)') 'FLOATING_POINT = IEEE64LITTLE'
-    write(fileUnit,'(a)') 'DATATYPE = 4D_SU3_GAUGE_3X3'
-    write(fileUnit,'(a)') 'CHECKSUM = 1234567'
+    write(fileUnit,'(a)') 'FLOATING_POINT = '// trim(header%floating_point)
+    write(fileUnit,'(a)') 'DATATYPE = '// trim(header%datatype)
+    write(fileUnit,'(a)') 'CHECKSUM = '// trim(header%checksum)
     write(fileUnit,'(a,eS24.16e3)') 'PLAQUETTE = ', plaq
     write(fileUnit,'(a,eS24.16e3)') 'LINK_TRACE = ', link_trace
+    ! Ones below this are not in Jonivar's convertor
+    if (header%sequence_number .ge. 0) then
+       write(fileUnit,'(a,i0)') 'SEQUENCE_NUMBER = ', header%sequence_number
+    end if
+    if (len(trim(header%creator)) .gt. 0 ) then
+       write(fileUnit, '(a)') 'CREATOR = '// trim(header%creator)
+    end if
+    if (len(trim(header%creator_hardware)) .gt. 0 ) then
+       write(fileUnit, '(a)') 'CREATOR_HARDWARE = '// trim(header%creator_hardware)
+    end if
+    if (len(trim(header%creation_date)) .gt. 0 ) then
+       write(fileUnit, '(a)') 'CREATION_DATE = '// trim(header%creation_date)
+    end if
+    if (len(trim(header%archive_date)) .gt. 0 ) then
+       write(fileUnit, '(a)') 'ARCHIVE_DATE = '// trim(header%archive_date)
+    end if
     write(fileUnit,'(a)') 'END_HEADER'
     close(fileUnit)
     ! cshift to mu is xyzt
@@ -104,7 +174,7 @@ contains
 
     close(fileUnit)
 
-  end subroutine WriteGaugeField_NERSC
+  end subroutine WriteGaugeField_NERSC_FullHeader
 
   function ReadGaugeField_NERSC(filename, NX, NY, NZ, NT, fixSU3) result(U_out)
     !< Reads a NERSC format gaugefield into internal form [3,3,4,NT,NX,NY,NZ]
@@ -142,29 +212,34 @@ contains
          status='replace', &
          action='read')
 
-    read(fileUnit,'(a)') stringRead  ! 'BEGIN_HEADER'
+    headerLoop: do
+       read(fileUnit,'(a)') stringRead  ! 'BEGIN_HEADER'
+       if (trim(stringRead) == 'END_HEADER') then
+          exit headerLoop
+       end if
+    end do headerLoop
     ! write(*,*) trim(stringRead)
-    read(fileUnit,'(a)') stringRead  ! 'STORAGE_FORMAT = 1.0'
+    !read(fileUnit,'(a)') stringRead  ! 'STORAGE_FORMAT = 1.0'
     ! write(*,*) trim(stringRead)
-    read(fileUnit,'(a)') stringRead  ! 'DIMENSION_1 = ', NX
+    !read(fileUnit,'(a)') stringRead  ! 'DIMENSION_1 = ', NX
     ! write(*,*) trim(stringRead)
-    read(fileUnit,'(a)') stringRead  ! 'DIMENSION_2 = ', NY
+    !read(fileUnit,'(a)') stringRead  ! 'DIMENSION_2 = ', NY
     ! write(*,*) trim(stringRead)
-    read(fileUnit,'(a)') stringRead  ! 'DIMENSION_3 = ', NZ
+    !read(fileUnit,'(a)') stringRead  ! 'DIMENSION_3 = ', NZ
     ! write(*,*) trim(stringRead)
-    read(fileUnit,'(a)') stringRead  ! 'DIMENSION_4 = ', NT
+    !read(fileUnit,'(a)') stringRead  ! 'DIMENSION_4 = ', NT
     ! write(*,*) trim(stringRead)
-    read(fileUnit,'(a)') stringRead  ! 'FLOATING_POINT = IEEE64LITTLE'
+    !read(fileUnit,'(a)') stringRead  ! 'FLOATING_POINT = IEEE64LITTLE'
     ! write(*,*) trim(stringRead)
-    read(fileUnit,'(a)') stringRead  ! 'DATATYPE = 4D_SU3_GAUGE_3X3'
+    !read(fileUnit,'(a)') stringRead  ! 'DATATYPE = 4D_SU3_GAUGE_3X3'
     ! write(*,*) trim(stringRead)
-    read(fileUnit,'(a)') stringRead  ! 'CHECKSUM = 1234567'
+    !read(fileUnit,'(a)') stringRead  ! 'CHECKSUM = 1234567'
     ! write(*,*) trim(stringRead)
-    read(fileUnit,'(a)') stringRead  ! 'PLAQUETTE = ', plaq
+    !read(fileUnit,'(a)') stringRead  ! 'PLAQUETTE = ', plaq
     ! write(*,*) trim(stringRead)
-    read(fileUnit,'(a)') stringRead  ! 'LINK_TRACE = ', link_trace
+    !read(fileUnit,'(a)') stringRead  ! 'LINK_TRACE = ', link_trace
     ! write(*,*) trim(stringRead)
-    read(fileUnit,'(a)') stringRead  ! 'END_HEADER'
+    !read(fileUnit,'(a)') stringRead  ! 'END_HEADER'
     ! write(*,*) trim(stringRead)
     inquire(fileUnit, pos=pos)
     close(fileUnit)
