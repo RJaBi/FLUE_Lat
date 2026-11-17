@@ -7,6 +7,8 @@ module FLUE
    use FLUE_gpManip, only: Q_Average, cone_cut
    use FLUE_heatbath, only: updateLinks, build_colour_sites
    use FLUE_ILDG_bin, only: ReadGaugeField_ILDG, writeGaugeField_ILDG
+   use FLUE_ILDG_lime, only: writeGaugeField_ILDG_lime, writeGaugeField_ILDG_lime
+   use FLUE_limeOut, only: writeLimeHeader, writeLimePadding
    use FLUE_matrixConstants, only: Ident3x3, Ident2x2, sigma1, sigma2, sigma3
    use FLUE_mom, only: get_qhat
    use FLUE_NERSCFileIO, only: WriteGaugeField_NERSC, readGaugeField_NERSC, header_NERSC, writeGaugeField_NERSC_FullHeader
@@ -27,15 +29,27 @@ module FLUE
    use FLUE_wloops, only: polyakov, genPlaquette, magnetic, genericPath, periodCoord
    implicit none(type, external)
 
-   character(len=*), parameter :: version = "0.1.2"
+   character(len=*), parameter :: version = "0.1.4"
    !< Version of the FLUE software
-   public
-   !public :: calc_mom_space_scalarD
-   !public :: Ident, MultiplyMatMat, MultiplyMatdagMatdag
-   !public :: TraceMultMatMat, RealTraceMultMatMat, TraceLessConjgSubtract, colourDecomp
-   !public :: Q_Average
-   !public :: get_qhat
-   !public :: WP, pi, WC
-   !public :: writeCompiler, writeGit
+   !public
+   private
+   public :: WP, WC
+   !< constants
+   public :: writeCompiler, writeGit
+   public :: ReadGaugeField_CSSM
+   public :: writeGaugeField_openQCD, readGaugeField_openQCD
+   public :: ReadGaugeField_ILDG, writeGaugeField_ILDG
+   public :: writeGaugeField_ILDG_Lime
+   public :: writeGaugeField_NERSC
+   public :: genPlaquette, magnetic
+   public :: stoutSmearLinks
+   public :: ReadGaugefield_HKLS, writeGaugeField_HKLS
+   public :: writeGaugeField_SU2_CSSM
+   public :: writeGaugeField_NRQ2CD
+   public :: SU2_genPlaquette
+   public :: Ident2x2, Ident3x3
+   public :: Su2_updateLinks
+   public :: updateLinks, build_colour_sites
+
 
 end module FLUE

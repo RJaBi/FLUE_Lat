@@ -11,6 +11,8 @@ module FLUE_NERSCFileIO
   public :: writeGaugeField_NERSC_FullHeader
 
   type :: header_NERSC
+     !< Derived type containing all the header info required
+     !< Note that not all of these are required by some NERSC readers
      character(len=3) :: storage_format = '1.0'
      !< I don't know what other versions are...
      integer :: dimension_1, dimension_2, dimension_3, dimension_4
@@ -57,8 +59,9 @@ contains
     integer, intent(in) :: NX, NY, NZ, NT
     !< Lattice dimensions
     complex(kind=WC), dimension(3,3,4,NT,NX,NY,NZ), intent(in) :: U_in
-
+    !< Input gaugefield to write
     type(header_NERSC) :: header
+    !< Derived type containing all the header info required
     call writeGaugeField_NERSC_FullHeader(filename, U_in, NX, NY, NZ, NT, header)
   end subroutine WriteGaugeField_NERSC
 

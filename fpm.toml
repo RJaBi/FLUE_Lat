@@ -1,5 +1,5 @@
 name = "FLUE"
-version = "0.1.3"
+version = "0.1.4"
 license = "MIT"
 author = "Ryan Bignell"
 maintainer = "ryan07bignell+github@gmail.com"
@@ -39,6 +39,7 @@ philox = { git = "git@github.com:RJaBi/Philox_Fortran.git", branch = "main" }
 #philox = {git = "../Philox_RNG", branch = "main"}
 test-drive = { git = "https://github.com/fortran-lang/test-drive", tag = "v0.6.1" }
 pyplot-fortran = { git="https://github.com/jacobwilliams/pyplot-fortran.git" }
+FoXy = { git = "https://github.com/Fortran-FOSS-Programmers/FoXy" }
 
 #[[executable]]
 #name="Flue"

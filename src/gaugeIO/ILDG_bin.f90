@@ -1,13 +1,16 @@
 
 module FLUE_ILDG_bin
   !< Functions to read and write ILDG (binary) format gaugefields
-   use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT
+   use, intrinsic :: ISO_FORTRAN_ENV, only: OUTPUT_UNIT, int64
    use FLUE_constants, only: WP, WC
    use FLUE_SU3MatrixOps, only: FixSU3Matrix
+   use FLUE_endianIO, only: need_endian_swap, endianSwap
    implicit none(type, external)
    private
    public :: ReadGaugeField_ILDG
    public :: writeGaugeField_ILDG
+
+   public :: writeGaugeField_ILDG_unit
 
 contains
 
@@ -80,10 +83,59 @@ contains
 
    end function ReadGaugeField_ILDG
 
+   subroutine writeGaugeField_ILDG_Unit( &
+        myUnit, U_xd, NX, NY, NZ, NT, fixSU3)
+     !< Writes the binary portion of the ILDG gaugefield to an open unit
+     integer, intent(in) :: myUnit
+     !< Already-open big-endian unformatted stream unit.
+     integer, intent(in) :: NX, NY, NZ, NT
+     !< Lattice dimensions.
+     complex(kind=WC), dimension(3, 3, 4, NT, NX, NY, NZ), intent(in) :: U_xd
+     !< Input gauge field in FLUE indexing
+     logical, optional, intent(in) :: fixSU3
+     !< Reproject links to SU(3), default false
+     complex(kind=WC), dimension(3, 3, 4, NX, NY, NZ, NT) :: UWrite
+     !< re-ordered gaugefield to write
+     integer, dimension(4), parameter :: Directionmap = (/2, 3, 4, 1/)
+     !< For re-ordering
+     integer :: it, ix, iy, iz, mu
+     !< integers
+     logical :: fixSU3Set
+     !< Whether we are re-projecting each link to SU3
+     fixSU3Set = .false.
+     if (present(fixSU3)) fixSU3Set = fixSU3
+     ! Reorder directions t,x,y,z -> x,y,z,t and transpose each matrix.
+     !
+     ! directionMap(mu) returns the corresponding input direction:
+     ! output x <- input x (2)
+     ! output y <- input y (3)
+     ! output z <- input z (4)
+     ! output t <- input t (1)
+     do concurrent ( &
+          it = 1:NT, &
+          ix = 1:NX, &
+          iy = 1:NY, &
+          iz = 1:NZ, &
+          mu = 1:4)
+        UWrite(:, :, mu, ix, iy, iz, it) = transpose( &
+             U_xd(:, :, directionMap(mu), it, ix, iy, iz))
+     end do
+     if (fixSU3Set) then
+        do concurrent(it=1:nt, ix=1:nx, iy=1:ny, iz=1:nz, mu=1:4) default(none) shared(UWrite)
+           call FixSU3Matrix(UWrite(:, :, mu, ix, iy, iz, it))
+        end do
+     end if
+     ! Write timeslice by timeslice to avoid 2GB limit
+     do it = 1, NT
+        write (myUnit) UWrite(:, :, :, :, :, :, it)
+     end do
+ end subroutine writeGaugeField_ILDG_Unit
+
+
    subroutine writeGaugeField_ILDG(filename, U_xd, NX, NY, NZ, NT, fixSU3)
      !< Write a gaugefield in ILDG (binary) format
      character(len=*), intent(IN) :: filename
-     !< filename to read to
+     !< filename to write to
      integer, intent(IN) :: NX, NY, NZ, NT
      !< lattice dimensions
      logical, optional, intent(IN) :: fixSU3

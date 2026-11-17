@@ -31,14 +31,15 @@ Note that $SU(2)$ supports only the `Generic path based Wilson line` and the `ge
 ---
 ## Gauge Formats $(SU3)$
 
-The supported formats are `openqcd` and an ILDG-like binary format. This is the ILDG binary data format in big endian. The `cssm` format stores some metadata, and then only the first two rows of the $SU(3)$ matrix. The `cssm` format assumes big endian. The `nersc` format does not correctly implement the checksum (uses `1234567`) and only supports `IEEE64LITTLE`. The `nersc` reader does not do any checks and assumes a fixed header size.
+The supported formats are `openqcd`, `cssm`, `nserc` and ILDG-Lime and ILDG-like binary format. This is the ILDG binary data format in big endian. The `cssm` format stores some metadata, and then only the first two rows of the $SU(3)$ matrix. The `cssm` format assumes big endian. The `nersc` format does not correctly implement the checksum (uses `1234567`) and only supports `IEEE64LITTLE`. The `nersc` reader does not do any checks and assumes a fixed header size.
 
-| Format   | Read    | Write   |
-|----------|---------|---------|
-| openqcd  | &check; | &check; |
-| ildg-bin | &check; | &cross; |
-| cssm     | &check; | &cross; |
-| nersc    | &check; | &check; |
+| Format    | Read    | Write   |
+|-----------|---------|---------|
+| openqcd   | &check; | &check; |
+| ildg-bin  | &check; | &cross; |
+| cssm      | &check; | &cross; |
+| nersc     | &check; | &check; |
+| ildg-lime | &cross; | &check; |
 
 The internal representation of a $SU(3)$ gauge field is `(3, 3, 4, NT, NS, NS, NS)`.
 
@@ -76,12 +77,15 @@ suffixes = ["F90"]
 macros=['SETGITHASH=Yes', 'LOCALITYSUPPORT=1']
 ```
 
-| Program            | purpose					                                    	                                               | args		                     |
+| Program            | purpose					                                    	                                     | args		                     |
 |--------------------|-------------------------------------------------------------------------------------------------------|-----------------------------|
-| magnetic           | Calculates the magnetic portion of Fmunu                                                             | mag.toml		                 |
+| magnetic           | Calculates the magnetic portion of Fmunu                                                              | mag.toml		                 |
 | ILDG_to_OQCD       | Convert a gauge field ILDG-bin in big endian to openqcd                                               | inputFile outputFile NT NS  |
+| UNIT_to_OQCD       | Write a unit gaugefield (i.e. colour matrix is Real 3x3 Identity) to openqcd                          | inputFile outputFile NT NS  |
 | CSSM_to_OQCD       | Convert a gauge field cssm to openqcd                                                                 | inputFile outputFile NT NS  |
 | OQCD_to_ILDG       | Convert a gauge field openqcd to ILDG-bin in big endian                                               | inputFile outputFile NT NS  |
+| OQCD_to_ILDG_lime       | Convert a gauge field openqcd to ILDG-lime container format                                      | inputFile outputFile NT NS  |
+| OQCD_to_NERSC       | Convert a gauge field openqcd to NERSC format                                                        | inputFile outputFile NT NS  |
 | SU2_HKLS_to_CSSM   | Convert a $SU(2)$ gaugefield in HKLS to cssm                                                          | inputFile outputFile NT NS  |
 | SU2_HKLS_to_NRQ2CD | Convert a $SU(2)$ gaugefield in HKLS to NRQ2CD                                                        | inputFile outputFile NT NS  |
 | OQCD_stoutSmear    | Stout smear (spatial) an openqcd gauge field and print average unsmeared and smeared plaquette values | inputFile rho nSweeps NT NS |
@@ -116,8 +120,8 @@ Available routines are:
 
 IO Routines:
 
-`write[ILDG/OQCD/NERSC](filename, U, NS, NT)`
-`read[ILDG/OQCD/NERSC/CSSM](filename, NS, NT)`
+`write[ILDG-bin/OQCD/NERSC](filename, U, NS, NT)`
+`read[ILDG-bin/OQCD/NERSC/CSSM](filename, NS, NT)`
 
 plaquette routines:
 

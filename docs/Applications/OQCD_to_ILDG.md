@@ -9,5 +9,5 @@ Run using
 
 
 ```
-fpm run ILDG_to_OQCD -- inputFile outputFile NT NS
+fpm run OQCD_to_ILDG -- inputFile outputFile NT NS
 ```
